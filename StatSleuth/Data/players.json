@@ -1,0 +1,301 @@
+[
+  {
+    "id": "00000001-0000-0000-0000-000000000001",
+    "firstName": "Shohei", "lastName": "Ohtani",
+    "team": "Los Angeles Dodgers", "position": "DH",
+    "age": 30, "nationality": "Japanese", "debutYear": 2018, "jerseyNumber": 17,
+    "hitterStats": { "gamesPlayed": 159, "atBats": 599, "hits": 167, "doubles": 29, "triples": 2, "homeRuns": 44, "rbi": 96, "runs": 102, "stolenBases": 20, "walks": 96, "strikeouts": 143, "battingAverage": 0.310, "onBasePercentage": 0.390, "sluggingPercentage": 0.646 },
+    "pitcherStats": null,
+    "careerHitterStats": { "gamesPlayed": 850, "atBats": 3050, "hits": 880, "doubles": 158, "triples": 12, "homeRuns": 238, "rbi": 563, "runs": 521, "stolenBases": 87, "walks": 430, "strikeouts": 720, "battingAverage": 0.288, "onBasePercentage": 0.378, "sluggingPercentage": 0.587 },
+    "careerPitcherStats": null
+  },
+  {
+    "id": "00000001-0000-0000-0000-000000000002",
+    "firstName": "Vladimir", "lastName": "Guerrero Jr.",
+    "team": "Toronto Blue Jays", "position": "1B",
+    "age": 25, "nationality": "Dominican", "debutYear": 2019, "jerseyNumber": 27,
+    "hitterStats": { "gamesPlayed": 157, "atBats": 588, "hits": 174, "doubles": 34, "triples": 1, "homeRuns": 26, "rbi": 97, "runs": 91, "stolenBases": 4, "walks": 78, "strikeouts": 98, "battingAverage": 0.296, "onBasePercentage": 0.371, "sluggingPercentage": 0.476 },
+    "pitcherStats": null,
+    "careerHitterStats": { "gamesPlayed": 660, "atBats": 2490, "hits": 724, "doubles": 145, "triples": 5, "homeRuns": 152, "rbi": 449, "runs": 383, "stolenBases": 14, "walks": 298, "strikeouts": 390, "battingAverage": 0.291, "onBasePercentage": 0.362, "sluggingPercentage": 0.503 },
+    "careerPitcherStats": null
+  },
+  {
+    "id": "00000001-0000-0000-0000-000000000003",
+    "firstName": "Freddie", "lastName": "Freeman",
+    "team": "Los Angeles Dodgers", "position": "1B",
+    "age": 34, "nationality": "American", "debutYear": 2010, "jerseyNumber": 5,
+    "hitterStats": { "gamesPlayed": 156, "atBats": 572, "hits": 178, "doubles": 40, "triples": 2, "homeRuns": 22, "rbi": 90, "runs": 92, "stolenBases": 7, "walks": 82, "strikeouts": 107, "battingAverage": 0.311, "onBasePercentage": 0.400, "sluggingPercentage": 0.490 },
+    "pitcherStats": null,
+    "careerHitterStats": { "gamesPlayed": 1994, "atBats": 7162, "hits": 2160, "doubles": 468, "triples": 28, "homeRuns": 308, "rbi": 1150, "runs": 1101, "stolenBases": 62, "walks": 986, "strikeouts": 1392, "battingAverage": 0.299, "onBasePercentage": 0.388, "sluggingPercentage": 0.509 },
+    "careerPitcherStats": null
+  },
+  {
+    "id": "00000001-0000-0000-0000-000000000004",
+    "firstName": "Gerrit", "lastName": "Cole",
+    "team": "New York Yankees", "position": "SP",
+    "age": 33, "nationality": "American", "debutYear": 2013, "jerseyNumber": 45,
+    "hitterStats": null, "pitcherStats": { "wins": 15, "losses": 4, "era": 2.63, "gamesPlayed": 33, "gamesStarted": 33, "saves": 0, "inningsPitched": 209.0, "strikeouts": 243, "walks": 44, "whip": 1.06, "hitsAllowed": 178, "homeRunsAllowed": 21 },
+    "careerHitterStats": null,
+    "careerPitcherStats": { "wins": 138, "losses": 78, "era": 3.22, "gamesPlayed": 312, "gamesStarted": 312, "saves": 0, "inningsPitched": 1897.0, "strikeouts": 2218, "walks": 484, "whip": 1.10, "hitsAllowed": 1600, "homeRunsAllowed": 215 }
+  },
+  {
+    "id": "00000001-0000-0000-0000-000000000005",
+    "firstName": "Bo", "lastName": "Bichette",
+    "team": "Toronto Blue Jays", "position": "SS",
+    "age": 26, "nationality": "American", "debutYear": 2019, "jerseyNumber": 11,
+    "hitterStats": { "gamesPlayed": 148, "atBats": 572, "hits": 160, "doubles": 35, "triples": 4, "homeRuns": 20, "rbi": 73, "runs": 84, "stolenBases": 10, "walks": 38, "strikeouts": 122, "battingAverage": 0.279, "onBasePercentage": 0.320, "sluggingPercentage": 0.449 },
+    "pitcherStats": null,
+    "careerHitterStats": { "gamesPlayed": 610, "atBats": 2380, "hits": 678, "doubles": 148, "triples": 18, "homeRuns": 92, "rbi": 339, "runs": 351, "stolenBases": 45, "walks": 158, "strikeouts": 488, "battingAverage": 0.285, "onBasePercentage": 0.326, "sluggingPercentage": 0.468 },
+    "careerPitcherStats": null
+  },
+  {
+    "id": "00000001-0000-0000-0000-000000000006",
+    "firstName": "Mookie", "lastName": "Betts",
+    "team": "Los Angeles Dodgers", "position": "RF",
+    "age": 31, "nationality": "American", "debutYear": 2014, "jerseyNumber": 50,
+    "hitterStats": { "gamesPlayed": 130, "atBats": 468, "hits": 140, "doubles": 28, "triples": 3, "homeRuns": 22, "rbi": 75, "runs": 90, "stolenBases": 14, "walks": 68, "strikeouts": 82, "battingAverage": 0.307, "onBasePercentage": 0.408, "sluggingPercentage": 0.535 },
+    "pitcherStats": null,
+    "careerHitterStats": { "gamesPlayed": 1384, "atBats": 5130, "hits": 1545, "doubles": 324, "triples": 38, "homeRuns": 244, "rbi": 780, "runs": 900, "stolenBases": 168, "walks": 608, "strikeouts": 740, "battingAverage": 0.301, "onBasePercentage": 0.383, "sluggingPercentage": 0.520 },
+    "careerPitcherStats": null
+  },
+  {
+    "id": "00000001-0000-0000-0000-000000000007",
+    "firstName": "Ronald", "lastName": "Acuña Jr.",
+    "team": "Atlanta Braves", "position": "RF",
+    "age": 26, "nationality": "Venezuelan", "debutYear": 2018, "jerseyNumber": 13,
+    "hitterStats": { "gamesPlayed": 107, "atBats": 388, "hits": 108, "doubles": 18, "triples": 4, "homeRuns": 17, "rbi": 51, "runs": 78, "stolenBases": 29, "walks": 55, "strikeouts": 88, "battingAverage": 0.281, "onBasePercentage": 0.366, "sluggingPercentage": 0.469 },
+    "pitcherStats": null,
+    "careerHitterStats": { "gamesPlayed": 790, "atBats": 2908, "hits": 876, "doubles": 170, "triples": 30, "homeRuns": 183, "rbi": 525, "runs": 578, "stolenBases": 226, "walks": 402, "strikeouts": 638, "battingAverage": 0.301, "onBasePercentage": 0.390, "sluggingPercentage": 0.567 },
+    "careerPitcherStats": null
+  },
+  {
+    "id": "00000001-0000-0000-0000-000000000008",
+    "firstName": "Aaron", "lastName": "Judge",
+    "team": "New York Yankees", "position": "RF",
+    "age": 32, "nationality": "American", "debutYear": 2016, "jerseyNumber": 99,
+    "hitterStats": { "gamesPlayed": 158, "atBats": 541, "hits": 157, "doubles": 26, "triples": 1, "homeRuns": 58, "rbi": 144, "runs": 122, "stolenBases": 10, "walks": 133, "strikeouts": 175, "battingAverage": 0.290, "onBasePercentage": 0.427, "sluggingPercentage": 0.613 },
+    "pitcherStats": null,
+    "careerHitterStats": { "gamesPlayed": 1004, "atBats": 3348, "hits": 924, "doubles": 170, "triples": 13, "homeRuns": 327, "rbi": 807, "runs": 699, "stolenBases": 57, "walks": 636, "strikeouts": 1042, "battingAverage": 0.276, "onBasePercentage": 0.394, "sluggingPercentage": 0.588 },
+    "careerPitcherStats": null
+  },
+  {
+    "id": "00000001-0000-0000-0000-000000000009",
+    "firstName": "Yordan", "lastName": "Alvarez",
+    "team": "Houston Astros", "position": "DH",
+    "age": 27, "nationality": "Cuban", "debutYear": 2019, "jerseyNumber": 44,
+    "hitterStats": { "gamesPlayed": 143, "atBats": 499, "hits": 147, "doubles": 30, "triples": 1, "homeRuns": 31, "rbi": 97, "runs": 82, "stolenBases": 2, "walks": 84, "strikeouts": 102, "battingAverage": 0.308, "onBasePercentage": 0.406, "sluggingPercentage": 0.565 },
+    "pitcherStats": null,
+    "careerHitterStats": { "gamesPlayed": 609, "atBats": 2108, "hits": 633, "doubles": 128, "triples": 5, "homeRuns": 168, "rbi": 487, "runs": 378, "stolenBases": 7, "walks": 355, "strikeouts": 424, "battingAverage": 0.300, "onBasePercentage": 0.400, "sluggingPercentage": 0.579 },
+    "careerPitcherStats": null
+  },
+  {
+    "id": "00000001-0000-0000-0000-000000000010",
+    "firstName": "José", "lastName": "Ramírez",
+    "team": "Cleveland Guardians", "position": "3B",
+    "age": 31, "nationality": "Dominican", "debutYear": 2013, "jerseyNumber": 11,
+    "hitterStats": { "gamesPlayed": 158, "atBats": 572, "hits": 163, "doubles": 38, "triples": 3, "homeRuns": 33, "rbi": 103, "runs": 96, "stolenBases": 22, "walks": 74, "strikeouts": 78, "battingAverage": 0.285, "onBasePercentage": 0.366, "sluggingPercentage": 0.530 },
+    "pitcherStats": null,
+    "careerHitterStats": { "gamesPlayed": 1620, "atBats": 5980, "hits": 1730, "doubles": 420, "triples": 38, "homeRuns": 283, "rbi": 984, "runs": 940, "stolenBases": 204, "walks": 686, "strikeouts": 680, "battingAverage": 0.289, "onBasePercentage": 0.360, "sluggingPercentage": 0.510 },
+    "careerPitcherStats": null
+  },
+  {
+    "id": "00000001-0000-0000-0000-000000000011",
+    "firstName": "Spencer", "lastName": "Strider",
+    "team": "Atlanta Braves", "position": "SP",
+    "age": 25, "nationality": "American", "debutYear": 2022, "jerseyNumber": 99,
+    "hitterStats": null,
+    "pitcherStats": { "wins": 18, "losses": 5, "era": 3.86, "gamesPlayed": 32, "gamesStarted": 32, "saves": 0, "inningsPitched": 186.2, "strikeouts": 281, "walks": 55, "whip": 1.07, "hitsAllowed": 144, "homeRunsAllowed": 28 },
+    "careerHitterStats": null,
+    "careerPitcherStats": { "wins": 34, "losses": 11, "era": 3.28, "gamesPlayed": 72, "gamesStarted": 68, "saves": 0, "inningsPitched": 388.0, "strikeouts": 568, "walks": 112, "whip": 0.99, "hitsAllowed": 272, "homeRunsAllowed": 52 }
+  },
+  {
+    "id": "00000001-0000-0000-0000-000000000012",
+    "firstName": "Julio", "lastName": "Rodríguez",
+    "team": "Seattle Mariners", "position": "CF",
+    "age": 23, "nationality": "Dominican", "debutYear": 2022, "jerseyNumber": 44,
+    "hitterStats": { "gamesPlayed": 145, "atBats": 535, "hits": 152, "doubles": 27, "triples": 3, "homeRuns": 32, "rbi": 103, "runs": 88, "stolenBases": 37, "walks": 60, "strikeouts": 145, "battingAverage": 0.284, "onBasePercentage": 0.355, "sluggingPercentage": 0.520 },
+    "pitcherStats": null,
+    "careerHitterStats": { "gamesPlayed": 400, "atBats": 1490, "hits": 427, "doubles": 76, "triples": 9, "homeRuns": 84, "rbi": 267, "runs": 242, "stolenBases": 104, "walks": 155, "strikeouts": 388, "battingAverage": 0.287, "onBasePercentage": 0.352, "sluggingPercentage": 0.507 },
+    "careerPitcherStats": null
+  },
+  {
+    "id": "00000001-0000-0000-0000-000000000013",
+    "firstName": "Corey", "lastName": "Seager",
+    "team": "Texas Rangers", "position": "SS",
+    "age": 30, "nationality": "American", "debutYear": 2015, "jerseyNumber": 5,
+    "hitterStats": { "gamesPlayed": 143, "atBats": 520, "hits": 157, "doubles": 30, "triples": 1, "homeRuns": 33, "rbi": 96, "runs": 91, "stolenBases": 2, "walks": 62, "strikeouts": 104, "battingAverage": 0.302, "onBasePercentage": 0.373, "sluggingPercentage": 0.556 },
+    "pitcherStats": null,
+    "careerHitterStats": { "gamesPlayed": 1040, "atBats": 3740, "hits": 1101, "doubles": 234, "triples": 14, "homeRuns": 196, "rbi": 643, "runs": 590, "stolenBases": 17, "walks": 404, "strikeouts": 648, "battingAverage": 0.294, "onBasePercentage": 0.367, "sluggingPercentage": 0.529 },
+    "careerPitcherStats": null
+  },
+  {
+    "id": "00000001-0000-0000-0000-000000000014",
+    "firstName": "Trea", "lastName": "Turner",
+    "team": "Philadelphia Phillies", "position": "SS",
+    "age": 31, "nationality": "American", "debutYear": 2015, "jerseyNumber": 7,
+    "hitterStats": { "gamesPlayed": 155, "atBats": 600, "hits": 180, "doubles": 33, "triples": 5, "homeRuns": 19, "rbi": 76, "runs": 96, "stolenBases": 30, "walks": 48, "strikeouts": 108, "battingAverage": 0.300, "onBasePercentage": 0.349, "sluggingPercentage": 0.453 },
+    "pitcherStats": null,
+    "careerHitterStats": { "gamesPlayed": 1200, "atBats": 4650, "hits": 1380, "doubles": 248, "triples": 52, "homeRuns": 172, "rbi": 596, "runs": 740, "stolenBases": 282, "walks": 352, "strikeouts": 716, "battingAverage": 0.297, "onBasePercentage": 0.349, "sluggingPercentage": 0.484 },
+    "careerPitcherStats": null
+  },
+  {
+    "id": "00000001-0000-0000-0000-000000000015",
+    "firstName": "Nolan", "lastName": "Arenado",
+    "team": "St. Louis Cardinals", "position": "3B",
+    "age": 33, "nationality": "American", "debutYear": 2013, "jerseyNumber": 28,
+    "hitterStats": { "gamesPlayed": 148, "atBats": 543, "hits": 152, "doubles": 32, "triples": 1, "homeRuns": 26, "rbi": 93, "runs": 73, "stolenBases": 2, "walks": 52, "strikeouts": 102, "battingAverage": 0.280, "onBasePercentage": 0.344, "sluggingPercentage": 0.480 },
+    "pitcherStats": null,
+    "careerHitterStats": { "gamesPlayed": 1748, "atBats": 6420, "hits": 1862, "doubles": 416, "triples": 26, "homeRuns": 340, "rbi": 1178, "runs": 932, "stolenBases": 26, "walks": 634, "strikeouts": 1108, "battingAverage": 0.290, "onBasePercentage": 0.352, "sluggingPercentage": 0.521 },
+    "careerPitcherStats": null
+  },
+  {
+    "id": "00000001-0000-0000-0000-000000000016",
+    "firstName": "Zack", "lastName": "Wheeler",
+    "team": "Philadelphia Phillies", "position": "SP",
+    "age": 34, "nationality": "American", "debutYear": 2013, "jerseyNumber": 45,
+    "hitterStats": null,
+    "pitcherStats": { "wins": 13, "losses": 7, "era": 3.07, "gamesPlayed": 30, "gamesStarted": 30, "saves": 0, "inningsPitched": 192.0, "strikeouts": 212, "walks": 42, "whip": 1.04, "hitsAllowed": 157, "homeRunsAllowed": 18 },
+    "careerHitterStats": null,
+    "careerPitcherStats": { "wins": 105, "losses": 84, "era": 3.52, "gamesPlayed": 286, "gamesStarted": 272, "saves": 0, "inningsPitched": 1642.0, "strikeouts": 1738, "walks": 488, "whip": 1.18, "hitsAllowed": 1452, "homeRunsAllowed": 188 }
+  },
+  {
+    "id": "00000001-0000-0000-0000-000000000017",
+    "firstName": "Kyle", "lastName": "Tucker",
+    "team": "Houston Astros", "position": "RF",
+    "age": 27, "nationality": "American", "debutYear": 2018, "jerseyNumber": 30,
+    "hitterStats": { "gamesPlayed": 102, "atBats": 368, "hits": 105, "doubles": 24, "triples": 2, "homeRuns": 23, "rbi": 71, "runs": 63, "stolenBases": 20, "walks": 52, "strikeouts": 80, "battingAverage": 0.285, "onBasePercentage": 0.375, "sluggingPercentage": 0.533 },
+    "pitcherStats": null,
+    "careerHitterStats": { "gamesPlayed": 720, "atBats": 2520, "hits": 722, "doubles": 166, "triples": 22, "homeRuns": 164, "rbi": 503, "runs": 428, "stolenBases": 118, "walks": 358, "strikeouts": 534, "battingAverage": 0.286, "onBasePercentage": 0.374, "sluggingPercentage": 0.536 },
+    "careerPitcherStats": null
+  },
+  {
+    "id": "00000001-0000-0000-0000-000000000018",
+    "firstName": "Gunnar", "lastName": "Henderson",
+    "team": "Baltimore Orioles", "position": "SS",
+    "age": 22, "nationality": "American", "debutYear": 2022, "jerseyNumber": 2,
+    "hitterStats": { "gamesPlayed": 155, "atBats": 551, "hits": 161, "doubles": 33, "triples": 5, "homeRuns": 37, "rbi": 95, "runs": 107, "stolenBases": 15, "walks": 88, "strikeouts": 151, "battingAverage": 0.291, "onBasePercentage": 0.396, "sluggingPercentage": 0.556 },
+    "pitcherStats": null,
+    "careerHitterStats": { "gamesPlayed": 280, "atBats": 988, "hits": 278, "doubles": 60, "triples": 9, "homeRuns": 63, "rbi": 168, "runs": 190, "stolenBases": 26, "walks": 148, "strikeouts": 272, "battingAverage": 0.281, "onBasePercentage": 0.380, "sluggingPercentage": 0.524 },
+    "careerPitcherStats": null
+  },
+  {
+    "id": "00000001-0000-0000-0000-000000000019",
+    "firstName": "Luis", "lastName": "Castillo",
+    "team": "Seattle Mariners", "position": "SP",
+    "age": 31, "nationality": "Dominican", "debutYear": 2017, "jerseyNumber": 58,
+    "hitterStats": null,
+    "pitcherStats": { "wins": 16, "losses": 7, "era": 3.10, "gamesPlayed": 33, "gamesStarted": 33, "saves": 0, "inningsPitched": 201.0, "strikeouts": 220, "walks": 58, "whip": 1.12, "hitsAllowed": 167, "homeRunsAllowed": 16 },
+    "careerHitterStats": null,
+    "careerPitcherStats": { "wins": 94, "losses": 74, "era": 3.56, "gamesPlayed": 234, "gamesStarted": 234, "saves": 0, "inningsPitched": 1368.0, "strikeouts": 1450, "walks": 482, "whip": 1.20, "hitsAllowed": 1160, "homeRunsAllowed": 128 }
+  },
+  {
+    "id": "00000001-0000-0000-0000-000000000020",
+    "firstName": "Paul", "lastName": "Goldschmidt",
+    "team": "St. Louis Cardinals", "position": "1B",
+    "age": 36, "nationality": "American", "debutYear": 2011, "jerseyNumber": 46,
+    "hitterStats": { "gamesPlayed": 151, "atBats": 541, "hits": 143, "doubles": 28, "triples": 2, "homeRuns": 22, "rbi": 82, "runs": 77, "stolenBases": 6, "walks": 80, "strikeouts": 138, "battingAverage": 0.264, "onBasePercentage": 0.360, "sluggingPercentage": 0.438 },
+    "pitcherStats": null,
+    "careerHitterStats": { "gamesPlayed": 1940, "atBats": 6840, "hits": 2021, "doubles": 426, "triples": 40, "homeRuns": 371, "rbi": 1220, "runs": 1098, "stolenBases": 141, "walks": 1012, "strikeouts": 1542, "battingAverage": 0.296, "onBasePercentage": 0.389, "sluggingPercentage": 0.531 },
+    "careerPitcherStats": null
+  },
+  {
+    "id": "00000001-0000-0000-0000-000000000021",
+    "firstName": "Framber", "lastName": "Valdez",
+    "team": "Houston Astros", "position": "SP",
+    "age": 30, "nationality": "Dominican", "debutYear": 2019, "jerseyNumber": 59,
+    "hitterStats": null,
+    "pitcherStats": { "wins": 12, "losses": 11, "era": 3.45, "gamesPlayed": 31, "gamesStarted": 31, "saves": 0, "inningsPitched": 197.0, "strikeouts": 194, "walks": 62, "whip": 1.22, "hitsAllowed": 179, "homeRunsAllowed": 12 },
+    "careerHitterStats": null,
+    "careerPitcherStats": { "wins": 62, "losses": 43, "era": 3.28, "gamesPlayed": 148, "gamesStarted": 146, "saves": 0, "inningsPitched": 886.0, "strikeouts": 844, "walks": 292, "whip": 1.18, "hitsAllowed": 754, "homeRunsAllowed": 52 }
+  },
+  {
+    "id": "00000001-0000-0000-0000-000000000022",
+    "firstName": "Adley", "lastName": "Rutschman",
+    "team": "Baltimore Orioles", "position": "C",
+    "age": 26, "nationality": "American", "debutYear": 2022, "jerseyNumber": 35,
+    "hitterStats": { "gamesPlayed": 145, "atBats": 495, "hits": 140, "doubles": 33, "triples": 1, "homeRuns": 20, "rbi": 80, "runs": 76, "stolenBases": 3, "walks": 78, "strikeouts": 88, "battingAverage": 0.282, "onBasePercentage": 0.378, "sluggingPercentage": 0.457 },
+    "pitcherStats": null,
+    "careerHitterStats": { "gamesPlayed": 380, "atBats": 1280, "hits": 362, "doubles": 84, "triples": 3, "homeRuns": 49, "rbi": 196, "runs": 193, "stolenBases": 8, "walks": 208, "strikeouts": 220, "battingAverage": 0.283, "onBasePercentage": 0.378, "sluggingPercentage": 0.455 },
+    "careerPitcherStats": null
+  },
+  {
+    "id": "00000001-0000-0000-0000-000000000023",
+    "firstName": "Pete", "lastName": "Alonso",
+    "team": "New York Mets", "position": "1B",
+    "age": 29, "nationality": "American", "debutYear": 2019, "jerseyNumber": 20,
+    "hitterStats": { "gamesPlayed": 157, "atBats": 562, "hits": 145, "doubles": 26, "triples": 0, "homeRuns": 46, "rbi": 118, "runs": 88, "stolenBases": 2, "walks": 74, "strikeouts": 148, "battingAverage": 0.258, "onBasePercentage": 0.345, "sluggingPercentage": 0.549 },
+    "pitcherStats": null,
+    "careerHitterStats": { "gamesPlayed": 780, "atBats": 2770, "hits": 726, "doubles": 140, "triples": 4, "homeRuns": 226, "rbi": 619, "runs": 448, "stolenBases": 6, "walks": 372, "strikeouts": 716, "battingAverage": 0.262, "onBasePercentage": 0.352, "sluggingPercentage": 0.530 },
+    "careerPitcherStats": null
+  },
+  {
+    "id": "00000001-0000-0000-0000-000000000024",
+    "firstName": "Bryce", "lastName": "Harper",
+    "team": "Philadelphia Phillies", "position": "1B",
+    "age": 31, "nationality": "American", "debutYear": 2012, "jerseyNumber": 3,
+    "hitterStats": { "gamesPlayed": 151, "atBats": 538, "hits": 157, "doubles": 36, "triples": 2, "homeRuns": 30, "rbi": 95, "runs": 89, "stolenBases": 12, "walks": 100, "strikeouts": 125, "battingAverage": 0.292, "onBasePercentage": 0.400, "sluggingPercentage": 0.533 },
+    "pitcherStats": null,
+    "careerHitterStats": { "gamesPlayed": 1626, "atBats": 5680, "hits": 1598, "doubles": 330, "triples": 30, "homeRuns": 326, "rbi": 949, "runs": 1012, "stolenBases": 104, "walks": 968, "strikeouts": 1380, "battingAverage": 0.281, "onBasePercentage": 0.388, "sluggingPercentage": 0.519 },
+    "careerPitcherStats": null
+  },
+  {
+    "id": "00000001-0000-0000-0000-000000000025",
+    "firstName": "Dylan", "lastName": "Cease",
+    "team": "San Diego Padres", "position": "SP",
+    "age": 28, "nationality": "American", "debutYear": 2019, "jerseyNumber": 84,
+    "hitterStats": null,
+    "pitcherStats": { "wins": 14, "losses": 11, "era": 3.47, "gamesPlayed": 33, "gamesStarted": 33, "saves": 0, "inningsPitched": 198.1, "strikeouts": 226, "walks": 76, "whip": 1.20, "hitsAllowed": 162, "homeRunsAllowed": 20 },
+    "careerHitterStats": null,
+    "careerPitcherStats": { "wins": 56, "losses": 52, "era": 3.91, "gamesPlayed": 168, "gamesStarted": 166, "saves": 0, "inningsPitched": 918.0, "strikeouts": 1044, "walks": 380, "whip": 1.26, "hitsAllowed": 778, "homeRunsAllowed": 100 }
+  },
+  {
+    "id": "00000001-0000-0000-0000-000000000026",
+    "firstName": "Matt", "lastName": "Olson",
+    "team": "Atlanta Braves", "position": "1B",
+    "age": 30, "nationality": "American", "debutYear": 2016, "jerseyNumber": 28,
+    "hitterStats": { "gamesPlayed": 162, "atBats": 569, "hits": 154, "doubles": 26, "triples": 0, "homeRuns": 54, "rbi": 139, "runs": 101, "stolenBases": 1, "walks": 104, "strikeouts": 172, "battingAverage": 0.269, "onBasePercentage": 0.389, "sluggingPercentage": 0.604 },
+    "pitcherStats": null,
+    "careerHitterStats": { "gamesPlayed": 1084, "atBats": 3744, "hits": 992, "doubles": 196, "triples": 4, "homeRuns": 264, "rbi": 756, "runs": 608, "stolenBases": 7, "walks": 584, "strikeouts": 960, "battingAverage": 0.265, "onBasePercentage": 0.366, "sluggingPercentage": 0.516 },
+    "careerPitcherStats": null
+  },
+  {
+    "id": "00000001-0000-0000-0000-000000000027",
+    "firstName": "George", "lastName": "Springer",
+    "team": "Toronto Blue Jays", "position": "CF",
+    "age": 34, "nationality": "American", "debutYear": 2014, "jerseyNumber": 4,
+    "hitterStats": { "gamesPlayed": 130, "atBats": 476, "hits": 130, "doubles": 28, "triples": 2, "homeRuns": 22, "rbi": 66, "runs": 80, "stolenBases": 8, "walks": 56, "strikeouts": 108, "battingAverage": 0.273, "onBasePercentage": 0.350, "sluggingPercentage": 0.472 },
+    "pitcherStats": null,
+    "careerHitterStats": { "gamesPlayed": 1376, "atBats": 4924, "hits": 1356, "doubles": 290, "triples": 30, "homeRuns": 256, "rbi": 780, "runs": 876, "stolenBases": 130, "walks": 598, "strikeouts": 1148, "battingAverage": 0.275, "onBasePercentage": 0.356, "sluggingPercentage": 0.495 },
+    "careerPitcherStats": null
+  },
+  {
+    "id": "00000001-0000-0000-0000-000000000028",
+    "firstName": "Max", "lastName": "Scherzer",
+    "team": "Texas Rangers", "position": "SP",
+    "age": 39, "nationality": "American", "debutYear": 2008, "jerseyNumber": 31,
+    "hitterStats": null,
+    "pitcherStats": { "wins": 9, "losses": 4, "era": 3.77, "gamesPlayed": 22, "gamesStarted": 22, "saves": 0, "inningsPitched": 126.2, "strikeouts": 148, "walks": 30, "whip": 1.14, "hitsAllowed": 114, "homeRunsAllowed": 18 },
+    "careerHitterStats": null,
+    "careerPitcherStats": { "wins": 216, "losses": 115, "era": 3.16, "gamesPlayed": 458, "gamesStarted": 448, "saves": 0, "inningsPitched": 2816.2, "strikeouts": 3390, "walks": 712, "whip": 1.05, "hitsAllowed": 2244, "homeRunsAllowed": 302 }
+  },
+  {
+    "id": "00000001-0000-0000-0000-000000000029",
+    "firstName": "Wander", "lastName": "Franco",
+    "team": "Tampa Bay Rays", "position": "SS",
+    "age": 23, "nationality": "Dominican", "debutYear": 2021, "jerseyNumber": 5,
+    "hitterStats": { "gamesPlayed": 70, "atBats": 260, "hits": 78, "doubles": 18, "triples": 2, "homeRuns": 8, "rbi": 35, "runs": 38, "stolenBases": 5, "walks": 28, "strikeouts": 42, "battingAverage": 0.300, "onBasePercentage": 0.371, "sluggingPercentage": 0.462 },
+    "pitcherStats": null,
+    "careerHitterStats": { "gamesPlayed": 288, "atBats": 1068, "hits": 310, "doubles": 68, "triples": 8, "homeRuns": 34, "rbi": 147, "runs": 156, "stolenBases": 22, "walks": 104, "strikeouts": 162, "battingAverage": 0.290, "onBasePercentage": 0.355, "sluggingPercentage": 0.455 },
+    "careerPitcherStats": null
+  },
+  {
+    "id": "00000001-0000-0000-0000-000000000030",
+    "firstName": "Cody", "lastName": "Bellinger",
+    "team": "Chicago Cubs", "position": "CF",
+    "age": 28, "nationality": "American", "debutYear": 2017, "jerseyNumber": 24,
+    "hitterStats": { "gamesPlayed": 130, "atBats": 464, "hits": 134, "doubles": 28, "triples": 3, "homeRuns": 26, "rbi": 81, "runs": 78, "stolenBases": 11, "walks": 52, "strikeouts": 118, "battingAverage": 0.289, "onBasePercentage": 0.356, "sluggingPercentage": 0.525 },
+    "pitcherStats": null,
+    "careerHitterStats": { "gamesPlayed": 960, "atBats": 3280, "hits": 874, "doubles": 174, "triples": 22, "homeRuns": 196, "rbi": 554, "runs": 554, "stolenBases": 66, "walks": 400, "strikeouts": 864, "battingAverage": 0.266, "onBasePercentage": 0.347, "sluggingPercentage": 0.488 },
+    "careerPitcherStats": null
+  }
+]
