@@ -192,8 +192,11 @@ struct Player: Identifiable, Codable {
     // Debut / rookie season stats — used by rookieSeason game mode
     let rookieSeason: HistoricSeason?
 
-    // A past season from mid-career — used by mysteryEra game mode (year hidden from player)
-    let mysterySeason: HistoricSeason?
+    // Pool of past seasons fetched for this player — GameViewModel picks one randomly at session start
+    let mysterySeasons: [HistoricSeason]?
+
+    // The specific season picked for THIS game session (nil until session starts)
+    var mysterySeason: HistoricSeason?
 
     var fullName: String { "\(firstName) \(lastName)" }
     var headshotURL: URL? {
@@ -242,6 +245,7 @@ struct Player: Identifiable, Codable {
         case careerHitterStats, careerPitcherStats
         case historicSeason
         case rookieSeason
+        case mysterySeasons
         case mysterySeason
     }
 }

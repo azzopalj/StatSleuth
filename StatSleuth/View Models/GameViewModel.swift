@@ -72,7 +72,17 @@ final class GameViewModel {
             progressService.recordSeen(playerID: target.id, mode: mode, packID: pack.id, poolSize: pool.count)
         }
 
-        session = GameSession(mode: mode, pack: pack, targetPlayer: target)
+        // For Mystery Era, randomly pick one season from the player's mystery pool
+        var resolvedTarget = target
+        if mode == .mysteryEra {
+            let pool = target.mysterySeasons ?? []
+            if let picked = pool.randomElement() {
+                resolvedTarget.mysterySeason = picked
+            }
+            // Historic players already have mysterySeason set in JSON; no action needed if pool is empty
+        }
+
+        session = GameSession(mode: mode, pack: pack, targetPlayer: resolvedTarget)
         searchQuery = ""
         searchResults = []
         showingResults = false
@@ -115,11 +125,16 @@ final class GameViewModel {
             guard let rs = player.rookieSeason else { return false }
             return meetsSeasonThreshold(hitter: rs.hitterStats, pitcher: rs.pitcherStats)
         case .mysteryEra:
-            // Need a dedicated mystery season; fall back to current stats only if available
+            // Need at least one season in the mystery pool, OR a curated historic mysterySeason
+            if let seasons = player.mysterySeasons, !seasons.isEmpty {
+                return seasons.contains {
+                    meetsSeasonThreshold(hitter: $0.hitterStats, pitcher: $0.pitcherStats)
+                }
+            }
             if let ms = player.mysterySeason {
                 return meetsSeasonThreshold(hitter: ms.hitterStats, pitcher: ms.pitcherStats)
             }
-            return meetsSeasonThreshold(hitter: player.hitterStats, pitcher: player.pitcherStats)
+            return false
         }
     }
 

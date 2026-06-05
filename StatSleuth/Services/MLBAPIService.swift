@@ -34,13 +34,13 @@ actor MLBAPIService {
         var careerPitcher:  PitcherStats?
         var rookieHitter:   HitterStats?
         var rookiePitcher:  PitcherStats?
-        var mysteryHitter:  HitterStats?
-        var mysteryPitcher: PitcherStats?
+        var mysterySeasons: [HistoricSeason] = []
         var seasonYear:     Int?
         var rookieYear:     Int?
     }
 
-    private let mysterySeason = 2023
+    // Even years across the last decade — gives a varied pool without too many API calls
+    private let mysteryYears = [2014, 2016, 2018, 2020, 2022, 2024]
 
     // MARK: - Public
 
@@ -64,13 +64,11 @@ actor MLBAPIService {
         async let psPitch = fetchBulkPitcherStats(season: fallbackSeason)
         async let cHit    = fetchBulkHitterStats(season: nil)
         async let cPitch  = fetchBulkPitcherStats(season: nil)
-        async let msHit   = fetchBulkHitterStats(season: mysterySeason)
-        async let msPitch = fetchBulkPitcherStats(season: mysterySeason)
 
-        let (curHit, curPitch, prevHit, prevPitch, carHit, carPitch, mysHit, mysPitch) = await (
-            csHit, csPitch, psHit, psPitch, cHit, cPitch, msHit, msPitch
+        let (curHit, curPitch, prevHit, prevPitch, carHit, carPitch) = await (
+            csHit, csPitch, psHit, psPitch, cHit, cPitch
         )
-        print("📊 Bulk: cur \(curHit.count)H/\(curPitch.count)P  prev \(prevHit.count)H/\(prevPitch.count)P  career \(carHit.count)H/\(carPitch.count)P  mystery \(mysHit.count)H/\(mysPitch.count)P")
+        print("📊 Bulk: cur \(curHit.count)H/\(curPitch.count)P  prev \(prevHit.count)H/\(prevPitch.count)P  career \(carHit.count)H/\(carPitch.count)P")
         progress(0.70)
 
         // Step 4: Fetch rookie stats — one bulk call per distinct debut year, all concurrent
@@ -112,6 +110,35 @@ actor MLBAPIService {
             }
         }
         print("🎓 Rookie stats: \(rookieHitters.count)H / \(rookiePitchers.count)P across \(debutYears.count) debut years")
+
+        // Step 5: Fetch mystery era stats — one bulk call per target year, all concurrent
+        var mysterySeasonsByID: [Int: [HistoricSeason]] = [:]
+
+        await withTaskGroup(of: YearBatch.self) { group in
+            for year in mysteryYears {
+                group.addTask {
+                    async let h = self.fetchBulkHitterStats(season: year)
+                    async let p = self.fetchBulkPitcherStats(season: year)
+                    return (year: year, hitters: await h, pitchers: await p)
+                }
+            }
+            for await batch in group {
+                let allIDs = Set(batch.hitters.keys).union(batch.pitchers.keys)
+                for id in allIDs {
+                    let season = HistoricSeason(
+                        year: batch.year, war: 0,
+                        hitterStats: batch.hitters[id],
+                        pitcherStats: batch.pitchers[id]
+                    )
+                    mysterySeasonsByID[id, default: []].append(season)
+                }
+            }
+        }
+        // Sort each player's mystery seasons chronologically
+        for id in mysterySeasonsByID.keys {
+            mysterySeasonsByID[id]?.sort { $0.year < $1.year }
+        }
+        print("🔮 Mystery seasons: \(mysterySeasonsByID.count) players with \(mysteryYears.count) candidate years each")
         progress(0.85)
 
         // Step 5: Assemble Player objects — include ALL rostered players
@@ -129,8 +156,7 @@ actor MLBAPIService {
                 careerPitcher:  carPitch[person.id],
                 rookieHitter:   rookieHitters[person.id],
                 rookiePitcher:  rookiePitchers[person.id],
-                mysteryHitter:  mysHit[person.id],
-                mysteryPitcher: mysPitch[person.id],
+                mysterySeasons: mysterySeasonsByID[person.id] ?? [],
                 seasonYear:     resolvedYear,
                 rookieYear:     rookieYears[person.id]
             )
@@ -277,15 +303,12 @@ actor MLBAPIService {
             rookieSeason = nil
         }
 
-        let mysterySeason: HistoricSeason?
-        if stats.mysteryHitter != nil || stats.mysteryPitcher != nil {
-            mysterySeason = HistoricSeason(
-                year: self.mysterySeason, war: 0,
-                hitterStats: !isPitcherAbbr ? stats.mysteryHitter : nil,
-                pitcherStats: isPitcherAbbr ? stats.mysteryPitcher : nil
-            )
-        } else {
-            mysterySeason = nil
+        // Filter mystery seasons to only include the relevant stat type for this player
+        let filteredMysterySeasons = stats.mysterySeasons.compactMap { season -> HistoricSeason? in
+            let h = !isPitcherAbbr ? season.hitterStats : nil
+            let p = isPitcherAbbr ? season.pitcherStats : nil
+            guard h != nil || p != nil else { return nil }
+            return HistoricSeason(year: season.year, war: season.war, hitterStats: h, pitcherStats: p)
         }
 
         return Player(
@@ -310,7 +333,8 @@ actor MLBAPIService {
             careerPitcherStats: careerPitcher,
             historicSeason: nil,
             rookieSeason: rookieSeason,
-            mysterySeason: mysterySeason
+            mysterySeasons: filteredMysterySeasons.isEmpty ? nil : filteredMysterySeasons,
+            mysterySeason: nil   // picked at game session start by GameViewModel
         )
     }
 
