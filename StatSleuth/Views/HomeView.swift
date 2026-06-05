@@ -8,6 +8,7 @@ struct HomeView: View {
 
     @State private var selectedMode: GameMode? = nil
     @State private var navigateToPackSelection = false
+    @State private var navigateToDaily = false
     @State private var showSettings = false
     @State private var showHowToPlay = false
 
@@ -48,6 +49,11 @@ struct HomeView: View {
             .navigationDestination(isPresented: $navigateToPackSelection) {
                 if let mode = selectedMode {
                     PackSelectionView(mode: mode)
+                }
+            }
+            .navigationDestination(isPresented: $navigateToDaily) {
+                if let notablePack = playerDataService.buildPacks().first(where: { $0.name == "Notable Players" }) {
+                    GameView(mode: .daily, pack: notablePack)
                 }
             }
             .sheet(isPresented: $showSettings) {
@@ -107,8 +113,7 @@ struct HomeView: View {
 
     private var dailyChallengeButton: some View {
         Button {
-            selectedMode = .daily
-            navigateToPackSelection = true
+            navigateToDaily = true
         } label: {
             HStack {
                 VStack(alignment: .leading, spacing: 4) {

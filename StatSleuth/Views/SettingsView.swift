@@ -5,7 +5,6 @@ struct SettingsView: View {
     @Environment(UserProgressService.self) private var progressService
     @Environment(\.dismiss) private var dismiss
 
-    @State private var showResetConfirm = false
     @State private var notificationsEnabled = false
     @State private var notificationHour = 9
 
@@ -15,7 +14,6 @@ struct SettingsView: View {
                 statsSection
                 notificationsSection
                 aboutSection
-                dangerSection
             }
             .listStyle(.insetGrouped)
             .navigationTitle("Settings")
@@ -25,12 +23,6 @@ struct SettingsView: View {
                     Button("Done") { dismiss() }
                 }
             }
-            .alert("Reset Progress?", isPresented: $showResetConfirm) {
-                Button("Reset", role: .destructive) { progressService.resetProgress() }
-                Button("Cancel", role: .cancel) {}
-            } message: {
-                Text("This will erase your XP, level, streak, and purchased packs. This cannot be undone.")
-            }
         }
     }
 
@@ -38,11 +30,10 @@ struct SettingsView: View {
 
     private var statsSection: some View {
         Section("Your Stats") {
-            LabeledContent("Level", value: "\(progressService.progress.level)")
-            LabeledContent("XP", value: "\(progressService.progress.xp)")
             LabeledContent("Current Streak", value: "\(progressService.progress.currentStreak) days")
             LabeledContent("Longest Streak", value: "\(progressService.progress.longestStreak) days")
             LabeledContent("Games Played", value: "\(progressService.progress.totalGamesPlayed)")
+            LabeledContent("Games Won", value: "\(progressService.progress.totalGamesWon)")
             LabeledContent("Win Rate", value: "\(Int(progressService.progress.winRate * 100))%")
         }
     }
@@ -73,19 +64,6 @@ struct SettingsView: View {
             Link("Rate StatSleuth", destination: URL(string: "https://apps.apple.com")!)
             Link("Privacy Policy", destination: URL(string: "https://statsleuth.app/privacy")!)
             Link("Contact Us", destination: URL(string: "mailto:hello@statsleuth.app")!)
-        }
-    }
-
-    private var dangerSection: some View {
-        Section {
-            Button(role: .destructive) {
-                showResetConfirm = true
-            } label: {
-                Label("Reset All Progress", systemImage: "trash")
-                    .foregroundStyle(.red)
-            }
-        } footer: {
-            Text("Resetting progress cannot be undone.")
         }
     }
 

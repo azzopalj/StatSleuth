@@ -509,7 +509,7 @@
   {
     "id": "h1000040-0000-4000-8000-000000000040",
     "mlbID": null, "firstName": "Vladimir", "lastName": "Guerrero", "legalFirstName": null,
-    "team": "Los Angeles Angels", "teams": ["Los Angeles Angels", "Montreal Expos", "Texas Rangers", "Baltimore Orioles"],
+    "team": "Los Angeles Angels", "teams": ["Los Angeles Angels", "Washington Nationals", "Texas Rangers", "Baltimore Orioles"],
     "position": "RF", "age": 38, "nationality": "Dominican", "debutYear": 1996, "jerseyNumber": 27,
     "tier": "historic", "seasonYear": null, "careerSpan": "1996–2011",
     "hitterStats": null, "pitcherStats": null,
