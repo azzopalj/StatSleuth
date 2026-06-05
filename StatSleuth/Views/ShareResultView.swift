@@ -185,12 +185,11 @@ struct ShareResultView: View {
     private var shareText: String {
         var lines = [
             "⚾ StatSleuth — \(session.mode.displayName)",
-            won ? "I got it in \(guessesUsed)/\(session.maxGuesses)! \(emojiGrid)" : "I couldn't get it in \(session.maxGuesses) guesses \(emojiGrid)"
+            won ? "I got it in \(guessesUsed)/\(session.maxGuesses)! \(emojiGrid)" : "I couldn't get it in \(session.maxGuesses) guesses \(emojiGrid)",
+            "Think you can beat me?"
         ]
         if let url = deepLinkURL {
-            lines.append("Think you can beat me? \(url.absoluteString)")
-        } else {
-            lines.append("Think you can beat me? Download StatSleuth!")
+            lines.append(url.absoluteString)
         }
         return lines.joined(separator: "\n")
     }
@@ -206,6 +205,7 @@ struct ShareResultView: View {
         renderer.scale = 3.0
 
         var items: [Any] = [shareText]
+        if let url = deepLinkURL { items.append(url) }
         if let image = renderer.uiImage { items.insert(image, at: 0) }
         shareItems = items
         showingShareSheet = true
