@@ -9,6 +9,7 @@ struct HomeView: View {
     @State private var selectedMode: GameMode? = nil
     @State private var navigateToPackSelection = false
     @State private var navigateToDaily = false
+    @State private var navigateToDailyComplete = false
     @State private var showSettings = false
     @State private var showHowToPlay = false
 
@@ -55,6 +56,16 @@ struct HomeView: View {
                 if let notablePack = playerDataService.buildPacks().first(where: { $0.name == "Notable Players" }) {
                     GameView(mode: .daily, pack: notablePack)
                 }
+            }
+            .navigationDestination(isPresented: $navigateToDailyComplete) {
+                DailyCompleteView(
+                    won: progress.lastDailyWon,
+                    guessCount: progress.lastDailyGuessCount,
+                    maxGuesses: GameMode.daily.maxGuesses,
+                    onPlayOtherModes: {
+                        navigateToDailyComplete = false
+                    }
+                )
             }
             .sheet(isPresented: $showSettings) {
                 SettingsView()
@@ -113,7 +124,12 @@ struct HomeView: View {
 
     private var dailyChallengeButton: some View {
         Button {
-            navigateToDaily = true
+            HapticEngine.tap()
+            if progress.hasPlayedDailyToday {
+                navigateToDailyComplete = true
+            } else {
+                navigateToDaily = true
+            }
         } label: {
             HStack {
                 VStack(alignment: .leading, spacing: 4) {
@@ -158,6 +174,7 @@ struct HomeView: View {
             LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
                 ForEach(visibleModes) { mode in
                     ModeCard(mode: mode, isUnlocked: true) {
+                        HapticEngine.tap()
                         selectedMode = mode
                         navigateToPackSelection = true
                     }

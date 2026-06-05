@@ -117,6 +117,14 @@ struct GameView: View {
                 floatingInputBar(vm: vm)
             }
         }
+        .onChange(of: vm.guesses.count) { _, _ in
+            guard let last = vm.guesses.last else { return }
+            if last.isCorrect {
+                HapticEngine.correctGuess()
+            } else {
+                HapticEngine.wrongGuess()
+            }
+        }
     }
 
     // MARK: - Guess Counter

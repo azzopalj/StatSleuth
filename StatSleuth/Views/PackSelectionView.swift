@@ -95,6 +95,7 @@ struct PackSelectionView: View {
         if hasAnyLocked {
             Section {
                 Button {
+                    HapticEngine.impact()
                     Task { await buyUnlockAll() }
                 } label: {
                     HStack(spacing: 14) {
@@ -170,9 +171,11 @@ struct PackSelectionView: View {
 
         Button {
             if owned {
+                HapticEngine.tap()
                 selectedPack = pack
                 navigateToGame = true
             } else {
+                HapticEngine.impact()
                 Task { await buy(pack) }
             }
         } label: {

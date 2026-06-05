@@ -131,6 +131,7 @@ private struct HintPickerSheet: View {
 
                 List(hintTypes, id: \.self) { type in
                     Button {
+                        HapticEngine.hint()
                         onSelect(type)
                     } label: {
                         HStack {

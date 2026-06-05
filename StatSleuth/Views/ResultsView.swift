@@ -62,6 +62,7 @@ struct ResultsView: View {
                 withAnimation(.spring(bounce: 0.3)) {
                     animationPhase = i + 1
                 }
+                if i == 0 { HapticEngine.resultReveal(won: won) }
             }
         }
     }
@@ -184,6 +185,7 @@ struct ResultsView: View {
     private var actionButtons: some View {
         VStack(spacing: 12) {
             Button {
+                HapticEngine.tap()
                 showShare = true
             } label: {
                 Label("Challenge a Friend", systemImage: "square.and.arrow.up")
@@ -198,7 +200,10 @@ struct ResultsView: View {
             }
 
             HStack(spacing: 12) {
-                Button(action: onPlayAgain) {
+                Button {
+                    HapticEngine.tap()
+                    onPlayAgain()
+                } label: {
                     Label("Play Again", systemImage: "arrow.clockwise")
                         .font(.subheadline)
                         .frame(maxWidth: .infinity)
@@ -208,7 +213,10 @@ struct ResultsView: View {
                         .foregroundStyle(.primary)
                 }
 
-                Button(action: onGoHome) {
+                Button {
+                    HapticEngine.tap()
+                    onGoHome()
+                } label: {
                     Label("Home", systemImage: "house")
                         .font(.subheadline)
                         .frame(maxWidth: .infinity)

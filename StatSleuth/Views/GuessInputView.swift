@@ -58,6 +58,7 @@ struct GuessInputView: View {
             LazyVStack(spacing: 0) {
                 ForEach(searchResults) { player in
                     PlayerResultRow(player: player) {
+                        HapticEngine.selection()
                         isFocused = false
                         searchQuery = ""
                         onSelect(player)

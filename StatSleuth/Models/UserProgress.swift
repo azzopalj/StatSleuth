@@ -16,7 +16,20 @@ struct UserProgress: Codable {
     /// Recently seen player IDs per "mode+pack" key — prevents repeats
     var recentlySeenPlayers: [String: [UUID]]
 
+    // MARK: - Daily challenge completion (persisted across launches)
+    var lastDailyDate: Date?       // ET date the daily was last completed
+    var lastDailyWon: Bool         // true if won, false if lost
+    var lastDailyGuessCount: Int   // guesses used in that session
+
     // MARK: - Computed
+
+    /// True if the daily challenge has already been completed today (ET timezone)
+    var hasPlayedDailyToday: Bool {
+        guard let date = lastDailyDate else { return false }
+        var cal = Calendar(identifier: .gregorian)
+        cal.timeZone = TimeZone(identifier: "America/New_York")!
+        return cal.isDateInToday(date)
+    }
 
     var winRate: Double {
         guard totalGamesPlayed > 0 else { return 0 }
@@ -50,7 +63,10 @@ struct UserProgress: Codable {
             hintsAvailable: 5,
             purchasedPackIDs: [],
             unlockedModes: [.daily, .seasonStats, .careerStats],
-            recentlySeenPlayers: [:]
+            recentlySeenPlayers: [:],
+            lastDailyDate: nil,
+            lastDailyWon: false,
+            lastDailyGuessCount: 0
         )
     }
 
@@ -58,7 +74,10 @@ struct UserProgress: Codable {
 
     mutating func recordGame(_ session: GameSession) {
         totalGamesPlayed += 1
-        let won = { if case .won = session.state { return true }; return false }()
+        let won: Bool
+        let guessCount: Int
+        if case .won(let c) = session.state { won = true; guessCount = c }
+        else { won = false; guessCount = session.maxGuesses }
 
         if won {
             totalGamesWon += 1
@@ -70,6 +89,13 @@ struct UserProgress: Codable {
         }
 
         lastPlayedDate = Date()
+
+        // Track daily separately so we can show the "come back tomorrow" screen
+        if session.mode == .daily {
+            lastDailyDate = Date()
+            lastDailyWon = won
+            lastDailyGuessCount = guessCount
+        }
     }
 
     mutating func addHints(_ count: Int) {
