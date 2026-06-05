@@ -9,6 +9,7 @@ struct HomeView: View {
     @State private var selectedMode: GameMode? = nil
     @State private var navigateToPackSelection = false
     @State private var showSettings = false
+    @State private var showHowToPlay = false
 
     private var progress: UserProgress { progressService.progress }
 
@@ -28,11 +29,19 @@ struct HomeView: View {
             .navigationBarTitleDisplayMode(.large)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        showSettings = true
-                    } label: {
-                        Image(systemName: "gearshape.fill")
-                            .foregroundStyle(.secondary)
+                    HStack(spacing: 4) {
+                        Button {
+                            showHowToPlay = true
+                        } label: {
+                            Image(systemName: "questionmark.circle")
+                                .foregroundStyle(.secondary)
+                        }
+                        Button {
+                            showSettings = true
+                        } label: {
+                            Image(systemName: "gearshape.fill")
+                                .foregroundStyle(.secondary)
+                        }
                     }
                 }
             }
@@ -43,6 +52,9 @@ struct HomeView: View {
             }
             .sheet(isPresented: $showSettings) {
                 SettingsView()
+            }
+            .sheet(isPresented: $showHowToPlay) {
+                HowToPlayView()
             }
         }
     }

@@ -21,7 +21,7 @@ final class PlayerDataService {
     var isLoading: Bool { if case .loading = loadState { return true }; return false }
     var loadingProgress: Double { if case .loading(let p) = loadState { return p }; return 0 }
 
-    private let cacheVersion    = 16
+    private let cacheVersion    = 17
     private let cacheKey        = "com.lucasazzopardi.StatSleuth.playerCacheDate"
     private let cacheVersionKey = "com.lucasazzopardi.StatSleuth.playerCacheVersion"
 
@@ -119,7 +119,8 @@ final class PlayerDataService {
             hitterStats: p.hitterStats, pitcherStats: p.pitcherStats,
             careerHitterStats: p.careerHitterStats, careerPitcherStats: p.careerPitcherStats,
             historicSeason: p.historicSeason,
-            rookieSeason: p.rookieSeason
+            rookieSeason: p.rookieSeason,
+            mysterySeason: p.mysterySeason
         )
     }
 

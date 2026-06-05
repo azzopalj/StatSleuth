@@ -23,17 +23,24 @@ struct PackSelectionView: View {
     }
 
     // Group packs by type for display
-    private var freePacks: [Pack]  { filteredPacks.filter { $0.isFree } }
-    private var teamPacks: [Pack]  { filteredPacks.filter { $0.type == .team } }
+    private var notablePacks: [Pack]  { filteredPacks.filter { $0.type == .base && $0.name != "Legends" } }
+    private var legendsPacks: [Pack]  { filteredPacks.filter { $0.name == "Legends" } }
+    private var teamPacks: [Pack]     { filteredPacks.filter { $0.type == .team } }
     private var divisionPacks: [Pack] { filteredPacks.filter { $0.type == .division } }
 
     var body: some View {
         List {
             modeHeader
 
-            if !freePacks.isEmpty {
+            if !notablePacks.isEmpty {
                 Section("Free") {
-                    ForEach(freePacks) { pack in packRow(pack) }
+                    ForEach(notablePacks) { pack in packRow(pack) }
+                }
+            }
+
+            if !legendsPacks.isEmpty {
+                Section("Legends") {
+                    ForEach(legendsPacks) { pack in packRow(pack) }
                 }
             }
 

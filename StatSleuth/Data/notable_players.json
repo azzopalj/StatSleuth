@@ -1,42 +1,70 @@
 [
-  "Shohei Ohtani", "Mookie Betts", "Freddie Freeman",
-  "Aaron Judge", "Juan Soto", "Gerrit Cole",
-  "Vladimir Guerrero Jr.", "Bo Bichette", "George Springer",
-  "José Ramírez", "Gunnar Henderson", "Adley Rutschman",
-  "Ronald Acuña Jr.", "Spencer Strider", "Matt Olson",
-  "Yordan Alvarez", "Kyle Tucker", "Framber Valdez",
-  "Julio Rodríguez", "Luis Castillo",
-  "Corey Seager", "Marcus Semien",
-  "Manny Machado", "Fernando Tatis Jr.", "Dylan Cease",
-  "Bryce Harper", "Zack Wheeler", "Trea Turner",
-  "Pete Alonso", "Francisco Lindor",
-  "Paul Goldschmidt", "Nolan Arenado",
-  "Freddy Peralta", "Christian Yelich",
-  "Elly De La Cruz", "Hunter Greene",
-  "Bobby Witt Jr.", "Salvador Perez",
-  "Corbin Carroll", "Ketel Marte", "Zac Gallen",
-  "Cody Bellinger", "Marcus Stroman",
-  "Nolan Jones", "Ryan McMahon",
-  "Kyle Schwarber", "J.T. Realmuto",
-  "CJ Abrams", "MacKenzie Gore",
-  "Spencer Torkelson", "Tarik Skubal",
-  "Jeremy Peña", "Cristian Javier",
-  "Wander Franco", "Shane McClanahan",
-  "Logan Webb", "Patrick Bailey",
-  "Rafael Devers", "Triston Casas", "Brayan Bello",
-  "Xander Bogaerts", "Blake Snell",
-  "Cedric Mullins", "Kyle Bradish",
-  "Jonah Heim", "Nathan Eovaldi",
-  "Michael Harris II", "Charlie Morton",
-  "Luis Robert Jr.", "Garrett Crochet",
-  "Max Fried", "Austin Riley",
-  "Mike Soroka", "Jesús Luzardo",
-  "Jazz Chisholm Jr.", "Sandy Alcantara",
-  "Jake Burger", "Bryan De La Cruz",
-  "Steven Kwan", "Shane Bieber",
-  "José Abreu", "Dylan Coleman",
-  "Royce Lewis", "Joe Ryan",
-  "Ty France", "George Kirby",
-  "Vinnie Pasquantino", "Cole Ragans",
-  "José Berríos", "Matt Chapman"
+  "Vladimir Guerrero Jr.", "Dylan Cease", "Kevin Gausman", "Shane Bieber", "George Springer",
+
+  "Aaron Judge", "Max Fried", "Carlos Rodón", "Jazz Chisholm Jr.", "Ben Rice",
+  "Giancarlo Stanton", "Gerrit Cole", "David Bednar", "Paul Goldschmidt", "Cody Bellinger",
+
+  "Gunnar Henderson", "Jackson Holliday", "Adley Rutschman", "Jordan Westburg", "Chris Bassitt",
+
+  "Garrett Crochet", "Roman Anthony", "Aroldis Chapman",
+
+  "Junior Caminero", "Shane McClanahan", "Yandy Díaz", "Chandler Simpson", "Jonathan Aranda",
+
+  "Tarik Skubal", "Riley Greene", "Kerry Carpenter", "Gleyber Torres",
+
+  "Bobby Witt Jr.", "Cole Ragans", "Vinnie Pasquantino", "Jac Caglianone", "Salvador Perez", "Starling Marte",
+
+  "José Ramírez", "Steven Kwan",
+
+  "Byron Buxton", "Josh Bell", "Joe Ryan",
+
+  "Miguel Vargas", "Munetaka Murakami", "Kyle Teel",
+
+  "Cal Raleigh", "Julio Rodríguez", "Logan Gilbert", "Bryan Woo", "George Kirby",
+  "Luis Castillo", "Randy Arozarena",
+
+  "Corey Seager", "Jacob deGrom", "Wyatt Langford", "Joc Pederson",
+
+  "Yordan Alvarez", "José Altuve", "Jeremy Peña", "Hunter Brown", "Cam Smith", "Carlos Correa",
+
+  "Nick Kurtz", "Jacob Wilson", "Brent Rooker", "Shea Langeliers", "Luis Severino",
+
+  "Mike Trout", "Zach Neto", "Logan O'Hoppe", "Jose Soriano", "Jo Adell",
+
+  "Juan Soto", "Francisco Lindor", "Bo Bichette", "Luis Robert Jr.", "Freddy Peralta",
+  "Devin Williams", "Marcus Semien",
+
+  "Ronald Acuña Jr.", "Matt Olson", "Michael Harris II", "Chris Sale", "Drake Baldwin", "Austin Riley",
+
+  "Bryce Harper", "Zack Wheeler", "Trea Turner", "Kyle Schwarber", "Cristopher Sánchez",
+
+  "Dylan Crews", "CJ Abrams",
+
+  "Sandy Alcantara", "Eury Pérez", "Otto López", "Xavier Edwards", "Connor Norby", "Kyle Stowers",
+
+  "Pete Crow-Armstrong", "Seiya Suzuki", "Shota Imanaga", "Ian Happ",
+  "Alex Bregman", "Dansby Swanson", "Michael Conforto",
+
+  "Jackson Chourio", "William Contreras", "Christian Yelich", "Brice Turang", "Jacob Misiorowski",
+
+  "Elly De La Cruz", "Hunter Greene", "Spencer Steer", "Andrew Abbott", "Eugenio Suarez",
+
+  "Jordan Walker",
+
+  "Paul Skenes", "Oneil Cruz", "Bryan Reynolds", "Mitch Keller", "Bubba Chandler",
+  "Marcell Ozuna", "Gregory Soto",
+
+  "Shohei Ohtani", "Mookie Betts", "Freddie Freeman", "Yoshinobu Yamamoto", "Kyle Tucker",
+  "Will Smith", "Max Muncy", "Blake Snell", "Teoscar Hernandez", "Tyler Glasnow", "Edwin Diaz",
+
+  "Fernando Tatis Jr.", "Manny Machado", "Jackson Merrill", "Mason Miller", "Xander Bogaerts",
+  "Walker Buehler", "Michael King",
+
+  "Corbin Carroll", "Ketel Marte", "Jordan Lawlar", "Brandon Pfaadt", "Geraldo Perdomo",
+  "Zac Gallen", "Eduardo Rodriguez", "Nolan Arenado",
+
+  "Rafael Devers", "Logan Webb", "Matt Chapman", "Willy Adames", "Jung Hoo Lee",
+  "Robbie Ray", "Luis Arraez",
+
+  "Ezequiel Tovar", "Hunter Goodman", "Kyle Freeland"
 ]

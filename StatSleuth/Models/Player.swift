@@ -192,6 +192,9 @@ struct Player: Identifiable, Codable {
     // Debut / rookie season stats — used by rookieSeason game mode
     let rookieSeason: HistoricSeason?
 
+    // A past season from mid-career — used by mysteryEra game mode (year hidden from player)
+    let mysterySeason: HistoricSeason?
+
     var fullName: String { "\(firstName) \(lastName)" }
     var headshotURL: URL? {
         guard let mlbID else { return nil }
@@ -209,7 +212,9 @@ struct Player: Identifiable, Codable {
             return careerHitterStats ?? hitterStats
         case .rookieSeason:
             return rookieSeason?.hitterStats
-        case .seasonStats, .daily, .mysteryEra:
+        case .mysteryEra:
+            return mysterySeason?.hitterStats ?? (isHistoric ? historicSeason?.hitterStats : hitterStats)
+        case .seasonStats, .daily:
             if isHistoric { return historicSeason?.hitterStats }
             return hitterStats
         }
@@ -221,7 +226,9 @@ struct Player: Identifiable, Codable {
             return careerPitcherStats ?? pitcherStats
         case .rookieSeason:
             return rookieSeason?.pitcherStats
-        case .seasonStats, .daily, .mysteryEra:
+        case .mysteryEra:
+            return mysterySeason?.pitcherStats ?? (isHistoric ? historicSeason?.pitcherStats : pitcherStats)
+        case .seasonStats, .daily:
             if isHistoric { return historicSeason?.pitcherStats }
             return pitcherStats
         }
@@ -235,5 +242,6 @@ struct Player: Identifiable, Codable {
         case careerHitterStats, careerPitcherStats
         case historicSeason
         case rookieSeason
+        case mysterySeason
     }
 }

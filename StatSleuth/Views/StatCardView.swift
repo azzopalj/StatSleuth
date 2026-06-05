@@ -66,7 +66,7 @@ struct StatCardView: View {
             }
             return "Debut season stats"
         case .mysteryEra:
-            return "Stats from a mystery season"
+            return "Stats from a mystery season — which year?"
         }
     }
 

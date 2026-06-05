@@ -28,15 +28,19 @@ actor MLBAPIService {
     // MARK: - Assembled stats for one player (all in app model types)
 
     private struct PlayerStats {
-        var seasonHitter:  HitterStats?
-        var seasonPitcher: PitcherStats?
-        var careerHitter:  HitterStats?
-        var careerPitcher: PitcherStats?
-        var rookieHitter:  HitterStats?
-        var rookiePitcher: PitcherStats?
-        var seasonYear:    Int?           // which season the stats came from
-        var rookieYear:    Int?
+        var seasonHitter:   HitterStats?
+        var seasonPitcher:  PitcherStats?
+        var careerHitter:   HitterStats?
+        var careerPitcher:  PitcherStats?
+        var rookieHitter:   HitterStats?
+        var rookiePitcher:  PitcherStats?
+        var mysteryHitter:  HitterStats?
+        var mysteryPitcher: PitcherStats?
+        var seasonYear:     Int?
+        var rookieYear:     Int?
     }
+
+    private let mysterySeason = 2023
 
     // MARK: - Public
 
@@ -60,11 +64,13 @@ actor MLBAPIService {
         async let psPitch = fetchBulkPitcherStats(season: fallbackSeason)
         async let cHit    = fetchBulkHitterStats(season: nil)
         async let cPitch  = fetchBulkPitcherStats(season: nil)
+        async let msHit   = fetchBulkHitterStats(season: mysterySeason)
+        async let msPitch = fetchBulkPitcherStats(season: mysterySeason)
 
-        let (curHit, curPitch, prevHit, prevPitch, carHit, carPitch) = await (
-            csHit, csPitch, psHit, psPitch, cHit, cPitch
+        let (curHit, curPitch, prevHit, prevPitch, carHit, carPitch, mysHit, mysPitch) = await (
+            csHit, csPitch, psHit, psPitch, cHit, cPitch, msHit, msPitch
         )
-        print("📊 Bulk: cur \(curHit.count)H/\(curPitch.count)P  prev \(prevHit.count)H/\(prevPitch.count)P  career \(carHit.count)H/\(carPitch.count)P")
+        print("📊 Bulk: cur \(curHit.count)H/\(curPitch.count)P  prev \(prevHit.count)H/\(prevPitch.count)P  career \(carHit.count)H/\(carPitch.count)P  mystery \(mysHit.count)H/\(mysPitch.count)P")
         progress(0.70)
 
         // Step 4: Fetch rookie stats — one bulk call per distinct debut year, all concurrent
@@ -117,14 +123,16 @@ actor MLBAPIService {
             else { resolvedYear = nil }
 
             let stats = PlayerStats(
-                seasonHitter:  curHit[person.id]  ?? prevHit[person.id],
-                seasonPitcher: curPitch[person.id] ?? prevPitch[person.id],
-                careerHitter:  carHit[person.id],
-                careerPitcher: carPitch[person.id],
-                rookieHitter:  rookieHitters[person.id],
-                rookiePitcher: rookiePitchers[person.id],
-                seasonYear:    resolvedYear,
-                rookieYear:    rookieYears[person.id]
+                seasonHitter:   curHit[person.id]  ?? prevHit[person.id],
+                seasonPitcher:  curPitch[person.id] ?? prevPitch[person.id],
+                careerHitter:   carHit[person.id],
+                careerPitcher:  carPitch[person.id],
+                rookieHitter:   rookieHitters[person.id],
+                rookiePitcher:  rookiePitchers[person.id],
+                mysteryHitter:  mysHit[person.id],
+                mysteryPitcher: mysPitch[person.id],
+                seasonYear:     resolvedYear,
+                rookieYear:     rookieYears[person.id]
             )
             // Use roster-derived teamID as authoritative team source
             return mapToPlayer(person: person, stats: stats, rosterTeamID: rosterMap[person.id])
@@ -269,6 +277,17 @@ actor MLBAPIService {
             rookieSeason = nil
         }
 
+        let mysterySeason: HistoricSeason?
+        if stats.mysteryHitter != nil || stats.mysteryPitcher != nil {
+            mysterySeason = HistoricSeason(
+                year: self.mysterySeason, war: 0,
+                hitterStats: !isPitcherAbbr ? stats.mysteryHitter : nil,
+                pitcherStats: isPitcherAbbr ? stats.mysteryPitcher : nil
+            )
+        } else {
+            mysterySeason = nil
+        }
+
         return Player(
             id: UUID(),
             mlbID: person.id,
@@ -290,7 +309,8 @@ actor MLBAPIService {
             careerHitterStats: careerHitter,
             careerPitcherStats: careerPitcher,
             historicSeason: nil,
-            rookieSeason: rookieSeason
+            rookieSeason: rookieSeason,
+            mysterySeason: mysterySeason
         )
     }
 

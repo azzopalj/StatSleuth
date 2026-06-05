@@ -82,6 +82,17 @@ final class GameViewModel {
     // MARK: - Eligibility filtering
 
     private func isEligible(_ player: Player, for mode: GameMode) -> Bool {
+        // Notable players are hand-curated — always include them regardless of stats thresholds.
+        // This ensures injured, suspended, or low-PA notable players are still in the pool.
+        if player.tier == .notable {
+            switch mode {
+            case .rookieSeason:
+                return player.rookieSeason?.hitterStats != nil || player.rookieSeason?.pitcherStats != nil
+            default:
+                return true
+            }
+        }
+
         if player.isHistoric {
             switch mode {
             case .careerStats, .hallOfFame:
@@ -104,6 +115,10 @@ final class GameViewModel {
             guard let rs = player.rookieSeason else { return false }
             return meetsSeasonThreshold(hitter: rs.hitterStats, pitcher: rs.pitcherStats)
         case .mysteryEra:
+            // Need a dedicated mystery season; fall back to current stats only if available
+            if let ms = player.mysterySeason {
+                return meetsSeasonThreshold(hitter: ms.hitterStats, pitcher: ms.pitcherStats)
+            }
             return meetsSeasonThreshold(hitter: player.hitterStats, pitcher: player.pitcherStats)
         }
     }
