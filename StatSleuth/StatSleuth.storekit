@@ -1,10 +1,10 @@
 {
-  "identifier": "StatSleuth",
+  "identifier": "A164D593-BA03-47DC-934F-A914C911E3E0",
   "nonConsumableProducts": [
     {
       "displayPrice": "1.99",
       "familyShareable": false,
-      "internalID": "5C06DAAF-8903-4AB9-86F8-06F8190F9B4E",
+      "internalID": "A0943041-3AEC-46BB-B872-78FFFAA4A6EC",
       "localizations": [
         {
           "description": "Full roster for the Toronto Blue Jays.",
@@ -19,7 +19,7 @@
     {
       "displayPrice": "1.99",
       "familyShareable": false,
-      "internalID": "A308C197-F8C6-4220-88BB-5C105D20D357",
+      "internalID": "9F20E825-4A10-4CC5-A93D-48393F0D1D0D",
       "localizations": [
         {
           "description": "Full roster for the New York Yankees.",
@@ -34,7 +34,7 @@
     {
       "displayPrice": "1.99",
       "familyShareable": false,
-      "internalID": "D511CB7C-6AE2-4860-AC3F-93171023422B",
+      "internalID": "706774A1-9624-40F4-B7F3-F019B3B005FC",
       "localizations": [
         {
           "description": "Full roster for the Boston Red Sox.",
@@ -49,7 +49,7 @@
     {
       "displayPrice": "1.99",
       "familyShareable": false,
-      "internalID": "D787E322-E519-4CF2-A2D1-C5D1DC7FCD51",
+      "internalID": "7050135F-0BC0-434A-9B0C-E3E391AE188C",
       "localizations": [
         {
           "description": "Full roster for the Tampa Bay Rays.",
@@ -64,7 +64,7 @@
     {
       "displayPrice": "1.99",
       "familyShareable": false,
-      "internalID": "741B91B4-9C68-4195-90B5-A538511696EA",
+      "internalID": "701F97C6-1DA3-4470-9355-754490DFCDDD",
       "localizations": [
         {
           "description": "Full roster for the Baltimore Orioles.",
@@ -79,7 +79,7 @@
     {
       "displayPrice": "1.99",
       "familyShareable": false,
-      "internalID": "D76E7C1F-BA4E-42DF-B756-20022372E368",
+      "internalID": "523E7675-0445-4C25-9860-D479E255CA05",
       "localizations": [
         {
           "description": "Full roster for the Chicago White Sox.",
@@ -94,7 +94,7 @@
     {
       "displayPrice": "1.99",
       "familyShareable": false,
-      "internalID": "30924F78-440D-4904-9DC6-538B3C1B1FA6",
+      "internalID": "D84EE41E-8C82-4161-8A2A-9F014E89AB5F",
       "localizations": [
         {
           "description": "Full roster for the Cleveland Guardians.",
@@ -109,7 +109,7 @@
     {
       "displayPrice": "1.99",
       "familyShareable": false,
-      "internalID": "75371DC1-FB66-4E67-82EE-882B51A5DE26",
+      "internalID": "F6181021-4D43-4447-9237-4BF08EB6A0E0",
       "localizations": [
         {
           "description": "Full roster for the Detroit Tigers.",
@@ -124,7 +124,7 @@
     {
       "displayPrice": "1.99",
       "familyShareable": false,
-      "internalID": "19AB9980-9BCE-4492-9E23-3A54B32A5C0D",
+      "internalID": "1FD2A16F-1B77-47AA-B7C9-38B65A754E1D",
       "localizations": [
         {
           "description": "Full roster for the Kansas City Royals.",
@@ -139,7 +139,7 @@
     {
       "displayPrice": "1.99",
       "familyShareable": false,
-      "internalID": "66139B1E-7459-4D1F-A7E8-F11D69FBF1A3",
+      "internalID": "D48CFA47-7485-4B9F-A09A-4407A880C4AD",
       "localizations": [
         {
           "description": "Full roster for the Minnesota Twins.",
@@ -154,7 +154,7 @@
     {
       "displayPrice": "1.99",
       "familyShareable": false,
-      "internalID": "6966A5D7-A796-41E6-9956-83BD88036E76",
+      "internalID": "5AF8E130-8DFB-477D-B12A-3412B1D67761",
       "localizations": [
         {
           "description": "Full roster for the Houston Astros.",
@@ -169,7 +169,7 @@
     {
       "displayPrice": "1.99",
       "familyShareable": false,
-      "internalID": "820E14F9-B5B9-4571-A661-CDD8AEDD6FD7",
+      "internalID": "47928915-CE1F-4BE2-989F-6232D1DE5B3F",
       "localizations": [
         {
           "description": "Full roster for the Los Angeles Angels.",
@@ -184,7 +184,7 @@
     {
       "displayPrice": "1.99",
       "familyShareable": false,
-      "internalID": "5E1C89F8-E1C0-4A76-B8AA-BAC10196CD7A",
+      "internalID": "444DB9B4-8A4E-404D-84D3-BB72EA99A0A3",
       "localizations": [
         {
           "description": "Full roster for the Oakland Athletics.",
@@ -199,7 +199,7 @@
     {
       "displayPrice": "1.99",
       "familyShareable": false,
-      "internalID": "2E052B69-CBDD-431E-AE08-16B7F1E416B2",
+      "internalID": "4372DE2D-B842-495A-B78B-5C6C4579FC2F",
       "localizations": [
         {
           "description": "Full roster for the Seattle Mariners.",
@@ -214,7 +214,7 @@
     {
       "displayPrice": "1.99",
       "familyShareable": false,
-      "internalID": "30BCBBB8-3A52-4390-9837-9368FDA7A895",
+      "internalID": "4A9855B3-21DB-4C34-8E95-4DF102882EF0",
       "localizations": [
         {
           "description": "Full roster for the Texas Rangers.",
@@ -229,7 +229,7 @@
     {
       "displayPrice": "1.99",
       "familyShareable": false,
-      "internalID": "9ABE37F7-83B2-4FF7-A392-500F89A58C56",
+      "internalID": "E6663DA0-089E-4C42-96AB-DCA844E5AE86",
       "localizations": [
         {
           "description": "Full roster for the Atlanta Braves.",
@@ -244,7 +244,7 @@
     {
       "displayPrice": "1.99",
       "familyShareable": false,
-      "internalID": "0036FB59-7616-46BA-B982-3142C36EF3A8",
+      "internalID": "BE3A80FD-D912-4C36-9C03-21A90DDB57A7",
       "localizations": [
         {
           "description": "Full roster for the Miami Marlins.",
@@ -259,7 +259,7 @@
     {
       "displayPrice": "1.99",
       "familyShareable": false,
-      "internalID": "152426B4-C536-4041-A241-C81DA5363A71",
+      "internalID": "6BA14FB7-81B7-4896-B35E-5A0E90D8265E",
       "localizations": [
         {
           "description": "Full roster for the New York Mets.",
@@ -274,7 +274,7 @@
     {
       "displayPrice": "1.99",
       "familyShareable": false,
-      "internalID": "9FB368CF-976F-4099-A0C3-2DCFDEF71C71",
+      "internalID": "1FF30AF6-8BD5-4E94-8A7D-A12B245C4FC7",
       "localizations": [
         {
           "description": "Full roster for the Philadelphia Phillies.",
@@ -289,7 +289,7 @@
     {
       "displayPrice": "1.99",
       "familyShareable": false,
-      "internalID": "9C408F4B-6610-46C7-B528-6AEF593D4B69",
+      "internalID": "1FAD6B23-870A-4A59-811F-7775214A75F4",
       "localizations": [
         {
           "description": "Full roster for the Washington Nationals.",
@@ -304,7 +304,7 @@
     {
       "displayPrice": "1.99",
       "familyShareable": false,
-      "internalID": "1CB1480B-8280-456C-BAD6-CCA0E5F0989B",
+      "internalID": "52DDD361-4AE0-4BE6-ADA9-52A863A21F0E",
       "localizations": [
         {
           "description": "Full roster for the Chicago Cubs.",
@@ -319,7 +319,7 @@
     {
       "displayPrice": "1.99",
       "familyShareable": false,
-      "internalID": "6EC6D04C-401E-44A7-99F3-2F7D19306068",
+      "internalID": "0626163C-8D52-4C72-A80C-952938F180A2",
       "localizations": [
         {
           "description": "Full roster for the Cincinnati Reds.",
@@ -334,7 +334,7 @@
     {
       "displayPrice": "1.99",
       "familyShareable": false,
-      "internalID": "F401BBE9-D8DF-4BBA-B421-D0616ECD91D9",
+      "internalID": "10135863-EC55-4E72-9C96-3A721C6ECFFD",
       "localizations": [
         {
           "description": "Full roster for the Colorado Rockies.",
@@ -349,7 +349,7 @@
     {
       "displayPrice": "1.99",
       "familyShareable": false,
-      "internalID": "1A4F7C24-7239-41C9-A95B-C186942543C5",
+      "internalID": "F49CA0FB-3892-4985-98FE-B8066E2DD3FC",
       "localizations": [
         {
           "description": "Full roster for the Milwaukee Brewers.",
@@ -364,7 +364,7 @@
     {
       "displayPrice": "1.99",
       "familyShareable": false,
-      "internalID": "7E2F625A-3FB0-4E3C-9C6F-1DD0349E2B91",
+      "internalID": "2253A12B-803A-4D97-9C3C-BEE568DD9A23",
       "localizations": [
         {
           "description": "Full roster for the Pittsburgh Pirates.",
@@ -379,7 +379,7 @@
     {
       "displayPrice": "1.99",
       "familyShareable": false,
-      "internalID": "F0BA2428-BE30-4C54-936E-443190D2E946",
+      "internalID": "D8D83C0F-1A6F-46DF-8B03-FC498986F954",
       "localizations": [
         {
           "description": "Full roster for the St. Louis Cardinals.",
@@ -394,7 +394,7 @@
     {
       "displayPrice": "1.99",
       "familyShareable": false,
-      "internalID": "6335BDA7-9B9A-4CF7-9F70-A78EAA011A0E",
+      "internalID": "1424CC68-73D9-4415-ABC4-03463012E449",
       "localizations": [
         {
           "description": "Full roster for the Arizona Diamondbacks.",
@@ -409,7 +409,7 @@
     {
       "displayPrice": "1.99",
       "familyShareable": false,
-      "internalID": "E163C6A7-C382-4654-ADBA-5A6503E367A5",
+      "internalID": "DECABE7F-59E5-465E-99C5-B514713D47D5",
       "localizations": [
         {
           "description": "Full roster for the Los Angeles Dodgers.",
@@ -424,7 +424,7 @@
     {
       "displayPrice": "1.99",
       "familyShareable": false,
-      "internalID": "9202B148-97E0-4A1C-92E3-00DEFCD67BFC",
+      "internalID": "B24225D9-F9BC-446A-8111-73981723210C",
       "localizations": [
         {
           "description": "Full roster for the San Diego Padres.",
@@ -439,7 +439,7 @@
     {
       "displayPrice": "1.99",
       "familyShareable": false,
-      "internalID": "5DA2B7F8-1788-4992-88EF-58312D4FDC0C",
+      "internalID": "08C9258E-A6A2-4536-9A9D-2DF578627B30",
       "localizations": [
         {
           "description": "Full roster for the San Francisco Giants.",
@@ -454,10 +454,10 @@
     {
       "displayPrice": "2.99",
       "familyShareable": false,
-      "internalID": "B7C81029-08D1-44D5-A443-B4BBB4B8DA31",
+      "internalID": "6FFEB33D-376A-4009-9D9C-389A896AA5E1",
       "localizations": [
         {
-          "description": "All AL East players + 5 team packs.",
+          "description": "All AL East players + team packs.",
           "displayName": "AL East Pack",
           "locale": "en_US"
         }
@@ -469,10 +469,10 @@
     {
       "displayPrice": "2.99",
       "familyShareable": false,
-      "internalID": "C893F989-F7C7-40FC-B0B0-3181EB87FAC0",
+      "internalID": "B26FCBDD-2636-4D5A-9186-FCF73C33F5A2",
       "localizations": [
         {
-          "description": "All AL Central players + 5 team packs.",
+          "description": "All AL Central players + team packs.",
           "displayName": "AL Central Pack",
           "locale": "en_US"
         }
@@ -484,10 +484,10 @@
     {
       "displayPrice": "2.99",
       "familyShareable": false,
-      "internalID": "D63DB2C5-45B1-4F57-A8D1-8804AC94815E",
+      "internalID": "3509EAE4-4859-44E0-BAC8-71A9EEDF7F7D",
       "localizations": [
         {
-          "description": "All AL West players + 5 team packs.",
+          "description": "All AL West players + team packs.",
           "displayName": "AL West Pack",
           "locale": "en_US"
         }
@@ -499,10 +499,10 @@
     {
       "displayPrice": "2.99",
       "familyShareable": false,
-      "internalID": "D821D145-6713-4B79-83EE-43776F66148B",
+      "internalID": "313D06CE-7F0D-418F-84EC-7CEAC4E4D3EE",
       "localizations": [
         {
-          "description": "All NL East players + 5 team packs.",
+          "description": "All NL East players + team packs.",
           "displayName": "NL East Pack",
           "locale": "en_US"
         }
@@ -514,10 +514,10 @@
     {
       "displayPrice": "2.99",
       "familyShareable": false,
-      "internalID": "A004CC1F-1F6F-45CF-9362-160338D9104E",
+      "internalID": "C9D2C93B-5622-4518-AD13-C1D9ECD44E3E",
       "localizations": [
         {
-          "description": "All NL Central players + 5 team packs.",
+          "description": "All NL Central players + team packs.",
           "displayName": "NL Central Pack",
           "locale": "en_US"
         }
@@ -529,10 +529,10 @@
     {
       "displayPrice": "2.99",
       "familyShareable": false,
-      "internalID": "F9065BB0-075B-4C8E-9F0E-C52E752123D0",
+      "internalID": "42131CCE-5740-4151-B947-38626E7F2695",
       "localizations": [
         {
-          "description": "All NL West players + 5 team packs.",
+          "description": "All NL West players + team packs.",
           "displayName": "NL West Pack",
           "locale": "en_US"
         }
@@ -544,10 +544,10 @@
     {
       "displayPrice": "9.99",
       "familyShareable": false,
-      "internalID": "DC0843DA-7372-4B17-9426-395161E5549C",
+      "internalID": "265B85F0-2FCE-40A0-A63C-2C3B2D39AFC8",
       "localizations": [
         {
-          "description": "All 30 team packs and 6 division packs.",
+          "description": "All 30 team + 6 division packs.",
           "displayName": "Unlock Everything",
           "locale": "en_US"
         }
@@ -561,7 +561,7 @@
     {
       "displayPrice": "0.99",
       "familyShareable": false,
-      "internalID": "585CE62E-C636-4E7F-9368-60428DF45541",
+      "internalID": "94CC9678-1C01-45C7-A149-D328D4C635E3",
       "localizations": [
         {
           "description": "Replenish 5 hint tokens.",
@@ -576,7 +576,7 @@
     {
       "displayPrice": "1.99",
       "familyShareable": false,
-      "internalID": "D06B4082-31B0-46FA-A38F-F7B75DF78BC4",
+      "internalID": "685FE920-2C82-480C-BA92-1B926B28113D",
       "localizations": [
         {
           "description": "Replenish 15 hint tokens.",

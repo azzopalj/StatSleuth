@@ -35,8 +35,10 @@ struct StatSleutApp: App {
                 )
             }
             .task {
-                await playerDataService.loadPlayers()
-                await purchaseService.loadProducts()
+                // Load players and IAP products in parallel — products don't need players
+                async let players: Void = playerDataService.loadPlayers()
+                async let iap: Void     = purchaseService.loadProducts()
+                _ = await (players, iap)
             }
             // Recharge hints whenever the app comes back to the foreground
             .onChange(of: scenePhase) { _, phase in

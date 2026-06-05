@@ -152,26 +152,46 @@ final class PurchaseService {
     // MARK: - Load products
 
     func loadProducts() async {
-        isLoading = true
+        print("🛒 Requesting \(Self.allProductIDs.count) IAP products…")
         do {
             let loaded = try await Product.products(for: Self.allProductIDs)
-            for product in loaded {
-                products[product.id] = product
+            for product in loaded { products[product.id] = product }
+            print("💰 Loaded \(loaded.count)/\(Self.allProductIDs.count) products")
+
+            if loaded.isEmpty {
+                print("""
+                ⚠️ StoreKit returned 0 products. Checklist:
+                  1. Scheme → Run → Options → StoreKit Configuration set to StatSleuth.storekit?
+                  2. On device without config: signed into Sandbox tester in Settings → App Store?
+                  3. All products in App Store Connect in "Ready to Submit" state?
+                  4. Paid Applications Agreement signed in App Store Connect?
+                  5. Bundle ID in Xcode matches App Store Connect exactly?
+                """)
             }
-            print("💰 Loaded \(loaded.count) IAP products")
         } catch {
-            print("⚠️ Failed to load products: \(error)")
-            errorMessage = "Unable to load purchases. Check your connection."
+            print("⚠️ Product.products(for:) threw: \(error)")
         }
         isLoading = false
         await restorePurchases()
     }
 
+    /// Retries loadProducts if the products dict is still empty (e.g. called after a delay).
+    func retryLoadProductsIfNeeded() async {
+        guard products.isEmpty else { return }
+        await loadProducts()
+    }
+
     // MARK: - Purchase
 
     func purchase(productID: String) async {
+        // Products not loaded yet — try once more before failing
+        if products.isEmpty { await retryLoadProductsIfNeeded() }
+
         guard let product = products[productID] else {
-            errorMessage = "Product not available."
+            print("⚠️ Product \(productID) not in loaded dict. Loaded: \(products.keys.sorted())")
+            errorMessage = products.isEmpty
+                ? "Store unavailable. Check your internet connection and try again."
+                : "This product is temporarily unavailable."
             return
         }
         isLoading = true
