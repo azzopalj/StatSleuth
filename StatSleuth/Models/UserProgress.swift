@@ -21,6 +21,15 @@ struct UserProgress: Codable {
     var lastDailyWon: Bool         // true if won, false if lost
     var lastDailyGuessCount: Int   // guesses used in that session
 
+    // MARK: - Hint recharge
+    // One hint regenerates every hintRechargeInterval seconds up to naturalHintMax.
+    // Purchased hints may exceed the natural cap and don't affect the recharge timer.
+    static let naturalHintMax: Int = 5
+    static let hintRechargeInterval: TimeInterval = 2 * 3600  // 2 hours
+
+    /// The Date from which we measure elapsed intervals. nil = timer not running (hints are at/above natural max).
+    var hintsRechargeStartedAt: Date?
+
     // MARK: - Computed
 
     /// True if the daily challenge has already been completed today (ET timezone)
@@ -29,6 +38,16 @@ struct UserProgress: Codable {
         var cal = Calendar(identifier: .gregorian)
         cal.timeZone = TimeZone(identifier: "America/New_York")!
         return cal.isDateInToday(date)
+    }
+
+    /// Seconds until the next hint regenerates. nil if hints are full or timer isn't running.
+    var secondsUntilNextHint: TimeInterval? {
+        guard hintsAvailable < Self.naturalHintMax,
+              let start = hintsRechargeStartedAt else { return nil }
+        let elapsed = Date().timeIntervalSince(start)
+        let remaining = Self.hintRechargeInterval
+            - elapsed.truncatingRemainder(dividingBy: Self.hintRechargeInterval)
+        return max(0, remaining)
     }
 
     var winRate: Double {
@@ -60,13 +79,14 @@ struct UserProgress: Codable {
             lastPlayedDate: nil,
             totalGamesPlayed: 0,
             totalGamesWon: 0,
-            hintsAvailable: 5,
+            hintsAvailable: naturalHintMax,
             purchasedPackIDs: [],
             unlockedModes: [.daily, .seasonStats, .careerStats],
             recentlySeenPlayers: [:],
             lastDailyDate: nil,
             lastDailyWon: false,
-            lastDailyGuessCount: 0
+            lastDailyGuessCount: 0,
+            hintsRechargeStartedAt: nil
         )
     }
 
@@ -100,12 +120,43 @@ struct UserProgress: Codable {
 
     mutating func addHints(_ count: Int) {
         hintsAvailable += count
+        // If purchased hints push us to/above natural max, stop the recharge timer
+        if hintsAvailable >= Self.naturalHintMax {
+            hintsRechargeStartedAt = nil
+        }
     }
 
     mutating func useHint() -> Bool {
         guard hintsAvailable > 0 else { return false }
         hintsAvailable -= 1
+        // Start the recharge timer the first time hints drop below the natural max
+        if hintsAvailable < Self.naturalHintMax && hintsRechargeStartedAt == nil {
+            hintsRechargeStartedAt = Date()
+        }
         return true
+    }
+
+    /// Awards any hints earned by elapsed time since the recharge timer started.
+    /// Call at app launch and on foreground. Safe to call repeatedly.
+    mutating func rechargeHintsIfNeeded() {
+        guard hintsAvailable < Self.naturalHintMax,
+              let start = hintsRechargeStartedAt else {
+            if hintsAvailable >= Self.naturalHintMax { hintsRechargeStartedAt = nil }
+            return
+        }
+        let elapsed = Date().timeIntervalSince(start)
+        let earned  = Int(elapsed / Self.hintRechargeInterval)
+        guard earned > 0 else { return }
+
+        hintsAvailable = min(Self.naturalHintMax, hintsAvailable + earned)
+        if hintsAvailable >= Self.naturalHintMax {
+            hintsRechargeStartedAt = nil
+        } else {
+            // Advance the anchor by the consumed intervals so remaining time is correct
+            hintsRechargeStartedAt = start.addingTimeInterval(
+                Double(earned) * Self.hintRechargeInterval
+            )
+        }
     }
 
     mutating func unlockPack(_ packID: UUID) {

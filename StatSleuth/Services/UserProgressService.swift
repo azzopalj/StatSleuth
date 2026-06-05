@@ -10,6 +10,13 @@ final class UserProgressService {
 
     init() {
         self.progress = Self.load(key: "com.lucasazzopardi.StatSleuth.userProgress")
+        rechargeHints()   // award any hints earned while app was closed
+    }
+
+    /// Call whenever the app returns to the foreground.
+    func rechargeHints() {
+        progress.rechargeHintsIfNeeded()
+        save()
     }
 
     // MARK: - Persistence

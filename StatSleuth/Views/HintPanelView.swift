@@ -1,4 +1,5 @@
 import SwiftUI
+import StoreKit
 
 struct HintPanelView: View {
 
@@ -7,7 +8,11 @@ struct HintPanelView: View {
     let packHasHistoricPlayers: Bool
     let onRequestHint: (HintType) -> Void
 
+    @Environment(UserProgressService.self) private var progressService
+    @Environment(PurchaseService.self) private var purchaseService
+
     @State private var showHintPicker = false
+    @State private var showBuyHints = false
 
     private var availableHintTypes: [HintType] {
         var types: [HintType] = [.position, .team, .nationality]
@@ -23,13 +28,14 @@ struct HintPanelView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            // Used hints
-            if !hintsUsed.isEmpty {
-                usedHintsSection
-            }
-
-            // Hint button
+            if !hintsUsed.isEmpty { usedHintsSection }
             hintButton
+            if hintsAvailable < UserProgress.naturalHintMax { rechargeRow }
+        }
+        .sheet(isPresented: $showBuyHints) {
+            BuyHintsSheet()
+                .presentationDetents([.medium])
+                .presentationDragIndicator(.visible)
         }
     }
 
@@ -87,6 +93,181 @@ struct HintPanelView: View {
             .presentationDetents([.medium])
             .presentationDragIndicator(.visible)
         }
+    }
+
+    // MARK: - Recharge row
+
+    private var rechargeRow: some View {
+        HStack(spacing: 10) {
+            Image(systemName: "clock.arrow.circlepath")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+
+            if hintsAvailable == 0 {
+                Text("Out of hints")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            } else {
+                Text("\(hintsAvailable)/\(UserProgress.naturalHintMax) hints")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
+            // Live countdown
+            TimelineView(.periodic(from: .now, by: 1)) { context in
+                if let secs = progressService.progress.secondsUntilNextHint {
+                    let h = Int(secs) / 3600
+                    let m = (Int(secs) % 3600) / 60
+                    let s = Int(secs) % 60
+                    let timeStr = h > 0
+                        ? String(format: "+1 in %d:%02d:%02d", h, m, s)
+                        : String(format: "+1 in %d:%02d", m, s)
+                    Text(timeStr)
+                        .font(.caption)
+                        .fontWeight(.medium)
+                        .foregroundStyle(.orange)
+                        .monospacedDigit()
+                        .contentTransition(.numericText())
+                }
+            }
+
+            Spacer()
+
+            Button {
+                HapticEngine.tap()
+                showBuyHints = true
+            } label: {
+                Text("Get More")
+                    .font(.caption)
+                    .fontWeight(.semibold)
+                    .foregroundStyle(.blue)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 5)
+                    .background(.blue.opacity(0.1), in: Capsule())
+            }
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 8)
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 10))
+    }
+}
+
+// MARK: - BuyHintsSheet
+
+private struct BuyHintsSheet: View {
+    @Environment(PurchaseService.self) private var purchaseService
+    @Environment(UserProgressService.self) private var progressService
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationStack {
+            VStack(spacing: 20) {
+                // Current status
+                VStack(spacing: 6) {
+                    Image(systemName: "lightbulb.fill")
+                        .font(.system(size: 40))
+                        .foregroundStyle(.yellow)
+                    Text("You have \(progressService.progress.hintsAvailable) hint\(progressService.progress.hintsAvailable == 1 ? "" : "s")")
+                        .font(.title3).fontWeight(.bold)
+                    if let secs = progressService.progress.secondsUntilNextHint {
+                        let m = Int(secs) / 60
+                        let s = Int(secs) % 60
+                        Text("Next free hint in \(m):\(String(format: "%02d", s))")
+                            .font(.subheadline).foregroundStyle(.secondary)
+                    } else {
+                        Text("1 hint regenerates every 2 hours · max \(UserProgress.naturalHintMax)")
+                            .font(.subheadline).foregroundStyle(.secondary)
+                            .multilineTextAlignment(.center)
+                    }
+                }
+                .padding(.top, 8)
+
+                Divider()
+
+                // Purchase options
+                VStack(spacing: 12) {
+                    hintPackButton(
+                        productID: PurchaseService.hints5ID,
+                        count: 5,
+                        icon: "lightbulb.fill",
+                        label: "5 Hints"
+                    )
+                    hintPackButton(
+                        productID: PurchaseService.hints15ID,
+                        count: 15,
+                        icon: "lightbulb.max.fill",
+                        label: "15 Hints",
+                        badge: "Best Value"
+                    )
+                }
+                .padding(.horizontal, 4)
+
+                Spacer()
+            }
+            .padding(.horizontal, 20)
+            .navigationTitle("Get More Hints")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Close") { dismiss() }
+                }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func hintPackButton(
+        productID: String,
+        count: Int,
+        icon: String,
+        label: String,
+        badge: String? = nil
+    ) -> some View {
+        Button {
+            HapticEngine.impact()
+            Task {
+                await purchaseService.purchase(productID: productID)
+                if purchaseService.errorMessage == nil { dismiss() }
+            }
+        } label: {
+            HStack(spacing: 14) {
+                Image(systemName: icon)
+                    .font(.title2)
+                    .foregroundStyle(.yellow)
+                    .frame(width: 44, height: 44)
+                    .background(.yellow.opacity(0.15), in: RoundedRectangle(cornerRadius: 10))
+
+                VStack(alignment: .leading, spacing: 2) {
+                    HStack(spacing: 6) {
+                        Text(label).font(.headline).foregroundStyle(.primary)
+                        if let badge {
+                            Text(badge)
+                                .font(.caption2).fontWeight(.bold)
+                                .foregroundStyle(.white)
+                                .padding(.horizontal, 6).padding(.vertical, 2)
+                                .background(.blue, in: Capsule())
+                        }
+                    }
+                    if let product = purchaseService.products[productID] {
+                        Text(product.displayPrice)
+                            .font(.subheadline).foregroundStyle(.secondary)
+                    }
+                }
+
+                Spacer()
+
+                if purchaseService.isLoading {
+                    ProgressView().scaleEffect(0.8)
+                } else {
+                    Image(systemName: "chevron.right")
+                        .font(.caption).foregroundStyle(.tertiary)
+                }
+            }
+            .padding(14)
+            .background(Color(uiColor: .secondarySystemGroupedBackground),
+                        in: RoundedRectangle(cornerRadius: 14))
+        }
+        .disabled(purchaseService.isLoading)
     }
 }
 

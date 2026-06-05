@@ -52,8 +52,22 @@ extension PurchaseService {
     // Unlock-all bundle
     static let unlockAllID = "com.lucasazzopardi.statsleuth.unlockall"
 
+    // Hint packs
+    static let hints5ID  = "com.lucasazzopardi.statsleuth.hints.pack5"
+    static let hints15ID = "com.lucasazzopardi.statsleuth.hints.pack15"
+    static let hintPackIDs: [String] = [hints5ID, hints15ID]
+
     static var allProductIDs: Set<String> {
-        Set(teamPackIDs + divisionPackIDs + [unlockAllID])
+        Set(teamPackIDs + divisionPackIDs + hintPackIDs + [unlockAllID])
+    }
+
+    /// How many hints a given hint product ID awards
+    static func hintCount(for productID: String) -> Int {
+        switch productID {
+        case hints5ID:  return 5
+        case hints15ID: return 15
+        default:        return 0
+        }
     }
 
     // Division → contained team pack IDs
@@ -219,16 +233,23 @@ final class PurchaseService {
         purchasedProductIDs.insert(productID)
 
         guard let progressService, let playerDataService else { return }
+
+        // Hint packs — consumable, award hints directly
+        let hintsToAdd = Self.hintCount(for: productID)
+        if hintsToAdd > 0 {
+            progressService.addHints(hintsToAdd)
+            print("💡 Awarded \(hintsToAdd) hints for product \(productID)")
+            return
+        }
+
         let allPacks = playerDataService.buildPacks()
 
         // Determine which product IDs to unlock (includes division → team cascade and unlock-all)
         var productIDsToUnlock: Set<String> = [productID]
 
         if productID == Self.unlockAllID {
-            // Unlock every paid pack
-            productIDsToUnlock = Self.allProductIDs
+            productIDsToUnlock = Set(Self.teamPackIDs + Self.divisionPackIDs)
         } else if let teamIDs = Self.divisionTeamIDs[productID] {
-            // Purchasing a division pack also unlocks its team packs
             productIDsToUnlock.formUnion(teamIDs)
         }
 

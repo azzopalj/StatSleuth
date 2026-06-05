@@ -9,6 +9,7 @@ struct StatSleutApp: App {
     @State private var gameCenterService  = GameCenterService()
     @State private var deepLinkService    = DeepLinkService()
     @State private var purchaseService    = PurchaseService()
+    @Environment(\.scenePhase) private var scenePhase
 
     var body: some Scene {
         WindowGroup {
@@ -36,6 +37,10 @@ struct StatSleutApp: App {
             .task {
                 await playerDataService.loadPlayers()
                 await purchaseService.loadProducts()
+            }
+            // Recharge hints whenever the app comes back to the foreground
+            .onChange(of: scenePhase) { _, phase in
+                if phase == .active { progressService.rechargeHints() }
             }
             // Handle deep links (statsleuth://play?...)
             .onOpenURL { url in
