@@ -114,7 +114,9 @@ final class PurchaseService {
     private(set) var isLoading = false
     private(set) var errorMessage: String?
 
-    private var transactionListenerTask: Task<Void, Never>?
+    // nonisolated(unsafe) lets deinit cancel the task without crossing actor boundaries.
+    // Safe here because the task is only written once (at init) and cancelled once (at deinit).
+    nonisolated(unsafe) private var transactionListenerTask: Task<Void, Never>?
     private weak var progressService: UserProgressService?
     private weak var playerDataService: PlayerDataService?
 
@@ -122,7 +124,9 @@ final class PurchaseService {
         transactionListenerTask = Task { await self.listenForTransactions() }
     }
 
-    deinit { transactionListenerTask?.cancel() }
+    deinit {
+        transactionListenerTask?.cancel()
+    }
 
     // MARK: - Setup
 
