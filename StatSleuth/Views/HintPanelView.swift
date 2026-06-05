@@ -159,6 +159,8 @@ private struct BuyHintsSheet: View {
     @Environment(UserProgressService.self) private var progressService
     @Environment(\.dismiss) private var dismiss
 
+    @State private var purchaseError: String? = nil
+
     var body: some View {
         NavigationStack {
             VStack(spacing: 20) {
@@ -170,10 +172,15 @@ private struct BuyHintsSheet: View {
                     Text("You have \(progressService.progress.hintsAvailable) hint\(progressService.progress.hintsAvailable == 1 ? "" : "s")")
                         .font(.title3).fontWeight(.bold)
                     if let secs = progressService.progress.secondsUntilNextHint {
-                        let m = Int(secs) / 60
+                        let h = Int(secs) / 3600
+                        let m = (Int(secs) % 3600) / 60
                         let s = Int(secs) % 60
-                        Text("Next free hint in \(m):\(String(format: "%02d", s))")
+                        let str = h > 0
+                            ? String(format: "%d:%02d:%02d", h, m, s)
+                            : String(format: "%d:%02d", m, s)
+                        Text("Next free hint in \(str)")
                             .font(.subheadline).foregroundStyle(.secondary)
+                            .monospacedDigit()
                     } else {
                         Text("1 hint regenerates every 2 hours · max \(UserProgress.naturalHintMax)")
                             .font(.subheadline).foregroundStyle(.secondary)
@@ -212,6 +219,11 @@ private struct BuyHintsSheet: View {
                     Button("Close") { dismiss() }
                 }
             }
+            .alert("Purchase Failed", isPresented: .constant(purchaseError != nil)) {
+                Button("OK") { purchaseError = nil }
+            } message: {
+                if let msg = purchaseError { Text(msg) }
+            }
         }
     }
 
@@ -227,7 +239,11 @@ private struct BuyHintsSheet: View {
             HapticEngine.impact()
             Task {
                 await purchaseService.purchase(productID: productID)
-                if purchaseService.errorMessage == nil { dismiss() }
+                if let err = purchaseService.errorMessage {
+                    purchaseError = err
+                } else {
+                    dismiss()
+                }
             }
         } label: {
             HStack(spacing: 14) {

@@ -1,0 +1,595 @@
+{
+  "identifier": "StatSleuth",
+  "nonConsumableProducts": [
+    {
+      "displayPrice": "1.99",
+      "familyShareable": false,
+      "internalID": "5C06DAAF-8903-4AB9-86F8-06F8190F9B4E",
+      "localizations": [
+        {
+          "description": "Full roster for the Toronto Blue Jays.",
+          "displayName": "Toronto Blue Jays Pack",
+          "locale": "en_US"
+        }
+      ],
+      "productID": "com.lucasazzopardi.statsleuth.pack.team.tor",
+      "referenceName": "Toronto Blue Jays Pack",
+      "type": "NonConsumable"
+    },
+    {
+      "displayPrice": "1.99",
+      "familyShareable": false,
+      "internalID": "A308C197-F8C6-4220-88BB-5C105D20D357",
+      "localizations": [
+        {
+          "description": "Full roster for the New York Yankees.",
+          "displayName": "New York Yankees Pack",
+          "locale": "en_US"
+        }
+      ],
+      "productID": "com.lucasazzopardi.statsleuth.pack.team.nyy",
+      "referenceName": "New York Yankees Pack",
+      "type": "NonConsumable"
+    },
+    {
+      "displayPrice": "1.99",
+      "familyShareable": false,
+      "internalID": "D511CB7C-6AE2-4860-AC3F-93171023422B",
+      "localizations": [
+        {
+          "description": "Full roster for the Boston Red Sox.",
+          "displayName": "Boston Red Sox Pack",
+          "locale": "en_US"
+        }
+      ],
+      "productID": "com.lucasazzopardi.statsleuth.pack.team.bos",
+      "referenceName": "Boston Red Sox Pack",
+      "type": "NonConsumable"
+    },
+    {
+      "displayPrice": "1.99",
+      "familyShareable": false,
+      "internalID": "D787E322-E519-4CF2-A2D1-C5D1DC7FCD51",
+      "localizations": [
+        {
+          "description": "Full roster for the Tampa Bay Rays.",
+          "displayName": "Tampa Bay Rays Pack",
+          "locale": "en_US"
+        }
+      ],
+      "productID": "com.lucasazzopardi.statsleuth.pack.team.tb",
+      "referenceName": "Tampa Bay Rays Pack",
+      "type": "NonConsumable"
+    },
+    {
+      "displayPrice": "1.99",
+      "familyShareable": false,
+      "internalID": "741B91B4-9C68-4195-90B5-A538511696EA",
+      "localizations": [
+        {
+          "description": "Full roster for the Baltimore Orioles.",
+          "displayName": "Baltimore Orioles Pack",
+          "locale": "en_US"
+        }
+      ],
+      "productID": "com.lucasazzopardi.statsleuth.pack.team.bal",
+      "referenceName": "Baltimore Orioles Pack",
+      "type": "NonConsumable"
+    },
+    {
+      "displayPrice": "1.99",
+      "familyShareable": false,
+      "internalID": "D76E7C1F-BA4E-42DF-B756-20022372E368",
+      "localizations": [
+        {
+          "description": "Full roster for the Chicago White Sox.",
+          "displayName": "Chicago White Sox Pack",
+          "locale": "en_US"
+        }
+      ],
+      "productID": "com.lucasazzopardi.statsleuth.pack.team.cws",
+      "referenceName": "Chicago White Sox Pack",
+      "type": "NonConsumable"
+    },
+    {
+      "displayPrice": "1.99",
+      "familyShareable": false,
+      "internalID": "30924F78-440D-4904-9DC6-538B3C1B1FA6",
+      "localizations": [
+        {
+          "description": "Full roster for the Cleveland Guardians.",
+          "displayName": "Cleveland Guardians Pack",
+          "locale": "en_US"
+        }
+      ],
+      "productID": "com.lucasazzopardi.statsleuth.pack.team.cle",
+      "referenceName": "Cleveland Guardians Pack",
+      "type": "NonConsumable"
+    },
+    {
+      "displayPrice": "1.99",
+      "familyShareable": false,
+      "internalID": "75371DC1-FB66-4E67-82EE-882B51A5DE26",
+      "localizations": [
+        {
+          "description": "Full roster for the Detroit Tigers.",
+          "displayName": "Detroit Tigers Pack",
+          "locale": "en_US"
+        }
+      ],
+      "productID": "com.lucasazzopardi.statsleuth.pack.team.det",
+      "referenceName": "Detroit Tigers Pack",
+      "type": "NonConsumable"
+    },
+    {
+      "displayPrice": "1.99",
+      "familyShareable": false,
+      "internalID": "19AB9980-9BCE-4492-9E23-3A54B32A5C0D",
+      "localizations": [
+        {
+          "description": "Full roster for the Kansas City Royals.",
+          "displayName": "Kansas City Royals Pack",
+          "locale": "en_US"
+        }
+      ],
+      "productID": "com.lucasazzopardi.statsleuth.pack.team.kc",
+      "referenceName": "Kansas City Royals Pack",
+      "type": "NonConsumable"
+    },
+    {
+      "displayPrice": "1.99",
+      "familyShareable": false,
+      "internalID": "66139B1E-7459-4D1F-A7E8-F11D69FBF1A3",
+      "localizations": [
+        {
+          "description": "Full roster for the Minnesota Twins.",
+          "displayName": "Minnesota Twins Pack",
+          "locale": "en_US"
+        }
+      ],
+      "productID": "com.lucasazzopardi.statsleuth.pack.team.min",
+      "referenceName": "Minnesota Twins Pack",
+      "type": "NonConsumable"
+    },
+    {
+      "displayPrice": "1.99",
+      "familyShareable": false,
+      "internalID": "6966A5D7-A796-41E6-9956-83BD88036E76",
+      "localizations": [
+        {
+          "description": "Full roster for the Houston Astros.",
+          "displayName": "Houston Astros Pack",
+          "locale": "en_US"
+        }
+      ],
+      "productID": "com.lucasazzopardi.statsleuth.pack.team.hou",
+      "referenceName": "Houston Astros Pack",
+      "type": "NonConsumable"
+    },
+    {
+      "displayPrice": "1.99",
+      "familyShareable": false,
+      "internalID": "820E14F9-B5B9-4571-A661-CDD8AEDD6FD7",
+      "localizations": [
+        {
+          "description": "Full roster for the Los Angeles Angels.",
+          "displayName": "Los Angeles Angels Pack",
+          "locale": "en_US"
+        }
+      ],
+      "productID": "com.lucasazzopardi.statsleuth.pack.team.laa",
+      "referenceName": "Los Angeles Angels Pack",
+      "type": "NonConsumable"
+    },
+    {
+      "displayPrice": "1.99",
+      "familyShareable": false,
+      "internalID": "5E1C89F8-E1C0-4A76-B8AA-BAC10196CD7A",
+      "localizations": [
+        {
+          "description": "Full roster for the Oakland Athletics.",
+          "displayName": "Oakland Athletics Pack",
+          "locale": "en_US"
+        }
+      ],
+      "productID": "com.lucasazzopardi.statsleuth.pack.team.oak",
+      "referenceName": "Oakland Athletics Pack",
+      "type": "NonConsumable"
+    },
+    {
+      "displayPrice": "1.99",
+      "familyShareable": false,
+      "internalID": "2E052B69-CBDD-431E-AE08-16B7F1E416B2",
+      "localizations": [
+        {
+          "description": "Full roster for the Seattle Mariners.",
+          "displayName": "Seattle Mariners Pack",
+          "locale": "en_US"
+        }
+      ],
+      "productID": "com.lucasazzopardi.statsleuth.pack.team.sea",
+      "referenceName": "Seattle Mariners Pack",
+      "type": "NonConsumable"
+    },
+    {
+      "displayPrice": "1.99",
+      "familyShareable": false,
+      "internalID": "30BCBBB8-3A52-4390-9837-9368FDA7A895",
+      "localizations": [
+        {
+          "description": "Full roster for the Texas Rangers.",
+          "displayName": "Texas Rangers Pack",
+          "locale": "en_US"
+        }
+      ],
+      "productID": "com.lucasazzopardi.statsleuth.pack.team.tex",
+      "referenceName": "Texas Rangers Pack",
+      "type": "NonConsumable"
+    },
+    {
+      "displayPrice": "1.99",
+      "familyShareable": false,
+      "internalID": "9ABE37F7-83B2-4FF7-A392-500F89A58C56",
+      "localizations": [
+        {
+          "description": "Full roster for the Atlanta Braves.",
+          "displayName": "Atlanta Braves Pack",
+          "locale": "en_US"
+        }
+      ],
+      "productID": "com.lucasazzopardi.statsleuth.pack.team.atl",
+      "referenceName": "Atlanta Braves Pack",
+      "type": "NonConsumable"
+    },
+    {
+      "displayPrice": "1.99",
+      "familyShareable": false,
+      "internalID": "0036FB59-7616-46BA-B982-3142C36EF3A8",
+      "localizations": [
+        {
+          "description": "Full roster for the Miami Marlins.",
+          "displayName": "Miami Marlins Pack",
+          "locale": "en_US"
+        }
+      ],
+      "productID": "com.lucasazzopardi.statsleuth.pack.team.mia",
+      "referenceName": "Miami Marlins Pack",
+      "type": "NonConsumable"
+    },
+    {
+      "displayPrice": "1.99",
+      "familyShareable": false,
+      "internalID": "152426B4-C536-4041-A241-C81DA5363A71",
+      "localizations": [
+        {
+          "description": "Full roster for the New York Mets.",
+          "displayName": "New York Mets Pack",
+          "locale": "en_US"
+        }
+      ],
+      "productID": "com.lucasazzopardi.statsleuth.pack.team.nym",
+      "referenceName": "New York Mets Pack",
+      "type": "NonConsumable"
+    },
+    {
+      "displayPrice": "1.99",
+      "familyShareable": false,
+      "internalID": "9FB368CF-976F-4099-A0C3-2DCFDEF71C71",
+      "localizations": [
+        {
+          "description": "Full roster for the Philadelphia Phillies.",
+          "displayName": "Philadelphia Phillies Pack",
+          "locale": "en_US"
+        }
+      ],
+      "productID": "com.lucasazzopardi.statsleuth.pack.team.phi",
+      "referenceName": "Philadelphia Phillies Pack",
+      "type": "NonConsumable"
+    },
+    {
+      "displayPrice": "1.99",
+      "familyShareable": false,
+      "internalID": "9C408F4B-6610-46C7-B528-6AEF593D4B69",
+      "localizations": [
+        {
+          "description": "Full roster for the Washington Nationals.",
+          "displayName": "Washington Nationals Pack",
+          "locale": "en_US"
+        }
+      ],
+      "productID": "com.lucasazzopardi.statsleuth.pack.team.wsh",
+      "referenceName": "Washington Nationals Pack",
+      "type": "NonConsumable"
+    },
+    {
+      "displayPrice": "1.99",
+      "familyShareable": false,
+      "internalID": "1CB1480B-8280-456C-BAD6-CCA0E5F0989B",
+      "localizations": [
+        {
+          "description": "Full roster for the Chicago Cubs.",
+          "displayName": "Chicago Cubs Pack",
+          "locale": "en_US"
+        }
+      ],
+      "productID": "com.lucasazzopardi.statsleuth.pack.team.chc",
+      "referenceName": "Chicago Cubs Pack",
+      "type": "NonConsumable"
+    },
+    {
+      "displayPrice": "1.99",
+      "familyShareable": false,
+      "internalID": "6EC6D04C-401E-44A7-99F3-2F7D19306068",
+      "localizations": [
+        {
+          "description": "Full roster for the Cincinnati Reds.",
+          "displayName": "Cincinnati Reds Pack",
+          "locale": "en_US"
+        }
+      ],
+      "productID": "com.lucasazzopardi.statsleuth.pack.team.cin",
+      "referenceName": "Cincinnati Reds Pack",
+      "type": "NonConsumable"
+    },
+    {
+      "displayPrice": "1.99",
+      "familyShareable": false,
+      "internalID": "F401BBE9-D8DF-4BBA-B421-D0616ECD91D9",
+      "localizations": [
+        {
+          "description": "Full roster for the Colorado Rockies.",
+          "displayName": "Colorado Rockies Pack",
+          "locale": "en_US"
+        }
+      ],
+      "productID": "com.lucasazzopardi.statsleuth.pack.team.col",
+      "referenceName": "Colorado Rockies Pack",
+      "type": "NonConsumable"
+    },
+    {
+      "displayPrice": "1.99",
+      "familyShareable": false,
+      "internalID": "1A4F7C24-7239-41C9-A95B-C186942543C5",
+      "localizations": [
+        {
+          "description": "Full roster for the Milwaukee Brewers.",
+          "displayName": "Milwaukee Brewers Pack",
+          "locale": "en_US"
+        }
+      ],
+      "productID": "com.lucasazzopardi.statsleuth.pack.team.mil",
+      "referenceName": "Milwaukee Brewers Pack",
+      "type": "NonConsumable"
+    },
+    {
+      "displayPrice": "1.99",
+      "familyShareable": false,
+      "internalID": "7E2F625A-3FB0-4E3C-9C6F-1DD0349E2B91",
+      "localizations": [
+        {
+          "description": "Full roster for the Pittsburgh Pirates.",
+          "displayName": "Pittsburgh Pirates Pack",
+          "locale": "en_US"
+        }
+      ],
+      "productID": "com.lucasazzopardi.statsleuth.pack.team.pit",
+      "referenceName": "Pittsburgh Pirates Pack",
+      "type": "NonConsumable"
+    },
+    {
+      "displayPrice": "1.99",
+      "familyShareable": false,
+      "internalID": "F0BA2428-BE30-4C54-936E-443190D2E946",
+      "localizations": [
+        {
+          "description": "Full roster for the St. Louis Cardinals.",
+          "displayName": "St. Louis Cardinals Pack",
+          "locale": "en_US"
+        }
+      ],
+      "productID": "com.lucasazzopardi.statsleuth.pack.team.stl",
+      "referenceName": "St. Louis Cardinals Pack",
+      "type": "NonConsumable"
+    },
+    {
+      "displayPrice": "1.99",
+      "familyShareable": false,
+      "internalID": "6335BDA7-9B9A-4CF7-9F70-A78EAA011A0E",
+      "localizations": [
+        {
+          "description": "Full roster for the Arizona Diamondbacks.",
+          "displayName": "Arizona Diamondbacks Pack",
+          "locale": "en_US"
+        }
+      ],
+      "productID": "com.lucasazzopardi.statsleuth.pack.team.ari",
+      "referenceName": "Arizona Diamondbacks Pack",
+      "type": "NonConsumable"
+    },
+    {
+      "displayPrice": "1.99",
+      "familyShareable": false,
+      "internalID": "E163C6A7-C382-4654-ADBA-5A6503E367A5",
+      "localizations": [
+        {
+          "description": "Full roster for the Los Angeles Dodgers.",
+          "displayName": "Los Angeles Dodgers Pack",
+          "locale": "en_US"
+        }
+      ],
+      "productID": "com.lucasazzopardi.statsleuth.pack.team.lad",
+      "referenceName": "Los Angeles Dodgers Pack",
+      "type": "NonConsumable"
+    },
+    {
+      "displayPrice": "1.99",
+      "familyShareable": false,
+      "internalID": "9202B148-97E0-4A1C-92E3-00DEFCD67BFC",
+      "localizations": [
+        {
+          "description": "Full roster for the San Diego Padres.",
+          "displayName": "San Diego Padres Pack",
+          "locale": "en_US"
+        }
+      ],
+      "productID": "com.lucasazzopardi.statsleuth.pack.team.sd",
+      "referenceName": "San Diego Padres Pack",
+      "type": "NonConsumable"
+    },
+    {
+      "displayPrice": "1.99",
+      "familyShareable": false,
+      "internalID": "5DA2B7F8-1788-4992-88EF-58312D4FDC0C",
+      "localizations": [
+        {
+          "description": "Full roster for the San Francisco Giants.",
+          "displayName": "San Francisco Giants Pack",
+          "locale": "en_US"
+        }
+      ],
+      "productID": "com.lucasazzopardi.statsleuth.pack.team.sf",
+      "referenceName": "San Francisco Giants Pack",
+      "type": "NonConsumable"
+    },
+    {
+      "displayPrice": "2.99",
+      "familyShareable": false,
+      "internalID": "B7C81029-08D1-44D5-A443-B4BBB4B8DA31",
+      "localizations": [
+        {
+          "description": "All AL East players + 5 team packs.",
+          "displayName": "AL East Pack",
+          "locale": "en_US"
+        }
+      ],
+      "productID": "com.lucasazzopardi.statsleuth.pack.division.aleast",
+      "referenceName": "AL East Pack",
+      "type": "NonConsumable"
+    },
+    {
+      "displayPrice": "2.99",
+      "familyShareable": false,
+      "internalID": "C893F989-F7C7-40FC-B0B0-3181EB87FAC0",
+      "localizations": [
+        {
+          "description": "All AL Central players + 5 team packs.",
+          "displayName": "AL Central Pack",
+          "locale": "en_US"
+        }
+      ],
+      "productID": "com.lucasazzopardi.statsleuth.pack.division.alcentral",
+      "referenceName": "AL Central Pack",
+      "type": "NonConsumable"
+    },
+    {
+      "displayPrice": "2.99",
+      "familyShareable": false,
+      "internalID": "D63DB2C5-45B1-4F57-A8D1-8804AC94815E",
+      "localizations": [
+        {
+          "description": "All AL West players + 5 team packs.",
+          "displayName": "AL West Pack",
+          "locale": "en_US"
+        }
+      ],
+      "productID": "com.lucasazzopardi.statsleuth.pack.division.alwest",
+      "referenceName": "AL West Pack",
+      "type": "NonConsumable"
+    },
+    {
+      "displayPrice": "2.99",
+      "familyShareable": false,
+      "internalID": "D821D145-6713-4B79-83EE-43776F66148B",
+      "localizations": [
+        {
+          "description": "All NL East players + 5 team packs.",
+          "displayName": "NL East Pack",
+          "locale": "en_US"
+        }
+      ],
+      "productID": "com.lucasazzopardi.statsleuth.pack.division.nleast",
+      "referenceName": "NL East Pack",
+      "type": "NonConsumable"
+    },
+    {
+      "displayPrice": "2.99",
+      "familyShareable": false,
+      "internalID": "A004CC1F-1F6F-45CF-9362-160338D9104E",
+      "localizations": [
+        {
+          "description": "All NL Central players + 5 team packs.",
+          "displayName": "NL Central Pack",
+          "locale": "en_US"
+        }
+      ],
+      "productID": "com.lucasazzopardi.statsleuth.pack.division.nlcentral",
+      "referenceName": "NL Central Pack",
+      "type": "NonConsumable"
+    },
+    {
+      "displayPrice": "2.99",
+      "familyShareable": false,
+      "internalID": "F9065BB0-075B-4C8E-9F0E-C52E752123D0",
+      "localizations": [
+        {
+          "description": "All NL West players + 5 team packs.",
+          "displayName": "NL West Pack",
+          "locale": "en_US"
+        }
+      ],
+      "productID": "com.lucasazzopardi.statsleuth.pack.division.nlwest",
+      "referenceName": "NL West Pack",
+      "type": "NonConsumable"
+    },
+    {
+      "displayPrice": "9.99",
+      "familyShareable": false,
+      "internalID": "DC0843DA-7372-4B17-9426-395161E5549C",
+      "localizations": [
+        {
+          "description": "All 30 team packs and 6 division packs.",
+          "displayName": "Unlock Everything",
+          "locale": "en_US"
+        }
+      ],
+      "productID": "com.lucasazzopardi.statsleuth.unlockall",
+      "referenceName": "Unlock Everything",
+      "type": "NonConsumable"
+    }
+  ],
+  "consumableProducts": [
+    {
+      "displayPrice": "0.99",
+      "familyShareable": false,
+      "internalID": "585CE62E-C636-4E7F-9368-60428DF45541",
+      "localizations": [
+        {
+          "description": "Replenish 5 hint tokens.",
+          "displayName": "5 Hints",
+          "locale": "en_US"
+        }
+      ],
+      "productID": "com.lucasazzopardi.statsleuth.hints.pack5",
+      "referenceName": "5 Hints",
+      "type": "Consumable"
+    },
+    {
+      "displayPrice": "1.99",
+      "familyShareable": false,
+      "internalID": "D06B4082-31B0-46FA-A38F-F7B75DF78BC4",
+      "localizations": [
+        {
+          "description": "Replenish 15 hint tokens.",
+          "displayName": "15 Hints",
+          "locale": "en_US"
+        }
+      ],
+      "productID": "com.lucasazzopardi.statsleuth.hints.pack15",
+      "referenceName": "15 Hints",
+      "type": "Consumable"
+    }
+  ],
+  "autoRenewableSubscriptions": [],
+  "nonRenewingSubscriptions": [],
+  "settings": {}
+}
