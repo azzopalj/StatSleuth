@@ -36,13 +36,13 @@ enum HintType: String, Codable, CaseIterable {
     var hintCost: Int {
         switch self {
         case .position:      return 1
-        case .team:          return 1
+        case .team:          return 2
         case .nationality:   return 1
         case .era:           return 1
         case .draftInfo:     return 2
         case .jerseyNumber:  return 2
-        case .initials:      return 2
-        case .firstNameOnly: return 3
+        case .initials:      return 3
+        case .firstNameOnly: return 4
         }
     }
 }

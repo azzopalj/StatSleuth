@@ -108,6 +108,13 @@ enum MLBDivision: String, Codable, CaseIterable {
         default: return .national
         }
     }
+    /// Lowercase key used in product IDs (e.g. "aleast")
+    var productKey: String {
+        switch self {
+        case .alEast: return "aleast"; case .alCentral: return "alcentral"; case .alWest: return "alwest"
+        case .nlEast: return "nleast"; case .nlCentral: return "nlcentral"; case .nlWest: return "nlwest"
+        }
+    }
 }
 
 enum MLBLeague: String, Codable {

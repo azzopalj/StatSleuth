@@ -33,6 +33,7 @@ struct Pack: Identifiable, Codable {
     let isPurchased: Bool
     let price: Double?
     let sport: Sport
+    let productID: String?   // App Store Connect product identifier (nil = free)
 
     var isFree: Bool { price == nil }
     var playerCount: Int { playerIDs.count }

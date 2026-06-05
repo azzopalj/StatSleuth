@@ -80,6 +80,7 @@ struct GameView: View {
                         careerHitterStats: nil, careerPitcherStats: nil,
                         historicSeason: nil,
                         rookieSeason: nil,
+                        mysterySeasons: nil,
                         mysterySeason: nil
                     ),
                     mode: mode

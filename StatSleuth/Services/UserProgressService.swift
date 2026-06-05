@@ -58,6 +58,11 @@ final class UserProgressService {
         save()
     }
 
+    func unlockPacks(_ packIDs: [UUID]) {
+        packIDs.forEach { progress.purchasedPackIDs.insert($0) }
+        save()
+    }
+
     func resetProgress() {
         progress = .fresh
         save()

@@ -202,19 +202,17 @@ final class PlayerDataService {
         guard !allPlayers.isEmpty else { return [] }
         var packs: [Pack] = []
 
-        // Notable pack — current notable players only
-        let notableIDs = allPlayers
-            .filter { $0.tier == .notable }
-            .map { $0.id }
+        // Notable pack — free, always available
+        let notableIDs = allPlayers.filter { $0.tier == .notable }.map { $0.id }
         packs.append(Pack(
             id: stableID("notable"),
             name: "Notable Players",
             description: "The biggest names in baseball right now.",
             type: .base, playerIDs: notableIDs,
-            isPurchased: true, price: nil, sport: .baseball
+            isPurchased: true, price: nil, sport: .baseball, productID: nil
         ))
 
-        // Legends pack — all historic players
+        // Legends pack — free, always available, shown immediately after Notable
         let legendIDs = allPlayers.filter { $0.tier == .historic }.map { $0.id }
         if !legendIDs.isEmpty {
             packs.append(Pack(
@@ -222,7 +220,7 @@ final class PlayerDataService {
                 name: "Legends",
                 description: "The all-time greats across baseball history.",
                 type: .base, playerIDs: legendIDs,
-                isPurchased: true, price: nil, sport: .baseball
+                isPurchased: true, price: nil, sport: .baseball, productID: nil
             ))
         }
 
@@ -241,11 +239,12 @@ final class PlayerDataService {
                 name: team.rawValue,
                 description: "Current roster + legends for the \(team.rawValue).",
                 type: .team, playerIDs: ids,
-                isPurchased: false, price: 1.99, sport: .baseball
+                isPurchased: false, price: 1.99, sport: .baseball,
+                productID: "com.lucasazzopardi.statsleuth.pack.team.\(team.abbreviation.lowercased())"
             ))
         }
 
-        // Division packs — current players only
+        // Division packs — current players only; purchasing also unlocks contained team packs
         for division in MLBDivision.allCases {
             let ids = allPlayers
                 .filter { $0.tier != .historic && $0.team.division == division }
@@ -254,9 +253,10 @@ final class PlayerDataService {
             packs.append(Pack(
                 id: stableID("division-\(division.rawValue)"),
                 name: division.rawValue,
-                description: "All current \(division.rawValue) players.",
+                description: "All current \(division.rawValue) players. Includes all 5 team packs.",
                 type: .division, playerIDs: ids,
-                isPurchased: false, price: 2.99, sport: .baseball
+                isPurchased: false, price: 2.99, sport: .baseball,
+                productID: "com.lucasazzopardi.statsleuth.pack.division.\(division.productKey)"
             ))
         }
 

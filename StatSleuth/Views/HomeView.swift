@@ -85,10 +85,10 @@ struct HomeView: View {
             Divider().frame(height: 40)
 
             StatBadge(
-                icon: "star.fill",
+                icon: "trophy.fill",
                 iconColor: .yellow,
-                value: "Lv \(progress.level)",
-                label: "level"
+                value: "\(progress.totalGamesWon)",
+                label: "wins"
             )
 
             Divider().frame(height: 40)
@@ -149,12 +149,10 @@ struct HomeView: View {
                 .font(.headline)
                 .foregroundStyle(.primary)
 
+            let visibleModes = GameMode.allCases.filter { $0 != .daily && $0 != .hallOfFame }
             LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
-                ForEach(GameMode.allCases.filter { $0 != .daily }) { mode in
-                    ModeCard(
-                        mode: mode,
-                        isUnlocked: progress.unlockedModes.contains(mode)
-                    ) {
+                ForEach(visibleModes) { mode in
+                    ModeCard(mode: mode, isUnlocked: true) {
                         selectedMode = mode
                         navigateToPackSelection = true
                     }
@@ -198,35 +196,25 @@ private struct ModeCard: View {
     var body: some View {
         Button(action: onTap) {
             VStack(alignment: .leading, spacing: 8) {
-                HStack {
-                    Image(systemName: mode.icon)
-                        .font(.title2)
-                        .foregroundStyle(isUnlocked ? .primary : .secondary)
-                    Spacer()
-                    if !isUnlocked {
-                        Image(systemName: "lock.fill")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-                }
+                Image(systemName: mode.icon)
+                    .font(.title2)
+                    .foregroundStyle(.primary)
 
                 Text(mode.displayName)
                     .font(.subheadline)
                     .fontWeight(.semibold)
-                    .foregroundStyle(isUnlocked ? .primary : .secondary)
+                    .foregroundStyle(.primary)
                     .multilineTextAlignment(.leading)
 
-                if !isUnlocked, let level = mode.unlockLevel {
-                    Text("Unlock at level \(level)")
-                        .font(.caption2)
-                        .foregroundStyle(.tertiary)
-                }
+                Text(mode.description)
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(2)
+                    .multilineTextAlignment(.leading)
             }
             .padding(14)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 14))
-            .opacity(isUnlocked ? 1 : 0.6)
         }
-        .disabled(!isUnlocked)
     }
 }
