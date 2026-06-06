@@ -83,6 +83,15 @@ enum MLBTeam: String, Codable, CaseIterable {
         }
     }
 
+    var packKey: String {
+        switch self {
+        case .braves: return "atlanta"
+        case .diamondbacks: return "arizona"
+        case .athletics: return "athletics"
+        default: return abbreviation.lowercased()
+        }
+    }
+
     var division: MLBDivision {
         switch self {
         case .blueJays, .yankees, .redSox, .rays, .orioles: return .alEast
@@ -219,7 +228,7 @@ struct Player: Identifiable, Codable {
     func hitterStatsFor(mode: GameMode) -> HitterStats? {
         switch mode {
         case .careerStats, .hallOfFame:
-            return careerHitterStats ?? hitterStats
+            return careerHitterStats
         case .rookieSeason:
             return rookieSeason?.hitterStats
         case .mysteryEra:
@@ -233,7 +242,7 @@ struct Player: Identifiable, Codable {
     func pitcherStatsFor(mode: GameMode) -> PitcherStats? {
         switch mode {
         case .careerStats, .hallOfFame:
-            return careerPitcherStats ?? pitcherStats
+            return careerPitcherStats
         case .rookieSeason:
             return rookieSeason?.pitcherStats
         case .mysteryEra:

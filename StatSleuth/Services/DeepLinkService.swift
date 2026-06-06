@@ -11,13 +11,19 @@ enum DeepLink: Equatable {
 @Observable
 final class DeepLinkService {
 
+    private static let webBase = "https://azzopalj.github.io/statsleuth"
+
     var pendingDeepLink: DeepLink? = nil
 
-    // statsleuth://play?mlbID=518692&mode=seasonStats&pack=notable
+    // Handles both:
+    //   Universal link: https://azzopalj.github.io/statsleuth/?mlbID=...&mode=...&pack=...
+    //   Custom scheme:  statsleuth://play?mlbID=...&mode=...&pack=...
     func handle(url: URL) -> Bool {
-        guard url.scheme == "statsleuth",
-              url.host == "play",
-              let components = URLComponents(url: url, resolvingAgainstBaseURL: false),
+        let isUniversalLink = url.host == "azzopalj.github.io"
+        let isCustomScheme  = url.scheme == "statsleuth" && url.host == "play"
+        guard isUniversalLink || isCustomScheme else { return false }
+
+        guard let components = URLComponents(url: url, resolvingAgainstBaseURL: false),
               let queryItems = components.queryItems else { return false }
 
         let params = Dictionary(uniqueKeysWithValues: queryItems.compactMap { item in
@@ -35,15 +41,13 @@ final class DeepLinkService {
     }
 
     func buildURL(mlbID: Int, mode: GameMode, packType: String) -> URL? {
-        var components = URLComponents()
-        components.scheme = "statsleuth"
-        components.host = "play"
-        components.queryItems = [
+        var components = URLComponents(string: Self.webBase)
+        components?.queryItems = [
             URLQueryItem(name: "mlbID", value: String(mlbID)),
             URLQueryItem(name: "mode", value: mode.rawValue),
             URLQueryItem(name: "pack", value: packType)
         ]
-        return components.url
+        return components?.url
     }
 
     func clearPendingLink() {

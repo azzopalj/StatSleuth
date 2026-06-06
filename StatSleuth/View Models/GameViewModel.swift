@@ -96,6 +96,8 @@ final class GameViewModel {
         // This ensures injured, suspended, or low-PA notable players are still in the pool.
         if player.tier == .notable {
             switch mode {
+            case .careerStats, .hallOfFame:
+                return player.careerHitterStats != nil || player.careerPitcherStats != nil
             case .rookieSeason:
                 return player.rookieSeason?.hitterStats != nil || player.rookieSeason?.pitcherStats != nil
             default:

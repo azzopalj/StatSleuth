@@ -19,10 +19,10 @@ extension PurchaseService {
         "com.lucasazzopardi.statsleuth.pack.min",
         "com.lucasazzopardi.statsleuth.pack.hou",
         "com.lucasazzopardi.statsleuth.pack.laa",
-        "com.lucasazzopardi.statsleuth.pack.oak",
+        "com.lucasazzopardi.statsleuth.pack.athletics",
         "com.lucasazzopardi.statsleuth.pack.sea",
         "com.lucasazzopardi.statsleuth.pack.tex",
-        "com.lucasazzopardi.statsleuth.pack.atl",
+        "com.lucasazzopardi.statsleuth.pack.atlanta",
         "com.lucasazzopardi.statsleuth.pack.mia",
         "com.lucasazzopardi.statsleuth.pack.nym",
         "com.lucasazzopardi.statsleuth.pack.phi",
@@ -33,7 +33,7 @@ extension PurchaseService {
         "com.lucasazzopardi.statsleuth.pack.mil",
         "com.lucasazzopardi.statsleuth.pack.pit",
         "com.lucasazzopardi.statsleuth.pack.stl",
-        "com.lucasazzopardi.statsleuth.pack.ari",
+        "com.lucasazzopardi.statsleuth.pack.arizona",
         "com.lucasazzopardi.statsleuth.pack.lad",
         "com.lucasazzopardi.statsleuth.pack.sd",
         "com.lucasazzopardi.statsleuth.pack.sf"
@@ -89,12 +89,12 @@ extension PurchaseService {
         "com.lucasazzopardi.statsleuth.pack.division.alwest": [
             "com.lucasazzopardi.statsleuth.pack.hou",
             "com.lucasazzopardi.statsleuth.pack.laa",
-            "com.lucasazzopardi.statsleuth.pack.oak",
+            "com.lucasazzopardi.statsleuth.pack.athletics",
             "com.lucasazzopardi.statsleuth.pack.sea",
             "com.lucasazzopardi.statsleuth.pack.tex"
         ],
         "com.lucasazzopardi.statsleuth.pack.division.nleast": [
-            "com.lucasazzopardi.statsleuth.pack.atl",
+            "com.lucasazzopardi.statsleuth.pack.atlanta",
             "com.lucasazzopardi.statsleuth.pack.mia",
             "com.lucasazzopardi.statsleuth.pack.nym",
             "com.lucasazzopardi.statsleuth.pack.phi",
@@ -109,7 +109,7 @@ extension PurchaseService {
             "com.lucasazzopardi.statsleuth.pack.stl"
         ],
         "com.lucasazzopardi.statsleuth.pack.division.nlwest": [
-            "com.lucasazzopardi.statsleuth.pack.ari",
+            "com.lucasazzopardi.statsleuth.pack.arizona",
             "com.lucasazzopardi.statsleuth.pack.lad",
             "com.lucasazzopardi.statsleuth.pack.sd",
             "com.lucasazzopardi.statsleuth.pack.sf"

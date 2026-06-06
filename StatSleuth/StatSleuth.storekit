@@ -192,7 +192,7 @@
           "locale": "en_US"
         }
       ],
-      "productID": "com.lucasazzopardi.statsleuth.pack.team.oak",
+      "productID": "com.lucasazzopardi.statsleuth.pack.athletics",
       "referenceName": "Oakland Athletics Pack",
       "type": "NonConsumable"
     },
@@ -237,7 +237,7 @@
           "locale": "en_US"
         }
       ],
-      "productID": "com.lucasazzopardi.statsleuth.pack.team.atl",
+      "productID": "com.lucasazzopardi.statsleuth.pack.atlanta",
       "referenceName": "Atlanta Braves Pack",
       "type": "NonConsumable"
     },
@@ -402,7 +402,7 @@
           "locale": "en_US"
         }
       ],
-      "productID": "com.lucasazzopardi.statsleuth.pack.team.ari",
+      "productID": "com.lucasazzopardi.statsleuth.pack.arizona",
       "referenceName": "Arizona Diamondbacks Pack",
       "type": "NonConsumable"
     },
