@@ -11,7 +11,7 @@ enum DeepLink: Equatable {
 @Observable
 final class DeepLinkService {
 
-    private static let webBase = "https://azzopalj.github.io/statsleuth"
+    private static let webBase = "https://azzopalj.github.io/StatSleuth"
 
     var pendingDeepLink: DeepLink? = nil
 
@@ -19,7 +19,7 @@ final class DeepLinkService {
     //   Universal link: https://azzopalj.github.io/statsleuth/?mlbID=...&mode=...&pack=...
     //   Custom scheme:  statsleuth://play?mlbID=...&mode=...&pack=...
     func handle(url: URL) -> Bool {
-        let isUniversalLink = url.host == "azzopalj.github.io"
+        let isUniversalLink = url.host == "azzopalj.github.io" && url.path.hasPrefix("/StatSleuth")
         let isCustomScheme  = url.scheme == "statsleuth" && url.host == "play"
         guard isUniversalLink || isCustomScheme else { return false }
 

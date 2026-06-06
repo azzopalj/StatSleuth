@@ -4,7 +4,7 @@
     "details": [
       {
         "appID": "6TXY8CB8E5.com.lucasazzopardi.StatSleuth",
-        "paths": ["/statsleuth/*", "/statsleuth"]
+        "paths": ["/StatSleuth/*", "/StatSleuth"]
       }
     ]
   }
