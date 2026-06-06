@@ -7,36 +7,36 @@ extension PurchaseService {
 
     // Team pack IDs  (30)
     static let teamPackIDs: [String] = [
-        "com.lucasazzopardi.statsleuth.pack.team.tor",
-        "com.lucasazzopardi.statsleuth.pack.team.nyy",
-        "com.lucasazzopardi.statsleuth.pack.team.bos",
-        "com.lucasazzopardi.statsleuth.pack.team.tb",
-        "com.lucasazzopardi.statsleuth.pack.team.bal",
-        "com.lucasazzopardi.statsleuth.pack.team.cws",
-        "com.lucasazzopardi.statsleuth.pack.team.cle",
-        "com.lucasazzopardi.statsleuth.pack.team.det",
-        "com.lucasazzopardi.statsleuth.pack.team.kc",
-        "com.lucasazzopardi.statsleuth.pack.team.min",
-        "com.lucasazzopardi.statsleuth.pack.team.hou",
-        "com.lucasazzopardi.statsleuth.pack.team.laa",
-        "com.lucasazzopardi.statsleuth.pack.team.oak",
-        "com.lucasazzopardi.statsleuth.pack.team.sea",
-        "com.lucasazzopardi.statsleuth.pack.team.tex",
-        "com.lucasazzopardi.statsleuth.pack.team.atl",
-        "com.lucasazzopardi.statsleuth.pack.team.mia",
-        "com.lucasazzopardi.statsleuth.pack.team.nym",
-        "com.lucasazzopardi.statsleuth.pack.team.phi",
-        "com.lucasazzopardi.statsleuth.pack.team.wsh",
-        "com.lucasazzopardi.statsleuth.pack.team.chc",
-        "com.lucasazzopardi.statsleuth.pack.team.cin",
-        "com.lucasazzopardi.statsleuth.pack.team.col",
-        "com.lucasazzopardi.statsleuth.pack.team.mil",
-        "com.lucasazzopardi.statsleuth.pack.team.pit",
-        "com.lucasazzopardi.statsleuth.pack.team.stl",
-        "com.lucasazzopardi.statsleuth.pack.team.ari",
-        "com.lucasazzopardi.statsleuth.pack.team.lad",
-        "com.lucasazzopardi.statsleuth.pack.team.sd",
-        "com.lucasazzopardi.statsleuth.pack.team.sf"
+        "com.lucasazzopardi.statsleuth.pack.tor",
+        "com.lucasazzopardi.statsleuth.pack.nyy",
+        "com.lucasazzopardi.statsleuth.pack.bos",
+        "com.lucasazzopardi.statsleuth.pack.tb",
+        "com.lucasazzopardi.statsleuth.pack.bal",
+        "com.lucasazzopardi.statsleuth.pack.cws",
+        "com.lucasazzopardi.statsleuth.pack.cle",
+        "com.lucasazzopardi.statsleuth.pack.det",
+        "com.lucasazzopardi.statsleuth.pack.kc",
+        "com.lucasazzopardi.statsleuth.pack.min",
+        "com.lucasazzopardi.statsleuth.pack.hou",
+        "com.lucasazzopardi.statsleuth.pack.laa",
+        "com.lucasazzopardi.statsleuth.pack.oak",
+        "com.lucasazzopardi.statsleuth.pack.sea",
+        "com.lucasazzopardi.statsleuth.pack.tex",
+        "com.lucasazzopardi.statsleuth.pack.atl",
+        "com.lucasazzopardi.statsleuth.pack.mia",
+        "com.lucasazzopardi.statsleuth.pack.nym",
+        "com.lucasazzopardi.statsleuth.pack.phi",
+        "com.lucasazzopardi.statsleuth.pack.wsh",
+        "com.lucasazzopardi.statsleuth.pack.chc",
+        "com.lucasazzopardi.statsleuth.pack.cin",
+        "com.lucasazzopardi.statsleuth.pack.col",
+        "com.lucasazzopardi.statsleuth.pack.mil",
+        "com.lucasazzopardi.statsleuth.pack.pit",
+        "com.lucasazzopardi.statsleuth.pack.stl",
+        "com.lucasazzopardi.statsleuth.pack.ari",
+        "com.lucasazzopardi.statsleuth.pack.lad",
+        "com.lucasazzopardi.statsleuth.pack.sd",
+        "com.lucasazzopardi.statsleuth.pack.sf"
     ]
 
     // Division pack IDs  (6)
@@ -73,46 +73,46 @@ extension PurchaseService {
     // Division → contained team pack IDs
     static let divisionTeamIDs: [String: [String]] = [
         "com.lucasazzopardi.statsleuth.pack.division.aleast": [
-            "com.lucasazzopardi.statsleuth.pack.team.tor",
-            "com.lucasazzopardi.statsleuth.pack.team.nyy",
-            "com.lucasazzopardi.statsleuth.pack.team.bos",
-            "com.lucasazzopardi.statsleuth.pack.team.tb",
-            "com.lucasazzopardi.statsleuth.pack.team.bal"
+            "com.lucasazzopardi.statsleuth.pack.tor",
+            "com.lucasazzopardi.statsleuth.pack.nyy",
+            "com.lucasazzopardi.statsleuth.pack.bos",
+            "com.lucasazzopardi.statsleuth.pack.tb",
+            "com.lucasazzopardi.statsleuth.pack.bal"
         ],
         "com.lucasazzopardi.statsleuth.pack.division.alcentral": [
-            "com.lucasazzopardi.statsleuth.pack.team.cws",
-            "com.lucasazzopardi.statsleuth.pack.team.cle",
-            "com.lucasazzopardi.statsleuth.pack.team.det",
-            "com.lucasazzopardi.statsleuth.pack.team.kc",
-            "com.lucasazzopardi.statsleuth.pack.team.min"
+            "com.lucasazzopardi.statsleuth.pack.cws",
+            "com.lucasazzopardi.statsleuth.pack.cle",
+            "com.lucasazzopardi.statsleuth.pack.det",
+            "com.lucasazzopardi.statsleuth.pack.kc",
+            "com.lucasazzopardi.statsleuth.pack.min"
         ],
         "com.lucasazzopardi.statsleuth.pack.division.alwest": [
-            "com.lucasazzopardi.statsleuth.pack.team.hou",
-            "com.lucasazzopardi.statsleuth.pack.team.laa",
-            "com.lucasazzopardi.statsleuth.pack.team.oak",
-            "com.lucasazzopardi.statsleuth.pack.team.sea",
-            "com.lucasazzopardi.statsleuth.pack.team.tex"
+            "com.lucasazzopardi.statsleuth.pack.hou",
+            "com.lucasazzopardi.statsleuth.pack.laa",
+            "com.lucasazzopardi.statsleuth.pack.oak",
+            "com.lucasazzopardi.statsleuth.pack.sea",
+            "com.lucasazzopardi.statsleuth.pack.tex"
         ],
         "com.lucasazzopardi.statsleuth.pack.division.nleast": [
-            "com.lucasazzopardi.statsleuth.pack.team.atl",
-            "com.lucasazzopardi.statsleuth.pack.team.mia",
-            "com.lucasazzopardi.statsleuth.pack.team.nym",
-            "com.lucasazzopardi.statsleuth.pack.team.phi",
-            "com.lucasazzopardi.statsleuth.pack.team.wsh"
+            "com.lucasazzopardi.statsleuth.pack.atl",
+            "com.lucasazzopardi.statsleuth.pack.mia",
+            "com.lucasazzopardi.statsleuth.pack.nym",
+            "com.lucasazzopardi.statsleuth.pack.phi",
+            "com.lucasazzopardi.statsleuth.pack.wsh"
         ],
         "com.lucasazzopardi.statsleuth.pack.division.nlcentral": [
-            "com.lucasazzopardi.statsleuth.pack.team.chc",
-            "com.lucasazzopardi.statsleuth.pack.team.cin",
-            "com.lucasazzopardi.statsleuth.pack.team.col",
-            "com.lucasazzopardi.statsleuth.pack.team.mil",
-            "com.lucasazzopardi.statsleuth.pack.team.pit",
-            "com.lucasazzopardi.statsleuth.pack.team.stl"
+            "com.lucasazzopardi.statsleuth.pack.chc",
+            "com.lucasazzopardi.statsleuth.pack.cin",
+            "com.lucasazzopardi.statsleuth.pack.col",
+            "com.lucasazzopardi.statsleuth.pack.mil",
+            "com.lucasazzopardi.statsleuth.pack.pit",
+            "com.lucasazzopardi.statsleuth.pack.stl"
         ],
         "com.lucasazzopardi.statsleuth.pack.division.nlwest": [
-            "com.lucasazzopardi.statsleuth.pack.team.ari",
-            "com.lucasazzopardi.statsleuth.pack.team.lad",
-            "com.lucasazzopardi.statsleuth.pack.team.sd",
-            "com.lucasazzopardi.statsleuth.pack.team.sf"
+            "com.lucasazzopardi.statsleuth.pack.ari",
+            "com.lucasazzopardi.statsleuth.pack.lad",
+            "com.lucasazzopardi.statsleuth.pack.sd",
+            "com.lucasazzopardi.statsleuth.pack.sf"
         ]
     ]
 }

@@ -240,7 +240,7 @@ final class PlayerDataService {
                 description: "Current roster + legends for the \(team.rawValue).",
                 type: .team, playerIDs: ids,
                 isPurchased: false, price: 1.99, sport: .baseball,
-                productID: "com.lucasazzopardi.statsleuth.pack.team.\(team.abbreviation.lowercased())"
+                productID: "com.lucasazzopardi.statsleuth.pack.\(team.abbreviation.lowercased())"
             ))
         }
 
