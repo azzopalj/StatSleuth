@@ -7,40 +7,19 @@ struct ContentView: View {
     @Environment(GameCenterService.self)  private var gameCenterService
     @Environment(DeepLinkService.self)    private var deepLinkService
 
-    @State private var showOnboarding = false
     @State private var deepLinkPack: Pack?
     @State private var deepLinkMode: GameMode?
+    @State private var deepLinkPlayer: Player?
     @State private var navigateToDeepLink = false
-
-    private let onboardingKey = "com.lucasazzopardi.StatSleuth.hasSeenOnboarding"
 
     var body: some View {
         NavigationStack {
             HomeView()
                 .navigationDestination(isPresented: $navigateToDeepLink) {
                     if let pack = deepLinkPack, let mode = deepLinkMode {
-                        GameView(mode: mode, pack: pack)
+                        GameView(mode: mode, pack: pack, forcedPlayer: deepLinkPlayer)
                     }
                 }
-        }
-        .overlay {
-            if showOnboarding {
-                OnboardingView(isPresented: $showOnboarding)
-                    .transition(.opacity)
-                    .zIndex(100)
-            }
-        }
-        .onAppear {
-            if !UserDefaults.standard.bool(forKey: onboardingKey) {
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                    withAnimation { showOnboarding = true }
-                }
-            }
-        }
-        .onChange(of: showOnboarding) { _, showing in
-            if !showing {
-                UserDefaults.standard.set(true, forKey: onboardingKey)
-            }
         }
         .onChange(of: deepLinkService.pendingDeepLink) { _, link in
             guard let link else { return }
@@ -52,7 +31,7 @@ struct ContentView: View {
         guard case .play(let mlbID, let mode, let packType) = link else { return }
 
         // Find the player by mlbID
-        let allPacks  = playerDataService.buildPacks()
+        let allPacks  = playerDataService.packs
         let allPlayers = playerDataService.allPlayers
 
         guard let player = allPlayers.first(where: { $0.mlbID == mlbID }) else {
@@ -74,6 +53,7 @@ struct ContentView: View {
 
         deepLinkMode = mode
         deepLinkPack = pack
+        deepLinkPlayer = player
         navigateToDeepLink = true
         deepLinkService.clearPendingLink()
     }

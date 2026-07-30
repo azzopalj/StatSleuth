@@ -17,6 +17,7 @@ struct HowToPlayView: View {
                 .padding(.horizontal, 20)
                 .padding(.top, 8)
                 .padding(.bottom, 40)
+                .iPadContentFrame()
             }
             .navigationTitle("How to Play")
             .navigationBarTitleDisplayMode(.inline)
@@ -89,15 +90,23 @@ struct HowToPlayView: View {
 
                 VStack(alignment: .leading, spacing: 6) {
                     Text("Each guess compares:").font(.caption).foregroundStyle(.secondary)
-                    let cols = [GridItem(.flexible()), GridItem(.flexible())]
-                    LazyVGrid(columns: cols, alignment: .leading, spacing: 4) {
-                        ForEach(["Position", "Team", "Division", "League",
-                                 "Age", "Nationality", "Key Stat 1", "Key Stat 2"], id: \.self) { label in
-                            Label(label, systemImage: "checkmark.circle.fill")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                                .labelStyle(.titleAndIcon)
+                    HStack(alignment: .top, spacing: 16) {
+                        VStack(alignment: .leading, spacing: 4) {
+                            ForEach(["Position", "Division", "Age", "Key Stat 1"], id: \.self) { label in
+                                Label(label, systemImage: "checkmark.circle.fill")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
                         }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        VStack(alignment: .leading, spacing: 4) {
+                            ForEach(["Team", "League", "Nationality", "Key Stat 2"], id: \.self) { label in
+                                Label(label, systemImage: "checkmark.circle.fill")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
                     }
                 }
             }
@@ -153,18 +162,18 @@ struct HowToPlayView: View {
     // MARK: - Modes
 
     private var modesSection: some View {
-        InfoCard(title: "Game Modes", icon: "gamecontroller.fill", iconColor: .purple) {
+        InfoCard(title: "Game Modes", icon: "square.grid.2x2.fill", iconColor: .purple) {
             VStack(spacing: 12) {
-                modeRow(icon: "calendar",           color: .blue,   name: "Daily Challenge",
-                        desc: "One player per day — same for everyone worldwide.")
-                modeRow(icon: "chart.bar",          color: .green,  name: "Season Stats",
-                        desc: "Guess from this season's stats.")
-                modeRow(icon: "trophy",             color: .orange, name: "Career Stats",
-                        desc: "Guess from career totals.")
-                modeRow(icon: "figure.run",         color: .mint,   name: "Rookie Season",
-                        desc: "Only their debut season stats are shown.")
-                modeRow(icon: "questionmark.circle", color: .purple, name: "Mystery Era",
-                        desc: "Stats from a random hidden season of their career.")
+                modeRow(icon: "calendar",            color: .blue,   name: "Daily Challenge",
+                        desc: "One player per day. Same for everyone. Can you keep your streak alive?")
+                modeRow(icon: "chart.bar",           color: .green,  name: "Season Stats",
+                        desc: "Guess the player from their current season stats.")
+                modeRow(icon: "trophy",              color: .orange, name: "Career Stats",
+                        desc: "Guess the player from their career totals.")
+                modeRow(icon: "figure.run",          color: .mint,   name: "Rookie Season",
+                        desc: "Guess the player from their debut season stats only. Unlock at level 8.")
+                modeRow(icon: "questionmark.circle", color: .purple, name: "Mystery Year",
+                        desc: "Stats from a mystery year of their career. Guess the player. Unlock at level 12.")
             }
         }
     }

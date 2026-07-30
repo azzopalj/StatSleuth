@@ -2,6 +2,8 @@ import SwiftUI
 
 struct OnboardingView: View {
 
+    static let storageKey = "com.lucasazzopardi.StatSleuth.hasSeenOnboarding"
+
     @Binding var isPresented: Bool
     @State private var currentPage = 0
 
@@ -21,77 +23,71 @@ struct OnboardingView: View {
         OnboardingPage(
             emoji: "💡",
             title: "Use Hints Wisely",
-            description: "Stuck? Spend a hint to reveal the player's position, team, era, and more. You get 5 free hints per day.",
+            description: "Stuck? Spend hints to reveal the player's position, team, era, and more. Hints recharge over time — or buy more in the store.",
             detail: nil
         ),
         OnboardingPage(
             emoji: "🔥",
             title: "Keep Your Streak",
-            description: "Play the Daily Challenge every day to build your streak. Earn XP and unlock new game modes.",
+            description: "Play the Daily Challenge every day to build your streak. Earn XP to level up and unlock Rookie Season and Mystery Year modes.",
             detail: nil
         )
     ]
 
     var body: some View {
         ZStack {
-            Color.black.opacity(0.6)
+            Color(uiColor: .systemBackground)
                 .ignoresSafeArea()
 
-            VStack(spacing: 0) {
-                Spacer()
-
-                VStack(spacing: 24) {
-                    // Page indicator
-                    HStack(spacing: 6) {
-                        ForEach(0..<pages.count, id: \.self) { i in
-                            Capsule()
-                                .fill(i == currentPage ? Color.blue : Color.secondary.opacity(0.4))
-                                .frame(width: i == currentPage ? 20 : 6, height: 6)
-                                .animation(.spring(bounce: 0.3), value: currentPage)
-                        }
+            VStack(spacing: 24) {
+                // Page indicator
+                HStack(spacing: 6) {
+                    ForEach(0..<pages.count, id: \.self) { i in
+                        Capsule()
+                            .fill(i == currentPage ? Color.blue : Color.secondary.opacity(0.4))
+                            .frame(width: i == currentPage ? 20 : 6, height: 6)
+                            .animation(.spring(bounce: 0.3), value: currentPage)
                     }
-
-                    // Content
-                    TabView(selection: $currentPage) {
-                        ForEach(0..<pages.count, id: \.self) { i in
-                            pageView(pages[i])
-                                .tag(i)
-                        }
-                    }
-                    .tabViewStyle(.page(indexDisplayMode: .never))
-                    .frame(height: 380)
-
-                    // Buttons
-                    VStack(spacing: 12) {
-                        Button {
-                            if currentPage < pages.count - 1 {
-                                withAnimation { currentPage += 1 }
-                            } else {
-                                isPresented = false
-                            }
-                        } label: {
-                            Text(currentPage < pages.count - 1 ? "Next" : "Let's Play!")
-                                .font(.headline)
-                                .frame(maxWidth: .infinity)
-                                .padding(.vertical, 14)
-                                .background(.blue, in: RoundedRectangle(cornerRadius: 14))
-                                .foregroundStyle(.white)
-                        }
-
-                        if currentPage < pages.count - 1 {
-                            Button("Skip") { isPresented = false }
-                                .font(.subheadline)
-                                .foregroundStyle(.secondary)
-                        }
-                    }
-                    .padding(.horizontal, 24)
-                    .padding(.bottom, 8)
                 }
-                .padding(.top, 24)
-                .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 28, style: .continuous))
-                .padding(.horizontal, 16)
-                .padding(.bottom, 32)
+                .padding(.top, 16)
+
+                // Content — expands to fill available height
+                TabView(selection: $currentPage) {
+                    ForEach(0..<pages.count, id: \.self) { i in
+                        pageView(pages[i])
+                            .tag(i)
+                    }
+                }
+                .tabViewStyle(.page(indexDisplayMode: .never))
+                .frame(maxHeight: .infinity)
+
+                // Buttons
+                VStack(spacing: 12) {
+                    Button {
+                        if currentPage < pages.count - 1 {
+                            withAnimation { currentPage += 1 }
+                        } else {
+                            isPresented = false
+                        }
+                    } label: {
+                        Text(currentPage < pages.count - 1 ? "Next" : "Let's Play!")
+                            .font(.headline)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 14)
+                            .background(.blue, in: RoundedRectangle(cornerRadius: 14))
+                            .foregroundStyle(.white)
+                    }
+
+                    Button("Skip") { isPresented = false }
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .opacity(currentPage < pages.count - 1 ? 1 : 0)
+                        .disabled(currentPage == pages.count - 1)
+                }
+                .padding(.horizontal, 24)
+                .padding(.bottom, 16)
             }
+            .iPadContentFrame()
         }
     }
 
@@ -115,7 +111,10 @@ struct OnboardingView: View {
                 detail
                     .padding(.horizontal, 24)
             }
+
+            Spacer(minLength: 0)
         }
+        .padding(.top, 48)
     }
 }
 

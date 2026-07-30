@@ -25,6 +25,22 @@ enum Position: String, Codable, CaseIterable {
 
     var isPitcher: Bool { self == .startingPitcher || self == .reliefPitcher }
     var displayName: String { rawValue }
+
+    /// Positions within the same group count as a "close" guess. DH is deliberately
+    /// its own group — it isn't interchangeable with any fielding spot.
+    var group: PositionGroup {
+        switch self {
+        case .startingPitcher, .reliefPitcher:      return .pitcher
+        case .catcher, .firstBase, .secondBase,
+             .thirdBase, .shortStop:                return .infield
+        case .leftField, .centerField, .rightField: return .outfield
+        case .designatedHitter:                     return .designatedHitter
+        }
+    }
+}
+
+enum PositionGroup {
+    case pitcher, infield, outfield, designatedHitter
 }
 
 // MARK: - MLB Team
@@ -98,8 +114,8 @@ enum MLBTeam: String, Codable, CaseIterable {
         case .whiteSox, .guardians, .tigers, .royals, .twins: return .alCentral
         case .astros, .angels, .athletics, .mariners, .rangers: return .alWest
         case .braves, .marlins, .mets, .phillies, .nationals: return .nlEast
-        case .cubs, .reds, .rockies, .brewers, .pirates, .cardinals: return .nlCentral
-        case .diamondbacks, .dodgers, .padres, .giants: return .nlWest
+        case .cubs, .reds, .brewers, .pirates, .cardinals: return .nlCentral
+        case .diamondbacks, .dodgers, .padres, .giants, .rockies: return .nlWest
         }
     }
 
@@ -227,7 +243,7 @@ struct Player: Identifiable, Codable {
 
     func hitterStatsFor(mode: GameMode) -> HitterStats? {
         switch mode {
-        case .careerStats, .hallOfFame:
+        case .careerStats:
             return careerHitterStats
         case .rookieSeason:
             return rookieSeason?.hitterStats
@@ -241,7 +257,7 @@ struct Player: Identifiable, Codable {
 
     func pitcherStatsFor(mode: GameMode) -> PitcherStats? {
         switch mode {
-        case .careerStats, .hallOfFame:
+        case .careerStats:
             return careerPitcherStats
         case .rookieSeason:
             return rookieSeason?.pitcherStats

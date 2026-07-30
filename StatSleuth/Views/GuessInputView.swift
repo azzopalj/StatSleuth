@@ -11,8 +11,12 @@ struct GuessInputView: View {
     var body: some View {
         VStack(spacing: 0) {
             searchField
-            if !searchResults.isEmpty && isFocused {
-                resultsList
+            if isFocused && !searchQuery.isEmpty {
+                if searchResults.isEmpty {
+                    emptyState
+                } else {
+                    resultsList
+                }
             }
         }
     }
@@ -49,6 +53,30 @@ struct GuessInputView: View {
                 .stroke(isFocused ? Color.blue.opacity(0.5) : Color.clear, lineWidth: 1.5)
         )
         .animation(.easeInOut(duration: 0.15), value: isFocused)
+    }
+
+    // MARK: - Empty State
+
+    private var emptyState: some View {
+        HStack {
+            Image(systemName: "magnifyingglass")
+                .foregroundStyle(.secondary)
+            Text("No players found")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 14)
+        .background(Color(uiColor: .secondarySystemGroupedBackground))
+        .clipShape(RoundedRectangle(cornerRadius: 14))
+        .overlay(
+            RoundedRectangle(cornerRadius: 14)
+                .stroke(Color.primary.opacity(0.1), lineWidth: 0.5)
+        )
+        .transition(.asymmetric(
+            insertion: .move(edge: .top).combined(with: .opacity),
+            removal: .opacity
+        ))
     }
 
     // MARK: - Results Dropdown

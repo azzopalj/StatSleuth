@@ -14,10 +14,11 @@ struct PackSelectionView: View {
     @State private var searchQuery = ""
     @State private var showingUnlockAll = false
     @State private var purchaseError: String? = nil
+    @State private var packToPreview: Pack? = nil
 
     private var progress: UserProgress { progressService.progress }
 
-    private var allPacks: [Pack] { playerDataService.buildPacks() }
+    private var allPacks: [Pack] { playerDataService.packs }
 
     private var filteredPacks: [Pack] {
         guard !searchQuery.isEmpty else { return allPacks }
@@ -49,6 +50,14 @@ struct PackSelectionView: View {
             Button("OK") { purchaseError = nil }
         } message: {
             if let msg = purchaseError { Text(msg) }
+        }
+        .sheet(item: $packToPreview) { pack in
+            PackPaywallView(pack: pack) {
+                packToPreview = nil
+                Task { await buy(pack) }
+            } onDismiss: {
+                packToPreview = nil
+            }
         }
     }
 
@@ -176,7 +185,7 @@ struct PackSelectionView: View {
                 navigateToGame = true
             } else {
                 HapticEngine.impact()
-                Task { await buy(pack) }
+                packToPreview = pack
             }
         } label: {
             HStack(spacing: 12) {

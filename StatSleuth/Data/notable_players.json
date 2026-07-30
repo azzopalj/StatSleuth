@@ -1,58 +1,58 @@
 [
-  "Vladimir Guerrero Jr.", "Dylan Cease", "Kevin Gausman", "Shane Bieber", "George Springer", "Alejandro Kirk", "Max Scherzer",
+  "Vladimir Guerrero Jr.", "Dylan Cease", "Kevin Gausman", "Shane Bieber", "George Springer", "Alejandro Kirk", "Max Scherzer","Kazuma Okamoto","Ernie Clement","Louis Varland",
 
   "Aaron Judge", "Max Fried", "Carlos Rodón", "Jazz Chisholm Jr.", "Ben Rice",
   "Giancarlo Stanton", "Gerrit Cole", "David Bednar", "Paul Goldschmidt", "Cody Bellinger",
 
-  "Gunnar Henderson", "Jackson Holliday", "Adley Rutschman", "Jordan Westburg", "Chris Bassitt",
+  "Gunnar Henderson", "Jackson Holliday", "Adley Rutschman", "Jordan Westburg", "Chris Bassitt", "Pete Alonso",
 
-  "Garrett Crochet", "Roman Anthony", "Aroldis Chapman", "Jarren Duran", "Trevor Story",
+  "Garrett Crochet", "Roman Anthony", "Aroldis Chapman", "Jarren Duran", "Trevor Story", "Willson Contreras","Masataka Yoshida", "Wilyer Abreu",
 
   "Junior Caminero", "Shane McClanahan", "Yandy Díaz", "Chandler Simpson", "Jonathan Aranda", "Drew Rasmussen",
 
-  "Tarik Skubal", "Riley Greene", "Kerry Carpenter", "Gleyber Torres",
+  "Tarik Skubal", "Riley Greene", "Kerry Carpenter", "Gleyber Torres", "Kevin McGonigle", "Dillon Dingler", "Framber Valdez",
 
-  "Bobby Witt Jr.", "Cole Ragans", "Vinnie Pasquantino", "Jac Caglianone", "Salvador Perez", "Starling Marte",
+  "Bobby Witt Jr.", "Cole Ragans", "Vinnie Pasquantino", "Jac Caglianone", "Salvador Perez", "Starling Marte", "Carter Jensen", "Seth Lugo",
 
-  "José Ramírez", "Steven Kwan",
+  "José Ramírez", "Steven Kwan", "Travis Bazzana", "Chase DeLauter", "Parker Messick", "Gavin Williams", "Tanner Bibee",
 
-  "Byron Buxton", "Josh Bell", "Joe Ryan",
+  "Byron Buxton", "Josh Bell", "Joe Ryan", "Royce Lewis", "Luke Keaschall", "Ryan Jeffers",
 
-  "Miguel Vargas", "Munetaka Murakami", "Kyle Teel",
+  "Miguel Vargas", "Munetaka Murakami", "Kyle Teel", "Colson Montgomery", "Sam Antonacci", "Sean Burke",
 
   "Cal Raleigh", "Julio Rodríguez", "Logan Gilbert", "Bryan Woo", "George Kirby",
-  "Luis Castillo", "Randy Arozarena",
+  "Luis Castillo", "Randy Arozarena", "Josh Naylor", "Cole Young", "Dominic Canzone",
 
-  "Corey Seager", "Jacob deGrom", "Wyatt Langford", "Joc Pederson",
+  "Corey Seager", "Jacob deGrom", "Wyatt Langford", "Joc Pederson", "Brandon Nimmo", "Wyatt Langford", "Nathan Eovaldi", "Jake Burger",
 
-  "Yordan Alvarez", "José Altuve", "Jeremy Peña", "Hunter Brown", "Cam Smith", "Carlos Correa",
+  "Yordan Alvarez", "José Altuve", "Jeremy Peña", "Hunter Brown", "Cam Smith", "Carlos Correa", "Tatsuya Imai", "Isaac Paredes",
 
-  "Nick Kurtz", "Jacob Wilson", "Brent Rooker", "Shea Langeliers", "Luis Severino",
+  "Nick Kurtz", "Jacob Wilson", "Brent Rooker", "Shea Langeliers", "Luis Severino", "Tyler Soderstrom",
 
-  "Mike Trout", "Zach Neto", "Logan O'Hoppe", "Jose Soriano", "Jo Adell",
+  "Mike Trout", "Zach Neto", "Logan O'Hoppe", "Jose Soriano", "Jo Adell", "Reid Detmers",
 
   "Juan Soto", "Francisco Lindor", "Bo Bichette", "Luis Robert Jr.", "Freddy Peralta",
-  "Devin Williams", "Marcus Semien",
+  "Devin Williams", "Marcus Semien", "Carson Benge", "Nolan McLean",
 
-  "Ronald Acuña Jr.", "Matt Olson", "Michael Harris II", "Chris Sale", "Drake Baldwin", "Austin Riley",
+  "Ronald Acuña Jr.", "Matt Olson", "Michael Harris II", "Chris Sale", "Drake Baldwin", "Austin Riley", "Ozzie Albies",
 
-  "Bryce Harper", "Zack Wheeler", "Trea Turner", "Kyle Schwarber", "Cristopher Sánchez",
+  "Bryce Harper", "Zack Wheeler", "Trea Turner", "Kyle Schwarber", "Cristopher Sánchez", "Brandon Marsh", "Zack Wheeler", "Alec Bohm", "Jesús Luzardo", "Aaron Nola", "Bryson Stott", "J. T. Realmuto", "Jhoan Duran",
 
-  "Dylan Crews", "CJ Abrams",
+  "Dylan Crews", "CJ Abrams", "James Wood", "Keibert Ruiz",
 
   "Sandy Alcantara", "Eury Pérez", "Otto López", "Xavier Edwards", "Connor Norby", "Kyle Stowers",
 
   "Pete Crow-Armstrong", "Seiya Suzuki", "Shota Imanaga", "Ian Happ",
-  "Alex Bregman", "Dansby Swanson", "Michael Conforto",
+  "Alex Bregman", "Dansby Swanson", "Michael Conforto", "Nico Hoerner", "Michael Busch",
 
-  "Jackson Chourio", "William Contreras", "Christian Yelich", "Brice Turang", "Jacob Misiorowski",
+  "Jackson Chourio", "William Contreras", "Christian Yelich", "Brice Turang", "Jacob Misiorowski", "Jake Bauers",
 
-  "Elly De La Cruz", "Hunter Greene", "Spencer Steer", "Andrew Abbott", "Eugenio Suarez",
+  "Elly De La Cruz", "Hunter Greene", "Spencer Steer", "Andrew Abbott", "Eugenio Suarez", "Chase Burns", "Sal Stewart",
 
-  "Jordan Walker",
+  "Jordan Walker", "JJ Wetherholt", "Ivan Herrera", "Andre Pallante",
 
   "Paul Skenes", "Oneil Cruz", "Bryan Reynolds", "Mitch Keller", "Bubba Chandler",
-  "Marcell Ozuna", "Gregory Soto",
+  "Marcell Ozuna", "Gregory Soto", "Brandon Lowe",
 
   "Shohei Ohtani", "Mookie Betts", "Freddie Freeman", "Yoshinobu Yamamoto", "Kyle Tucker",
   "Will Smith", "Max Muncy", "Blake Snell", "Teoscar Hernandez", "Tyler Glasnow", "Edwin Diaz",
@@ -61,10 +61,10 @@
   "Walker Buehler", "Michael King",
 
   "Corbin Carroll", "Ketel Marte", "Jordan Lawlar", "Brandon Pfaadt", "Geraldo Perdomo",
-  "Zac Gallen", "Eduardo Rodriguez", "Nolan Arenado",
+  "Zac Gallen", "Eduardo Rodriguez", "Nolan Arenado", "Gabriel Moreno",
 
   "Rafael Devers", "Logan Webb", "Matt Chapman", "Willy Adames", "Jung Hoo Lee",
   "Robbie Ray", "Luis Arraez",
 
-  "Ezequiel Tovar", "Hunter Goodman", "Kyle Freeland"
+  "Ezequiel Tovar", "Hunter Goodman", "Kyle Freeland", "Mickey Moniak"
 ]

@@ -45,41 +45,56 @@ final class GameViewModel {
 
     // MARK: - Session Management
 
-    func startSession(mode: GameMode, pack: Pack) {
+    func startSession(mode: GameMode, pack: Pack, forcedPlayer: Player? = nil) {
         let allPlayers = playerDataService.players(in: pack)
-        let eligible   = allPlayers.filter { isEligible($0, for: mode) }
-        let pool       = eligible.isEmpty ? allPlayers : eligible
+
+        // Eligible pool: only players that have stats for this mode.
+        // Anti-repeat tracking, seen-window size, and random selection all operate
+        // on this pool so players without stats never pollute the rotation.
+        let eligible = allPlayers.filter { hasStats($0, for: mode) }
+        let pool = eligible.isEmpty ? allPlayers : eligible
+
 
         let target: Player?
-        if mode == .daily {
+        if let forced = forcedPlayer {
+            target = forced
+        } else if mode == .daily {
+            // Prevent replaying the daily via deep link or programmatic call
+            if forcedPlayer == nil && progressService.progress.hasPlayedDailyToday {
+                errorMessage = "You've already completed today's daily challenge. Come back tomorrow!"
+                return
+            }
             target = playerDataService.dailyPlayer(from: pool)
         } else {
-            // Exclude recently seen players to prevent repeats
-            let recentIDs = progressService.recentlySeenIDs(mode: mode, packID: pack.id)
-            let unseenPool = pool.filter { !recentIDs.contains($0.id) }
-            // If everyone has been seen, reset and use full pool
-            let finalPool  = unseenPool.isEmpty ? pool : unseenPool
-            target = finalPool.randomElement()
+            // Anti-repeat cycling only applies to the Notable Players pack.
+            // Team/division packs are smaller paid packs — full random is fine there.
+            if pack.name == "Notable Players" {
+                let recentIDs  = progressService.recentlySeenIDs(mode: mode, packID: pack.id)
+                let unseenPool = pool.filter { !recentIDs.contains($0.id) }
+                // When everyone eligible has been seen the cycle resets naturally
+                let finalPool  = unseenPool.isEmpty ? pool : unseenPool
+                target = finalPool.randomElement()
+            } else {
+                target = pool.randomElement()
+            }
         }
 
         guard let target else {
-            errorMessage = "No players found in this pack."
+            errorMessage = "No players with stats found in this pack."
             return
         }
 
-        // Record this player as seen
-        if mode != .daily {
+        if mode != .daily && pack.name == "Notable Players" {
+            // Track seen against the eligible pool size so the window resets correctly
             progressService.recordSeen(playerID: target.id, mode: mode, packID: pack.id, poolSize: pool.count)
         }
 
-        // For Mystery Era, randomly pick one season from the player's mystery pool
         var resolvedTarget = target
         if mode == .mysteryEra {
-            let pool = target.mysterySeasons ?? []
-            if let picked = pool.randomElement() {
+            let seasons = target.mysterySeasons ?? []
+            if let picked = seasons.randomElement() {
                 resolvedTarget.mysterySeason = picked
             }
-            // Historic players already have mysterySeason set in JSON; no action needed if pool is empty
         }
 
         session = GameSession(mode: mode, pack: pack, targetPlayer: resolvedTarget)
@@ -89,91 +104,24 @@ final class GameViewModel {
         errorMessage = nil
     }
 
-    // MARK: - Eligibility filtering
+    // MARK: - Stats check (used post-selection to skip players with no usable stats)
 
-    private func isEligible(_ player: Player, for mode: GameMode) -> Bool {
-        // Notable players are hand-curated — always include them regardless of stats thresholds.
-        // This ensures injured, suspended, or low-PA notable players are still in the pool.
-        if player.tier == .notable {
-            switch mode {
-            case .careerStats, .hallOfFame:
-                return player.careerHitterStats != nil || player.careerPitcherStats != nil
-            case .rookieSeason:
-                return player.rookieSeason?.hitterStats != nil || player.rookieSeason?.pitcherStats != nil
-            default:
-                return true
-            }
-        }
-
-        if player.isHistoric {
-            switch mode {
-            case .careerStats, .hallOfFame:
-                return player.careerHitterStats != nil || player.careerPitcherStats != nil
-            case .rookieSeason:
-                return player.rookieSeason?.hitterStats != nil || player.rookieSeason?.pitcherStats != nil
-            default:
-                return player.historicSeason != nil
-            }
-        }
-
+    private func hasStats(_ player: Player, for mode: GameMode) -> Bool {
         switch mode {
         case .seasonStats, .daily:
-            return meetsSeasonThreshold(hitter: player.hitterStats, pitcher: player.pitcherStats)
+            return player.hitterStats != nil || player.pitcherStats != nil
         case .careerStats:
-            return meetsCareerThreshold(player)
-        case .hallOfFame:
-            return meetsHallOfFameThreshold(player)
+            return player.careerHitterStats != nil || player.careerPitcherStats != nil
         case .rookieSeason:
-            guard let rs = player.rookieSeason else { return false }
-            return meetsSeasonThreshold(hitter: rs.hitterStats, pitcher: rs.pitcherStats)
+            return player.rookieSeason?.hitterStats != nil || player.rookieSeason?.pitcherStats != nil
         case .mysteryEra:
-            // Need at least one season in the mystery pool, OR a curated historic mysterySeason
-            if let seasons = player.mysterySeasons, !seasons.isEmpty {
-                return seasons.contains {
-                    meetsSeasonThreshold(hitter: $0.hitterStats, pitcher: $0.pitcherStats)
-                }
+            if let seasons = player.mysterySeasons, seasons.contains(where: { $0.hitterStats != nil || $0.pitcherStats != nil }) {
+                return true
             }
-            if let ms = player.mysterySeason {
-                return meetsSeasonThreshold(hitter: ms.hitterStats, pitcher: ms.pitcherStats)
-            }
-            return false
+            return player.mysterySeason != nil
         }
     }
 
-    private func meetsSeasonThreshold(hitter: HitterStats?, pitcher: PitcherStats?) -> Bool {
-        if let h = hitter {
-            return (h.atBats + h.walks) >= 50
-        }
-        if let p = pitcher {
-            return p.gamesStarted >= 5 || p.gamesPlayed >= 10
-        }
-        return false
-    }
-
-    private func meetsCareerThreshold(_ player: Player) -> Bool {
-        if let h = player.careerHitterStats {
-            return h.gamesPlayed >= 500
-        }
-        if let p = player.careerPitcherStats {
-            if p.gamesStarted >= 10 {
-                // SP: 400+ innings pitched
-                return p.inningsPitched >= 400
-            }
-            // RP: 80+ saves — filters to notable closers/relievers only
-            return p.saves >= 80
-        }
-        return false
-    }
-
-    private func meetsHallOfFameThreshold(_ player: Player) -> Bool {
-        if let h = player.careerHitterStats {
-            return (h.atBats + h.walks) >= 3000
-        }
-        if let p = player.careerPitcherStats {
-            return p.gamesStarted >= 200 || p.gamesPlayed >= 400
-        }
-        return false
-    }
 
     // MARK: - Search
 
@@ -223,7 +171,7 @@ final class GameViewModel {
     func requestHint(type: HintType) -> Hint? {
         guard var currentSession = session,
               let target = targetPlayer,
-              progressService.useHint() else { return nil }
+              progressService.useHint(cost: type.hintCost) else { return nil }
 
         let value = hintValue(for: type, player: target)
         let hint = Hint(type: type, value: value)
@@ -277,7 +225,9 @@ final class GameViewModel {
 
     private func comparePosition(_ a: Position, _ b: Position) -> ComparisonResult {
         if a == b { return .match }
-        if a.isPitcher == b.isPitcher { return .close }
+        // Close only within the same group — e.g. LF vs RF, or SS vs 2B.
+        // A catcher guessed against a first baseman is a miss, not a near-miss.
+        if a.group == b.group { return .close }
         return .noMatch
     }
 
@@ -341,6 +291,15 @@ final class GameViewModel {
     func dismissResults() {
         showingResults = false
         session = nil
+    }
+
+    /// Immediately ends the current session as a loss (used when the player quits mid-game).
+    func forceQuit() {
+        guard var currentSession = session, case .inProgress = currentSession.state else { return }
+        currentSession.state = .lost
+        currentSession.endedAt = Date()
+        session = currentSession
+        handleGameComplete(currentSession)
     }
 }
 

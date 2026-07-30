@@ -15,18 +15,41 @@ enum LoadState {
 final class PlayerDataService {
 
     private(set) var allPlayers: [Player] = []
+    private(set) var packs: [Pack] = []
     private(set) var loadState: LoadState = .idle
+
+    /// Tracks the background rookie/mystery-year fetch, separate from core loading.
+    private(set) var extendedState: LoadState = .idle
+    @ObservationIgnored private var extendedTask: Task<Void, Never>?
 
     var isLoaded: Bool { if case .loaded = loadState { return true }; return false }
     var isLoading: Bool { if case .loading = loadState { return true }; return false }
     var loadingProgress: Double { if case .loading(let p) = loadState { return p }; return 0 }
 
-    private let cacheVersion    = 18
+    var isExtendedLoaded: Bool { if case .loaded = extendedState { return true }; return false }
+
+    /// Modes that need rookie/mystery-year data can only start once phase 2 finishes.
+    func isReady(for mode: GameMode) -> Bool {
+        switch mode {
+        case .rookieSeason, .mysteryEra: return isExtendedLoaded
+        default:                         return true
+        }
+    }
+
+    /// Combines a manual data-structure version with the app's marketing version string
+    /// (e.g. "19-1.4.0"). Bumps automatically on every App Store release; bump the
+    /// integer manually whenever the player data schema changes between releases.
+    private var cacheVersion: String {
+        let dataVersion = 24
+        let appVersion  = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
+        return "\(dataVersion)-\(appVersion)"
+    }
     private let cacheKey        = "com.lucasazzopardi.StatSleuth.playerCacheDate"
     private let cacheVersionKey = "com.lucasazzopardi.StatSleuth.playerCacheVersion"
+    private let extendedCacheKey = "com.lucasazzopardi.StatSleuth.extendedCacheVersion"
 
     private var cacheIsStale: Bool {
-        let stored = UserDefaults.standard.integer(forKey: cacheVersionKey)
+        let stored = UserDefaults.standard.string(forKey: cacheVersionKey)
         if stored != cacheVersion {
             // Delete stale cache file so it can't be used as fallback either
             if let url = cacheURL { try? FileManager.default.removeItem(at: url) }
@@ -42,15 +65,20 @@ final class PlayerDataService {
         loadState = .loading(progress: 0)
 
         if !cacheIsStale, let cached = loadCachedPlayers(), !cached.isEmpty {
-            print("📦 Using cached players (\(cached.count))")
-            allPlayers = cached
-            loadState = .loaded
+            finishLoad(with: cached)
+            // The cache is written twice: once after phase 1, again after phase 2.
+            // Only the second write sets this flag.
+            if UserDefaults.standard.string(forKey: extendedCacheKey) == cacheVersion {
+                extendedState = .loaded
+            } else {
+                startExtendedLoad()
+            }
             return
         }
 
         do {
-            var activePlayers = try await MLBAPIService.shared.fetchAllPlayers { [weak self] p in
-                Task { @MainActor in self?.loadState = .loading(progress: p * 0.85) }
+            var activePlayers = try await MLBAPIService.shared.fetchCorePlayers { [weak self] p in
+                Task { @MainActor in self?.loadState = .loading(progress: p * 0.9) }
             }
 
             // Tag notable players
@@ -60,40 +88,82 @@ final class PlayerDataService {
                 return rebuildPlayer(player, tier: isNotable ? .notable : .fullRoster)
             }
 
-            // Merge in historic players
-            let historicPlayers = loadHistoricPlayers()
-            print("📜 Loaded \(historicPlayers.count) historic players")
-
-            allPlayers = (activePlayers + historicPlayers)
+            let merged = (activePlayers + loadHistoricPlayers())
                 .sorted { $0.lastName < $1.lastName }
 
             loadState = .loading(progress: 0.95)
-            cachePlayersLocally(allPlayers)
-            UserDefaults.standard.set(Date(), forKey: cacheKey)
-            UserDefaults.standard.set(cacheVersion, forKey: cacheVersionKey)
-            print("✅ Total players: \(allPlayers.count)")
-            loadState = .loaded
+            persistCache(merged)
+            finishLoad(with: merged)
+            startExtendedLoad()
 
         } catch {
-            print("⚠️ API failed: \(error). Falling back.")
             if let cached = loadCachedPlayers(), !cached.isEmpty {
-                allPlayers = cached; loadState = .loaded; return
+                finishLoad(with: cached); return
             }
             if let bundled = loadBundledPlayers(), !bundled.isEmpty {
-                allPlayers = bundled; loadState = .loaded; return
+                finishLoad(with: bundled); return
             }
             loadState = .failed("Unable to load player data. Please check your connection.")
         }
+    }
+
+    private func finishLoad(with players: [Player]) {
+        allPlayers = players
+        packs = buildPacks()
+        loadState = .loaded
+    }
+
+    private func persistCache(_ players: [Player]) {
+        cachePlayersLocally(players)
+        UserDefaults.standard.set(Date(), forKey: cacheKey)
+        UserDefaults.standard.set(cacheVersion, forKey: cacheVersionKey)
+    }
+
+    // MARK: - Phase 2: rookie & mystery-year stats
+
+    /// Fetching these costs dozens of extra per-year API calls, so it runs in the
+    /// background once the app is already usable. Only Rookie Season and Mystery Year
+    /// modes need it — both are level-gated, so new users never wait on it.
+    private func startExtendedLoad() {
+        guard extendedTask == nil else { return }
+        extendedState = .loading(progress: 0)
+        let players = allPlayers
+        extendedTask = Task { [weak self] in
+            let extended = await MLBAPIService.shared.fetchExtendedStats(for: players)
+            guard !Task.isCancelled, let self else { return }
+            await MainActor.run { self.applyExtendedStats(extended) }
+        }
+    }
+
+    private func applyExtendedStats(_ extended: [Int: ExtendedStats]) {
+        guard !extended.isEmpty else {
+            extendedState = .failed("Unable to load data for this mode.")
+            extendedTask = nil
+            return
+        }
+        allPlayers = allPlayers.map { player in
+            guard let mlbID = player.mlbID, let ext = extended[mlbID] else { return player }
+            return rebuildPlayer(player, rookieSeason: ext.rookieSeason, mysterySeasons: ext.mysterySeasons)
+        }
+        packs = buildPacks()
+        persistCache(allPlayers)
+        UserDefaults.standard.set(cacheVersion, forKey: extendedCacheKey)
+        extendedState = .loaded
+        extendedTask = nil
+    }
+
+    /// Retries phase 2 after a failure — called from the game-start loading screen.
+    func retryExtendedLoad() {
+        guard case .failed = extendedState else { return }
+        extendedTask = nil
+        startExtendedLoad()
     }
 
     // MARK: - Historic players
 
     private func loadHistoricPlayers() -> [Player] {
         guard let url = Bundle.main.url(forResource: "historic_players", withExtension: "json"),
-              let data = try? Data(contentsOf: url) else {
-            print("⚠️ historic_players.json not found")
-            return []
-        }
+              let data = try? Data(contentsOf: url) else { return [] }
         return (try? JSONDecoder().decode([Player].self, from: data)) ?? []
     }
 
@@ -108,19 +178,24 @@ final class PlayerDataService {
 
     // MARK: - Rebuild player with new tier (Player is a struct so we recreate)
 
-    private func rebuildPlayer(_ p: Player, tier: PlayerTier) -> Player {
+    private func rebuildPlayer(
+        _ p: Player,
+        tier: PlayerTier? = nil,
+        rookieSeason: HistoricSeason? = nil,
+        mysterySeasons: [HistoricSeason]? = nil
+    ) -> Player {
         Player(
             id: p.id, mlbID: p.mlbID, firstName: p.firstName, lastName: p.lastName,
             legalFirstName: p.legalFirstName,
             team: p.team, teams: p.teams, position: p.position,
             age: p.age, nationality: p.nationality,
             debutYear: p.debutYear, jerseyNumber: p.jerseyNumber,
-            tier: tier, seasonYear: p.seasonYear, careerSpan: p.careerSpan,
+            tier: tier ?? p.tier, seasonYear: p.seasonYear, careerSpan: p.careerSpan,
             hitterStats: p.hitterStats, pitcherStats: p.pitcherStats,
             careerHitterStats: p.careerHitterStats, careerPitcherStats: p.careerPitcherStats,
             historicSeason: p.historicSeason,
-            rookieSeason: p.rookieSeason,
-            mysterySeasons: p.mysterySeasons,
+            rookieSeason: rookieSeason ?? p.rookieSeason,
+            mysterySeasons: mysterySeasons ?? p.mysterySeasons,
             mysterySeason: p.mysterySeason
         )
     }
@@ -151,7 +226,7 @@ final class PlayerDataService {
     // MARK: - Querying
 
     func players(in pack: Pack) -> [Player] {
-        allPlayers.filter { pack.playerIDs.contains($0.id) }
+        return allPlayers.filter { pack.playerIDs.contains($0.id) }
     }
 
     func search(_ query: String) -> [Player] {
@@ -163,20 +238,27 @@ final class PlayerDataService {
             $0.lastName.range(of: query, options: opts) != nil ||
             ($0.legalFirstName?.range(of: query, options: opts) != nil)
         }
-        #if DEBUG
-        if results.isEmpty {
-            // Help diagnose missing players — find close matches
-            let close = allPlayers.filter {
-                $0.lastName.lowercased().hasPrefix(String(query.lowercased().prefix(4)))
-            }.map { "\($0.fullName) [\($0.firstName)|\($0.lastName)|legal:\($0.legalFirstName ?? "nil")]" }
-            if !close.isEmpty { print("🔍 No exact match for '\(query)'. Close: \(close.prefix(5))") }
-            else { print("🔍 No match for '\(query)' — no close last names either") }
-        }
-        #endif
         return results
     }
 
     func player(withID id: UUID) -> Player? { allPlayers.first { $0.id == id } }
+
+    /// Merges multiple packs into a single ephemeral pack, deduplicating by player ID.
+    func mergedPack(from packs: [Pack]) -> Pack {
+        let merged = Array(Set(packs.flatMap { $0.playerIDs }))
+        let names  = packs.map { $0.name }.joined(separator: ", ")
+        return Pack(
+            id: UUID(),
+            name: "Custom",
+            description: names,
+            type: .base,
+            playerIDs: merged,
+            isPurchased: true,
+            price: nil,
+            sport: .baseball,
+            productID: nil
+        )
+    }
 
     func dailyPlayer(from players: [Player]) -> Player? {
         guard !players.isEmpty else { return nil }
@@ -198,7 +280,7 @@ final class PlayerDataService {
 
     // MARK: - Pack building
 
-    func buildPacks() -> [Pack] {
+    private func buildPacks() -> [Pack] {
         guard !allPlayers.isEmpty else { return [] }
         var packs: [Pack] = []
 

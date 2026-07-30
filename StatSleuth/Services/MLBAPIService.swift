@@ -2,6 +2,12 @@ import Foundation
 
 // MARK: - MLB API Service
 
+/// Rookie/mystery-year data loaded after the core player set, keyed by MLB ID.
+struct ExtendedStats: Sendable {
+    var rookieSeason: HistoricSeason?
+    var mysterySeasons: [HistoricSeason]?
+}
+
 actor MLBAPIService {
 
     static let shared = MLBAPIService()
@@ -28,15 +34,15 @@ actor MLBAPIService {
     // MARK: - Assembled stats for one player (all in app model types)
 
     private struct PlayerStats {
-        var seasonHitter:   HitterStats?
-        var seasonPitcher:  PitcherStats?
-        var careerHitter:   HitterStats?
-        var careerPitcher:  PitcherStats?
-        var rookieHitter:   HitterStats?
-        var rookiePitcher:  PitcherStats?
+        var seasonHitter:   HitterStats?  = nil
+        var seasonPitcher:  PitcherStats? = nil
+        var careerHitter:   HitterStats?  = nil
+        var careerPitcher:  PitcherStats? = nil
+        var rookieHitter:   HitterStats?  = nil
+        var rookiePitcher:  PitcherStats? = nil
         var mysterySeasons: [HistoricSeason] = []
-        var seasonYear:     Int?
-        var rookieYear:     Int?
+        var seasonYear:     Int? = nil
+        var rookieYear:     Int? = nil
     }
 
     // Even years across the last decade — gives a varied pool without too many API calls
@@ -44,18 +50,19 @@ actor MLBAPIService {
 
     // MARK: - Public
 
-    func fetchAllPlayers(progress: @escaping (Double) -> Void) async throws -> [Player] {
+    /// Phase 1 — everything needed for Season Stats, Career Stats, and Daily.
+    /// Deliberately excludes rookie and mystery-year data, which require dozens of
+    /// extra per-year API calls; those load later via `fetchExtendedStats`.
+    func fetchCorePlayers(progress: @escaping (Double) -> Void) async throws -> [Player] {
         progress(0.05)
 
         // Step 1: 40-man rosters — returns [playerID: teamID] map
         let rosterMap = try await fetchAllRosterIDs()
-        print("📋 \(rosterMap.count) rostered players")
-        progress(0.20)
+        progress(0.25)
 
         // Step 2: Person info
         let people = try await fetchPeopleInBulk(ids: Array(rosterMap.keys))
-        print("👤 \(people.count) person records")
-        progress(0.35)
+        progress(0.45)
 
         // Step 3: Bulk stats — paginated, returns [mlbID: HitterStats/PitcherStats] directly
         async let csHit   = fetchBulkHitterStats(season: currentSeason)
@@ -68,80 +75,8 @@ actor MLBAPIService {
         let (curHit, curPitch, prevHit, prevPitch, carHit, carPitch) = await (
             csHit, csPitch, psHit, psPitch, cHit, cPitch
         )
-        print("📊 Bulk: cur \(curHit.count)H/\(curPitch.count)P  prev \(prevHit.count)H/\(prevPitch.count)P  career \(carHit.count)H/\(carPitch.count)P")
-        progress(0.70)
+        progress(0.9)
 
-        // Step 4: Fetch rookie stats — one bulk call per distinct debut year, all concurrent
-        let debutYears = Set(people.compactMap { p in
-            p.mlbDebutDate.flatMap { Int(String($0.prefix(4))) }
-        }).filter { $0 < currentSeason }
-
-        typealias YearBatch = (year: Int, hitters: [Int: HitterStats], pitchers: [Int: PitcherStats])
-        var rookieHittersForYear: [Int: [Int: HitterStats]] = [:]
-        var rookiePitchersForYear: [Int: [Int: PitcherStats]] = [:]
-
-        await withTaskGroup(of: YearBatch.self) { group in
-            for year in debutYears {
-                group.addTask {
-                    async let h = self.fetchBulkHitterStats(season: year)
-                    async let p = self.fetchBulkPitcherStats(season: year)
-                    return (year: year, hitters: await h, pitchers: await p)
-                }
-            }
-            for await batch in group {
-                rookieHittersForYear[batch.year] = batch.hitters
-                rookiePitchersForYear[batch.year] = batch.pitchers
-            }
-        }
-
-        // Build flat per-player rookie stat lookup keyed by mlbID
-        var rookieHitters: [Int: HitterStats] = [:]
-        var rookiePitchers: [Int: PitcherStats] = [:]
-        var rookieYears: [Int: Int] = [:]
-        for person in people {
-            guard let year = person.mlbDebutDate.flatMap({ Int(String($0.prefix(4))) }) else { continue }
-            if let h = rookieHittersForYear[year]?[person.id] {
-                rookieHitters[person.id] = h
-                rookieYears[person.id] = year
-            }
-            if let p = rookiePitchersForYear[year]?[person.id] {
-                rookiePitchers[person.id] = p
-                rookieYears[person.id] = year
-            }
-        }
-        print("🎓 Rookie stats: \(rookieHitters.count)H / \(rookiePitchers.count)P across \(debutYears.count) debut years")
-
-        // Step 5: Fetch mystery era stats — one bulk call per target year, all concurrent
-        var mysterySeasonsByID: [Int: [HistoricSeason]] = [:]
-
-        await withTaskGroup(of: YearBatch.self) { group in
-            for year in mysteryYears {
-                group.addTask {
-                    async let h = self.fetchBulkHitterStats(season: year)
-                    async let p = self.fetchBulkPitcherStats(season: year)
-                    return (year: year, hitters: await h, pitchers: await p)
-                }
-            }
-            for await batch in group {
-                let allIDs = Set(batch.hitters.keys).union(batch.pitchers.keys)
-                for id in allIDs {
-                    let season = HistoricSeason(
-                        year: batch.year, war: 0,
-                        hitterStats: batch.hitters[id],
-                        pitcherStats: batch.pitchers[id]
-                    )
-                    mysterySeasonsByID[id, default: []].append(season)
-                }
-            }
-        }
-        // Sort each player's mystery seasons chronologically
-        for id in mysterySeasonsByID.keys {
-            mysterySeasonsByID[id]?.sort { $0.year < $1.year }
-        }
-        print("🔮 Mystery seasons: \(mysterySeasonsByID.count) players with \(mysteryYears.count) candidate years each")
-        progress(0.85)
-
-        // Step 5: Assemble Player objects — include ALL rostered players
         let players: [Player] = people.compactMap { person in
             let usedCurrent = curHit[person.id] != nil || curPitch[person.id] != nil
             let resolvedYear: Int?
@@ -154,19 +89,66 @@ actor MLBAPIService {
                 seasonPitcher:  curPitch[person.id] ?? prevPitch[person.id],
                 careerHitter:   carHit[person.id],
                 careerPitcher:  carPitch[person.id],
-                rookieHitter:   rookieHitters[person.id],
-                rookiePitcher:  rookiePitchers[person.id],
-                mysterySeasons: mysterySeasonsByID[person.id] ?? [],
-                seasonYear:     resolvedYear,
-                rookieYear:     rookieYears[person.id]
+                seasonYear:     resolvedYear
             )
             // Use roster-derived teamID as authoritative team source
             return mapToPlayer(person: person, stats: stats, rosterTeamID: rosterMap[person.id])
         }
 
         progress(1.0)
-        print("✅ Built \(players.count) players")
         return players.sorted { $0.lastName < $1.lastName }
+    }
+
+    /// Phase 2 — rookie-season and mystery-year stats, keyed by mlbID.
+    /// Runs in the background after the app is already usable. Each distinct year is
+    /// fetched exactly once even when it serves as both a debut year and a mystery year.
+    func fetchExtendedStats(for players: [Player]) async -> [Int: ExtendedStats] {
+        let debutYears = Set(players.map(\.debutYear)).filter { $0 <= currentSeason }
+        let years = debutYears.union(mysteryYears)
+
+        typealias YearBatch = (year: Int, hitters: [Int: HitterStats], pitchers: [Int: PitcherStats])
+        var hittersForYear:  [Int: [Int: HitterStats]]  = [:]
+        var pitchersForYear: [Int: [Int: PitcherStats]] = [:]
+
+        await withTaskGroup(of: YearBatch.self) { group in
+            for year in years {
+                group.addTask {
+                    async let h = self.fetchBulkHitterStats(season: year)
+                    async let p = self.fetchBulkPitcherStats(season: year)
+                    return (year: year, hitters: await h, pitchers: await p)
+                }
+            }
+            for await batch in group {
+                hittersForYear[batch.year]  = batch.hitters
+                pitchersForYear[batch.year] = batch.pitchers
+            }
+        }
+
+        var result: [Int: ExtendedStats] = [:]
+        for player in players {
+            guard let mlbID = player.mlbID else { continue }
+            let isPitcher = player.isPitcher
+
+            let rookieH = !isPitcher ? hittersForYear[player.debutYear]?[mlbID]  : nil
+            let rookieP =  isPitcher ? pitchersForYear[player.debutYear]?[mlbID] : nil
+            let rookieSeason = (rookieH != nil || rookieP != nil)
+                ? HistoricSeason(year: player.debutYear, war: 0, hitterStats: rookieH, pitcherStats: rookieP)
+                : nil
+
+            let mystery: [HistoricSeason] = mysteryYears.compactMap { year in
+                let h = !isPitcher ? hittersForYear[year]?[mlbID]  : nil
+                let p =  isPitcher ? pitchersForYear[year]?[mlbID] : nil
+                guard h != nil || p != nil else { return nil }
+                return HistoricSeason(year: year, war: 0, hitterStats: h, pitcherStats: p)
+            }.sorted { $0.year < $1.year }
+
+            guard rookieSeason != nil || !mystery.isEmpty else { continue }
+            result[mlbID] = ExtendedStats(
+                rookieSeason: rookieSeason,
+                mysterySeasons: mystery.isEmpty ? nil : mystery
+            )
+        }
+        return result
     }
 
     // MARK: - Roster
@@ -210,7 +192,7 @@ actor MLBAPIService {
         var result: [Int: HitterStats] = [:]
         var offset = 0
         while true {
-            var urlStr = "\(baseURL)/stats?stats=\(season == nil ? "career" : "season")&group=hitting&sportId=1&limit=500&offset=\(offset)"
+            var urlStr = "\(baseURL)/stats?stats=\(season == nil ? "career" : "season")&group=hitting&sportId=1&playerPool=All&limit=500&offset=\(offset)"
             if let s = season { urlStr += "&season=\(s)" }
             guard let url = URL(string: urlStr),
                   let (data, resp) = try? await session.data(from: url),
@@ -234,7 +216,7 @@ actor MLBAPIService {
         var result: [Int: PitcherStats] = [:]
         var offset = 0
         while true {
-            var urlStr = "\(baseURL)/stats?stats=\(season == nil ? "career" : "season")&group=pitching&sportId=1&limit=500&offset=\(offset)"
+            var urlStr = "\(baseURL)/stats?stats=\(season == nil ? "career" : "season")&group=pitching&sportId=1&playerPool=All&limit=500&offset=\(offset)"
             if let s = season { urlStr += "&season=\(s)" }
             guard let url = URL(string: urlStr),
                   let (data, resp) = try? await session.data(from: url),
@@ -259,17 +241,10 @@ actor MLBAPIService {
 
     private func mapToPlayer(person: PersonSummary, stats: PlayerStats, rosterTeamID: Int? = nil) -> Player? {
         let abbr = person.primaryPosition?.abbreviation ?? "UN"
-        guard abbr != "TWP" else { return nil }
-        let rawPosition = mapPosition(abbr)
-        let isPitcherAbbr = ["SP","RP","CL","P"].contains(abbr)
-
-        // Infer actual pitcher role (SP/RP/CL) from stats rather than API label
-        let position: Position
-        if isPitcherAbbr {
-            position = inferPitcherPosition(stats: stats.careerPitcher ?? stats.seasonPitcher)
-        } else {
-            position = rawPosition
-        }
+        // Two-way players (e.g. Ohtani) are included as DH — use hitter stats as primary
+        let isTwoWay = abbr == "TWP"
+        let position = isTwoWay ? Position.designatedHitter : mapPosition(abbr)
+        let isPitcherAbbr = !isTwoWay && ["SP","RP","CL","P"].contains(abbr)
 
         // Include player regardless of stats — prospects/IL players on 40-man
         // have no MLB stats yet but are still valid search targets.
@@ -288,8 +263,11 @@ actor MLBAPIService {
         let currentTeam: MLBTeam
         if let rosterID = rosterTeamID, let mapped = mapTeamByID(rosterID) {
             currentTeam = mapped
+        } else if let name = person.currentTeam?.name, let mapped = mapTeam(name) {
+            currentTeam = mapped
         } else {
-            currentTeam = mapTeam(person.currentTeam?.name ?? "")
+            // Unknown or missing team — player is likely a free agent or non-roster invitee
+            currentTeam = .dodgers
         }
         let rookieSeason: HistoricSeason?
         if let year = stats.rookieYear,
@@ -368,7 +346,7 @@ actor MLBAPIService {
         )
     }
 
-    private func mapTeam(_ name: String) -> MLBTeam {
+    private func mapTeam(_ name: String) -> MLBTeam? {
         switch name {
         case "Toronto Blue Jays":     return .blueJays
         case "New York Yankees":      return .yankees
@@ -400,7 +378,7 @@ actor MLBAPIService {
         case "Los Angeles Dodgers":   return .dodgers
         case "San Diego Padres":      return .padres
         case "San Francisco Giants":  return .giants
-        default:                      return .dodgers
+        default:                      return nil
         }
     }
 
@@ -447,14 +425,7 @@ actor MLBAPIService {
     }
 
     /// Refine pitcher position from their actual stats rather than trusting the API label.
-    /// SP if majority of appearances are starts, RP otherwise (no distinction for closers).
-    private func inferPitcherPosition(stats: PitcherStats?) -> Position {
-        guard let stats, stats.gamesPlayed > 0 else { return .startingPitcher }
-        if Double(stats.gamesStarted) / Double(stats.gamesPlayed) >= 0.5 {
-            return .startingPitcher
-        }
-        return .reliefPitcher
-    }
+
 }
 
 // MARK: - Array helper

@@ -30,6 +30,72 @@ struct UserProgress: Codable {
     /// The Date from which we measure elapsed intervals. nil = timer not running (hints are at/above natural max).
     var hintsRechargeStartedAt: Date?
 
+    // MARK: - Achievement tracking
+    var totalHintlessWins: Int         // wins with zero hints used
+    var currentConsecutiveWins: Int    // consecutive wins any mode (resets on loss)
+    var longestConsecutiveWins: Int
+    var consecutiveFirstGuessWins: Int // consecutive wins on first guess (resets on non-first-guess win or loss)
+
+    // MARK: - Codable (manual init so new keys fall back to 0 on old saved data)
+
+    enum CodingKeys: String, CodingKey {
+        case xp, level, currentStreak, longestStreak, lastPlayedDate
+        case totalGamesPlayed, totalGamesWon, hintsAvailable
+        case purchasedPackIDs, unlockedModes, recentlySeenPlayers
+        case lastDailyDate, lastDailyWon, lastDailyGuessCount
+        case hintsRechargeStartedAt
+        case totalHintlessWins, currentConsecutiveWins, longestConsecutiveWins, consecutiveFirstGuessWins
+    }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        xp                       = try c.decode(Int.self,              forKey: .xp)
+        level                    = try c.decode(Int.self,              forKey: .level)
+        currentStreak            = try c.decode(Int.self,              forKey: .currentStreak)
+        longestStreak            = try c.decode(Int.self,              forKey: .longestStreak)
+        lastPlayedDate           = try c.decodeIfPresent(Date.self,    forKey: .lastPlayedDate)
+        totalGamesPlayed         = try c.decode(Int.self,              forKey: .totalGamesPlayed)
+        totalGamesWon            = try c.decode(Int.self,              forKey: .totalGamesWon)
+        hintsAvailable           = try c.decode(Int.self,              forKey: .hintsAvailable)
+        purchasedPackIDs         = try c.decode(Set<UUID>.self,        forKey: .purchasedPackIDs)
+        unlockedModes            = try c.decode(Set<GameMode>.self,    forKey: .unlockedModes)
+        recentlySeenPlayers      = try c.decode([String: [UUID]].self, forKey: .recentlySeenPlayers)
+        lastDailyDate            = try c.decodeIfPresent(Date.self,    forKey: .lastDailyDate)
+        lastDailyWon             = try c.decode(Bool.self,             forKey: .lastDailyWon)
+        lastDailyGuessCount      = try c.decode(Int.self,              forKey: .lastDailyGuessCount)
+        hintsRechargeStartedAt   = try c.decodeIfPresent(Date.self,    forKey: .hintsRechargeStartedAt)
+        totalHintlessWins        = try c.decodeIfPresent(Int.self,     forKey: .totalHintlessWins)        ?? 0
+        currentConsecutiveWins   = try c.decodeIfPresent(Int.self,     forKey: .currentConsecutiveWins)   ?? 0
+        longestConsecutiveWins   = try c.decodeIfPresent(Int.self,     forKey: .longestConsecutiveWins)   ?? 0
+        consecutiveFirstGuessWins = try c.decodeIfPresent(Int.self,    forKey: .consecutiveFirstGuessWins) ?? 0
+    }
+
+    init(
+        xp: Int, level: Int, currentStreak: Int, longestStreak: Int, lastPlayedDate: Date?,
+        totalGamesPlayed: Int, totalGamesWon: Int, hintsAvailable: Int,
+        purchasedPackIDs: Set<UUID>, unlockedModes: Set<GameMode>,
+        recentlySeenPlayers: [String: [UUID]],
+        lastDailyDate: Date?, lastDailyWon: Bool, lastDailyGuessCount: Int,
+        hintsRechargeStartedAt: Date?,
+        totalHintlessWins: Int = 0, currentConsecutiveWins: Int = 0,
+        longestConsecutiveWins: Int = 0, consecutiveFirstGuessWins: Int = 0
+    ) {
+        self.xp = xp; self.level = level
+        self.currentStreak = currentStreak; self.longestStreak = longestStreak
+        self.lastPlayedDate = lastPlayedDate
+        self.totalGamesPlayed = totalGamesPlayed; self.totalGamesWon = totalGamesWon
+        self.hintsAvailable = hintsAvailable
+        self.purchasedPackIDs = purchasedPackIDs; self.unlockedModes = unlockedModes
+        self.recentlySeenPlayers = recentlySeenPlayers
+        self.lastDailyDate = lastDailyDate; self.lastDailyWon = lastDailyWon
+        self.lastDailyGuessCount = lastDailyGuessCount
+        self.hintsRechargeStartedAt = hintsRechargeStartedAt
+        self.totalHintlessWins = totalHintlessWins
+        self.currentConsecutiveWins = currentConsecutiveWins
+        self.longestConsecutiveWins = longestConsecutiveWins
+        self.consecutiveFirstGuessWins = consecutiveFirstGuessWins
+    }
+
     // MARK: - Computed
 
     /// True if the daily challenge has already been completed today (ET timezone)
@@ -103,9 +169,27 @@ struct UserProgress: Codable {
             totalGamesWon += 1
             xp += session.score
             updateLevel()
-            updateStreak()
+            currentConsecutiveWins += 1
+            longestConsecutiveWins = max(longestConsecutiveWins, currentConsecutiveWins)
+            if session.hintsUsed.isEmpty {
+                totalHintlessWins += 1
+            }
+            if guessCount == 1 {
+                consecutiveFirstGuessWins += 1
+            } else {
+                consecutiveFirstGuessWins = 0
+            }
+            // Daily streak only advances when the daily challenge is won
+            if session.mode == .daily {
+                updateDailyStreak()
+            }
         } else {
-            currentStreak = 0
+            currentConsecutiveWins = 0
+            consecutiveFirstGuessWins = 0
+            // Daily streak only resets when the daily challenge is lost
+            if session.mode == .daily {
+                currentStreak = 0
+            }
         }
 
         lastPlayedDate = Date()
@@ -126,9 +210,9 @@ struct UserProgress: Codable {
         }
     }
 
-    mutating func useHint() -> Bool {
-        guard hintsAvailable > 0 else { return false }
-        hintsAvailable -= 1
+    mutating func useHint(cost: Int = 1) -> Bool {
+        guard hintsAvailable >= cost else { return false }
+        hintsAvailable -= cost
         // Start the recharge timer the first time hints drop below the natural max
         if hintsAvailable < Self.naturalHintMax && hintsRechargeStartedAt == nil {
             hintsRechargeStartedAt = Date()
@@ -171,13 +255,16 @@ struct UserProgress: Codable {
         }
     }
 
-    private mutating func updateStreak() {
-        let calendar = Calendar.current
-        if let last = lastPlayedDate, calendar.isDateInYesterday(last) {
+    private mutating func updateDailyStreak() {
+        var cal = Calendar(identifier: .gregorian)
+        cal.timeZone = TimeZone(identifier: "America/New_York")!
+        if let last = lastDailyDate, cal.isDateInYesterday(last) {
             currentStreak += 1
-        } else if lastPlayedDate == nil {
+        } else if lastDailyDate == nil {
             currentStreak = 1
         }
+        // If lastDailyDate is today the user already completed the daily — don't double-count.
+        // (startSession guards against replaying, but this makes recordGame safe regardless.)
         longestStreak = max(longestStreak, currentStreak)
     }
 

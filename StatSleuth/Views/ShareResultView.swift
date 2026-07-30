@@ -83,9 +83,6 @@ struct ShareResultView: View {
     let deepLinkService: DeepLinkService
 
     @Environment(\.dismiss) private var dismiss
-    @State private var shareItems: [Any] = []
-    @State private var showingShareSheet = false
-    @State private var renderedImage: UIImage? = nil
 
     private var deepLinkURL: URL? {
         guard let mlbID = session.targetPlayer.mlbID else { return nil }
@@ -135,9 +132,7 @@ struct ShareResultView: View {
 
                     // Action buttons
                     VStack(spacing: 12) {
-                        Button {
-                            prepareAndShare()
-                        } label: {
+                        ShareLink(item: shareText, preview: SharePreview("⚾ StatSleuth")) {
                             Label("Share Challenge", systemImage: "square.and.arrow.up")
                                 .font(.headline)
                                 .frame(maxWidth: .infinity)
@@ -162,6 +157,7 @@ struct ShareResultView: View {
                     .padding(.horizontal, 20)
                 }
                 .padding(.bottom, 32)
+                .iPadContentFrame()
             }
             .navigationTitle("Share Result")
             .navigationBarTitleDisplayMode(.inline)
@@ -169,9 +165,6 @@ struct ShareResultView: View {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Done") { dismiss() }
                 }
-            }
-            .sheet(isPresented: $showingShareSheet) {
-                ShareSheet(items: shareItems)
             }
         }
     }
@@ -194,32 +187,6 @@ struct ShareResultView: View {
         return lines.joined(separator: "\n")
     }
 
-    // MARK: - Share
 
-    private func prepareAndShare() {
-        // Render the card to an image
-        let renderer = ImageRenderer(content:
-            ShareCardView(session: session, deepLinkURL: deepLinkURL)
-                .environment(\.colorScheme, .light)
-        )
-        renderer.scale = 3.0
-
-        var items: [Any] = [shareText]
-        if let url = deepLinkURL { items.append(url) }
-        if let image = renderer.uiImage { items.insert(image, at: 0) }
-        shareItems = items
-        showingShareSheet = true
-    }
 }
 
-// MARK: - UIActivityViewController wrapper
-
-struct ShareSheet: UIViewControllerRepresentable {
-    let items: [Any]
-
-    func makeUIViewController(context: Context) -> UIActivityViewController {
-        UIActivityViewController(activityItems: items, applicationActivities: nil)
-    }
-
-    func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
-}

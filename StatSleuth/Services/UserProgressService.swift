@@ -8,6 +8,12 @@ final class UserProgressService {
     private let key = "com.lucasazzopardi.StatSleuth.userProgress"
     private(set) var progress: UserProgress
 
+    /// The daily streak captured *before* the most recent game was recorded.
+    /// Non-zero only after a completed session — used to offer streak protection.
+    private(set) var streakBeforeLastGame: Int = 0
+
+    static let streakProtectionCost = 5
+
     init() {
         self.progress = Self.load(key: "com.lucasazzopardi.StatSleuth.userProgress")
         rechargeHints()   // award any hints earned while app was closed
@@ -38,8 +44,22 @@ final class UserProgressService {
     // MARK: - Public API
 
     func recordCompletedSession(_ session: GameSession) {
+        streakBeforeLastGame = progress.currentStreak
         progress.recordGame(session)
         save()
+    }
+
+    /// Spends `streakProtectionCost` hints to restore the streak lost in the last daily game.
+    /// Returns true if protection was applied successfully.
+    @discardableResult
+    func applyStreakProtection() -> Bool {
+        guard streakBeforeLastGame > 0,
+              progress.hintsAvailable >= Self.streakProtectionCost else { return false }
+        progress.currentStreak = streakBeforeLastGame
+        _ = progress.useHint(cost: Self.streakProtectionCost)
+        streakBeforeLastGame = 0   // prevent double-applying
+        save()
+        return true
     }
 
     func addHints(_ count: Int) {
@@ -47,10 +67,10 @@ final class UserProgressService {
         save()
     }
 
-    /// Returns true if a hint was successfully used
+    /// Returns true if a hint was successfully used, deducting the full cost
     @discardableResult
-    func useHint() -> Bool {
-        let success = progress.useHint()
+    func useHint(cost: Int = 1) -> Bool {
+        let success = progress.useHint(cost: cost)
         if success { save() }
         return success
     }
@@ -89,8 +109,10 @@ final class UserProgressService {
         var seen = progress.recentlySeenPlayers[key] ?? []
         seen.removeAll { $0 == playerID }
         seen.append(playerID)
-        // Keep at most 80% of the pool so we never lock out all options
-        let maxHistory = max(1, Int(Double(poolSize) * 0.8))
+        // Keep at most poolSize-1 so every player appears once before any repeats.
+        // When the whole pool has been seen, unseenPool will be empty and startSession
+        // falls back to the full pool, naturally resetting the cycle.
+        let maxHistory = max(1, poolSize - 1)
         if seen.count > maxHistory { seen.removeFirst(seen.count - maxHistory) }
         progress.recentlySeenPlayers[key] = seen
         save()

@@ -4,21 +4,25 @@ struct GameView: View {
 
     let mode: GameMode
     let pack: Pack
+    var forcedPlayer: Player? = nil
 
-    @Environment(PlayerDataService.self) private var playerDataService
+    @Environment(PlayerDataService.self)   private var playerDataService
     @Environment(UserProgressService.self) private var progressService
-    @Environment(GameCenterService.self) private var gameCenterService
-    @Environment(DeepLinkService.self) private var deepLinkService
-    @Environment(\.dismiss) private var dismiss
+    @Environment(GameCenterService.self)   private var gameCenterService
+    @Environment(DeepLinkService.self)     private var deepLinkService
+    @Environment(\.dismiss)                private var dismiss
 
     @State private var viewModel: GameViewModel?
     @State private var searchQuery = ""
     @State private var shakeGuessInput = false
     @State private var showResults = false
+    @State private var showQuitConfirm = false
 
     var body: some View {
         Group {
-            if let vm = viewModel {
+            if !playerDataService.isReady(for: mode) {
+                modeDataLoadingView
+            } else if let vm = viewModel {
                 gameContent(vm: vm)
                     .fullScreenCover(isPresented: $showResults) {
                         if let session = vm.session {
@@ -40,20 +44,61 @@ struct GameView: View {
                 ProgressView("Loading…")
             }
         }
-        .onAppear {
-            if viewModel == nil {
-                let vm = GameViewModel(
-                    playerDataService: playerDataService,
-                    progressService: progressService,
-                    gameCenterService: gameCenterService
-                )
-                vm.startSession(mode: mode, pack: pack)
-                viewModel = vm
-            }
-        }
+        .onAppear { startIfReady() }
+        .onChange(of: playerDataService.isExtendedLoaded) { _, _ in startIfReady() }
         .onChange(of: viewModel?.showingResults) { _, showing in
             if showing == true { showResults = true }
         }
+        .alert("Quit game?", isPresented: $showQuitConfirm) {
+            Button("Keep playing", role: .cancel) { }
+            Button("Quit — count as loss", role: .destructive) {
+                viewModel?.forceQuit()
+            }
+        } message: {
+            Text("This will count as a loss and reveal the answer.")
+        }
+    }
+
+    private func startIfReady() {
+        guard viewModel == nil, playerDataService.isReady(for: mode) else { return }
+        let vm = GameViewModel(
+            playerDataService: playerDataService,
+            progressService: progressService,
+            gameCenterService: gameCenterService
+        )
+        vm.startSession(mode: mode, pack: pack, forcedPlayer: forcedPlayer)
+        viewModel = vm
+    }
+
+    // MARK: - Waiting on background stat data
+
+    @ViewBuilder
+    private var modeDataLoadingView: some View {
+        VStack(spacing: 16) {
+            if case .failed(let message) = playerDataService.extendedState {
+                Image(systemName: "wifi.exclamationmark")
+                    .font(.system(size: 40))
+                    .foregroundStyle(.secondary)
+                Text(message)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+                Button("Try Again") { playerDataService.retryExtendedLoad() }
+                    .buttonStyle(.borderedProminent)
+            } else {
+                ProgressView()
+                    .controlSize(.large)
+                Text("Loading \(mode.displayName) data…")
+                    .font(.headline)
+                Text("This only happens once.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .padding(32)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .navigationTitle(pack.name)
+        .navigationBarTitleDisplayMode(.inline)
     }
 
     // MARK: - Main Game Content
@@ -63,48 +108,17 @@ struct GameView: View {
         ScrollView {
             VStack(spacing: 16) {
                 guessCounter(vm: vm)
-
                 if let player = vm.targetPlayer {
                     StatCardView(player: player, mode: mode)
                 }
-
-                GuessHistoryView(
-                    guesses: vm.guesses,
-                    targetPlayer: vm.targetPlayer ?? Player(
-                        id: UUID(), mlbID: nil,
-                        firstName: "", lastName: "", legalFirstName: nil,
-                        team: .blueJays, teams: [.blueJays], position: .firstBase,
-                        age: 0, nationality: "", debutYear: 2000,
-                        jerseyNumber: 0, tier: .fullRoster, seasonYear: nil, careerSpan: nil,
-                        hitterStats: nil, pitcherStats: nil,
-                        careerHitterStats: nil, careerPitcherStats: nil,
-                        historicSeason: nil,
-                        rookieSeason: nil,
-                        mysterySeasons: nil,
-                        mysterySeason: nil
-                    ),
-                    mode: mode
-                )
-
+                guessHistory(vm: vm)
                 if !vm.isComplete {
                     HintPanelView(
                         hintsAvailable: vm.hintsAvailable,
                         hintsUsed: vm.hintsUsed,
                         packHasHistoricPlayers: vm.packHasHistoricPlayers
-                    ) { type in
-                        vm.requestHint(type: type)
-                    }
+                    ) { type in vm.requestHint(type: type) }
                 }
-
-                #if DEBUG
-                if let target = vm.targetPlayer {
-                    Text("DEBUG: \(target.fullName)")
-                        .font(.caption2)
-                        .foregroundStyle(.red.opacity(0.6))
-                }
-                #endif
-
-                // Bottom padding so content clears the floating input
                 Color.clear.frame(height: 80)
             }
             .padding(.horizontal, 16)
@@ -112,6 +126,18 @@ struct GameView: View {
         }
         .navigationTitle(pack.name)
         .navigationBarTitleDisplayMode(.inline)
+        .navigationBarBackButtonHidden(!vm.isComplete)
+        .toolbar {
+            if !vm.isComplete {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button("Quit") {
+                        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+                        showQuitConfirm = true
+                    }
+                    .foregroundStyle(.red)
+                }
+            }
+        }
         .safeAreaInset(edge: .bottom) {
             if !vm.isComplete {
                 floatingInputBar(vm: vm)
@@ -159,7 +185,27 @@ struct GameView: View {
         .padding(.horizontal, 4)
     }
 
-    // MARK: - Floating Input Bar
+    // MARK: - Guess History (shared between layouts)
+
+    private func guessHistory(vm: GameViewModel) -> some View {
+        GuessHistoryView(
+            guesses: vm.guesses,
+            targetPlayer: vm.targetPlayer ?? Player(
+                id: UUID(), mlbID: nil,
+                firstName: "", lastName: "", legalFirstName: nil,
+                team: .blueJays, teams: [.blueJays], position: .firstBase,
+                age: 0, nationality: "", debutYear: 2000,
+                jerseyNumber: 0, tier: .fullRoster, seasonYear: nil, careerSpan: nil,
+                hitterStats: nil, pitcherStats: nil,
+                careerHitterStats: nil, careerPitcherStats: nil,
+                historicSeason: nil, rookieSeason: nil,
+                mysterySeasons: nil, mysterySeason: nil
+            ),
+            mode: mode
+        )
+    }
+
+    // MARK: - Floating Input Bar (iPhone only)
 
     private func floatingInputBar(vm: GameViewModel) -> some View {
         VStack(spacing: 0) {

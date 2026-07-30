@@ -2,13 +2,18 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>NSAppTransportSecurity</key>
-	<dict>
-		<key>NSExceptionDomains</key>
+	<key>CFBundleURLTypes</key>
+	<array>
 		<dict>
-			<key>statsapi.mlb.com</key>
-			<string></string>
+			<key>CFBundleURLName</key>
+			<string>com.lucasazzopardi.StatSleuth</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>statsleuth</string>
+			</array>
 		</dict>
-	</dict>
+	</array>
+	<key>UIUserInterfaceStyle</key>
+	<string>Dark</string>
 </dict>
 </plist>

@@ -7,8 +7,13 @@ struct ResultsView: View {
     let onPlayAgain: () -> Void
     let onGoHome: () -> Void
 
+    @Environment(UserProgressService.self) private var progressService
+    @Environment(GameCenterService.self)   private var gameCenterService
+
     @State private var animationPhase = 0
     @State private var showShare = false
+    @State private var showStats = false
+    @State private var streakProtected = false
 
     private var won: Bool {
         if case .won = session.state { return true }
@@ -27,6 +32,12 @@ struct ResultsView: View {
                     .opacity(animationPhase >= 1 ? 1 : 0)
                     .offset(y: animationPhase >= 1 ? 0 : 20)
 
+                if showStreakProtection {
+                    streakProtectionBanner
+                        .opacity(animationPhase >= 1 ? 1 : 0)
+                        .offset(y: animationPhase >= 1 ? 0 : 20)
+                }
+
                 playerReveal
                     .opacity(animationPhase >= 2 ? 1 : 0)
                     .offset(y: animationPhase >= 2 ? 0 : 20)
@@ -44,6 +55,7 @@ struct ResultsView: View {
             }
             .padding(.horizontal, 24)
             .padding(.vertical, 32)
+            .iPadContentFrame()
         }
         .background(.background)
         .onAppear { runEntrance() }
@@ -51,6 +63,78 @@ struct ResultsView: View {
             ShareResultView(session: session, deepLinkService: deepLinkService)
                 .presentationDetents([.medium, .large])
         }
+        .sheet(isPresented: $showStats) {
+            NavigationStack {
+                ScrollView {
+                    StatCardView(
+                        player: session.targetPlayer,
+                        mode: session.mode,
+                        revealedName: session.targetPlayer.fullName
+                    )
+                    .padding(20)
+                }
+                .navigationTitle("\(session.targetPlayer.firstName)'s Stats")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Button("Done") { showStats = false }
+                    }
+                }
+            }
+            .presentationDetents([.medium, .large])
+        }
+    }
+
+    // MARK: - Streak protection
+
+    private var showStreakProtection: Bool {
+        !won
+        && !streakProtected
+        && session.mode == .daily
+        && progressService.streakBeforeLastGame > 0
+        && progressService.progress.hintsAvailable >= UserProgressService.streakProtectionCost
+    }
+
+    private var streakProtectionBanner: some View {
+        VStack(spacing: 12) {
+            HStack(spacing: 10) {
+                Text("🔥")
+                    .font(.title2)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Save your \(progressService.streakBeforeLastGame)-day streak!")
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
+                    Text("Spend \(UserProgressService.streakProtectionCost) hints to keep it alive.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                Spacer()
+            }
+
+            Button {
+                HapticEngine.tap()
+                if progressService.applyStreakProtection() {
+                    streakProtected = true
+                    let progress = progressService.progress
+                    Task { await gameCenterService.reportStreakAchievements(progress: progress) }
+                }
+            } label: {
+                HStack(spacing: 6) {
+                    Image(systemName: "lightbulb.fill")
+                        .foregroundStyle(.yellow)
+                    Text("Spend \(UserProgressService.streakProtectionCost) hints — protect streak")
+                        .fontWeight(.semibold)
+                }
+                .font(.subheadline)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 12)
+                .background(.orange, in: RoundedRectangle(cornerRadius: 12))
+                .foregroundStyle(.white)
+            }
+        }
+        .padding(16)
+        .background(Color.orange.opacity(0.12), in: RoundedRectangle(cornerRadius: 16))
+        .overlay(RoundedRectangle(cornerRadius: 16).stroke(Color.orange.opacity(0.3), lineWidth: 1))
     }
 
     // MARK: - Entrance animation
@@ -135,6 +219,22 @@ struct ResultsView: View {
                     .padding(.vertical, 6)
                     .background(.yellow.opacity(0.15), in: Capsule())
                 }
+
+                // Mystery Year reveal
+                if session.mode == .mysteryEra,
+                   let year = player.mysterySeason?.year {
+                    HStack(spacing: 6) {
+                        Image(systemName: "calendar.badge.checkmark")
+                            .font(.caption2)
+                            .foregroundStyle(.purple)
+                        Text("The stats were from \(year, format: .number.grouping(.never))")
+                            .font(.caption)
+                            .fontWeight(.semibold)
+                    }
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
+                    .background(.purple.opacity(0.15), in: Capsule())
+                }
             }
         }
         .padding(20)
@@ -184,6 +284,19 @@ struct ResultsView: View {
 
     private var actionButtons: some View {
         VStack(spacing: 12) {
+            Button {
+                HapticEngine.tap()
+                showStats = true
+            } label: {
+                Label("View Stats", systemImage: "chart.bar.doc.horizontal")
+                    .font(.subheadline)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 14)
+                    .background(Color(uiColor: .secondarySystemGroupedBackground),
+                                in: RoundedRectangle(cornerRadius: 14))
+                    .foregroundStyle(.primary)
+            }
+
             Button {
                 HapticEngine.tap()
                 showShare = true

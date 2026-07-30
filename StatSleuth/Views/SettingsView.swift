@@ -3,16 +3,20 @@ import SwiftUI
 struct SettingsView: View {
 
     @Environment(UserProgressService.self) private var progressService
+    @Environment(PurchaseService.self)     private var purchaseService
     @Environment(\.dismiss) private var dismiss
 
     @State private var notificationsEnabled = false
     @State private var notificationHour = 9
+    @State private var restoreInProgress = false
+    @State private var restoreMessage: String?
 
     var body: some View {
         NavigationStack {
             List {
                 statsSection
                 notificationsSection
+                purchasesSection
                 aboutSection
             }
             .listStyle(.insetGrouped)
@@ -23,6 +27,7 @@ struct SettingsView: View {
                     Button("Done") { dismiss() }
                 }
             }
+            .onAppear { loadNotificationState() }
         }
     }
 
@@ -42,7 +47,12 @@ struct SettingsView: View {
         Section("Daily Reminder") {
             Toggle("Remind me to play", isOn: $notificationsEnabled)
                 .onChange(of: notificationsEnabled) { _, enabled in
-                    if enabled { requestNotificationPermission() }
+                    if enabled {
+                        requestNotificationPermission()
+                    } else {
+                        UNUserNotificationCenter.current()
+                            .removePendingNotificationRequests(withIdentifiers: ["daily-reminder"])
+                    }
                 }
 
             if notificationsEnabled {
@@ -58,12 +68,41 @@ struct SettingsView: View {
         }
     }
 
+    private var purchasesSection: some View {
+        Section("Purchases") {
+            Button {
+                restoreInProgress = true
+                restoreMessage = nil
+                Task {
+                    await purchaseService.restorePurchases()
+                    restoreInProgress = false
+                    restoreMessage = "Purchases restored."
+                }
+            } label: {
+                HStack {
+                    Label("Restore Purchases", systemImage: "arrow.clockwise")
+                    Spacer()
+                    if restoreInProgress {
+                        ProgressView().scaleEffect(0.8)
+                    }
+                }
+            }
+            .disabled(restoreInProgress)
+
+            if let msg = restoreMessage {
+                Text(msg)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+        }
+    }
+
     private var aboutSection: some View {
         Section("About") {
             LabeledContent("Version", value: appVersion)
-            Link("Rate StatSleuth", destination: URL(string: "https://apps.apple.com")!)
-            Link("Privacy Policy", destination: URL(string: "https://statsleuth.app/privacy")!)
-            Link("Contact Us", destination: URL(string: "mailto:hello@statsleuth.app")!)
+            Link("Rate StatSleuth", destination: URL(string: "https://apps.apple.com/app/id6776067937?action=write-review")!)
+            Link("Privacy Policy", destination: URL(string: "https://azzopalj.github.io/StatSleuth/privacy.html")!)
+            Link("Contact Us", destination: URL(string: "https://azzopalj.github.io/StatSleuth/support.html")!)
         }
     }
 
@@ -83,6 +122,24 @@ struct SettingsView: View {
         comps.minute = 0
         guard let date = Calendar.current.date(from: comps) else { return "\(hour):00" }
         return fmt.string(from: date)
+    }
+
+    /// Reads the live notification state from UNUserNotificationCenter so the
+    /// toggle and time picker always reflect reality after an app relaunch.
+    private func loadNotificationState() {
+        UNUserNotificationCenter.current().getPendingNotificationRequests { requests in
+            DispatchQueue.main.async {
+                guard let request = requests.first(where: { $0.identifier == "daily-reminder" }),
+                      let trigger = request.trigger as? UNCalendarNotificationTrigger,
+                      let hour = trigger.dateComponents.hour
+                else {
+                    notificationsEnabled = false
+                    return
+                }
+                notificationsEnabled = true
+                notificationHour = hour
+            }
+        }
     }
 
     private func requestNotificationPermission() {

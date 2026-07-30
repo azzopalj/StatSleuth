@@ -9,17 +9,29 @@ struct StatSleutApp: App {
     @State private var gameCenterService  = GameCenterService()
     @State private var deepLinkService    = DeepLinkService()
     @State private var purchaseService    = PurchaseService()
+    @State private var showOnboarding     = !UserDefaults.standard.bool(forKey: OnboardingView.storageKey)
     @Environment(\.scenePhase) private var scenePhase
 
     var body: some Scene {
         WindowGroup {
             Group {
-                if playerDataService.isLoaded {
+                // Onboarding runs first so the initial player fetch overlaps with it —
+                // by the time a new user taps "Let's Play!", loading is usually done.
+                if showOnboarding {
+                    OnboardingView(isPresented: $showOnboarding)
+                        .transition(.opacity)
+                } else if playerDataService.isLoaded {
                     ContentView()
                 } else {
                     LoadingView(loadState: playerDataService.loadState) {
                         Task { await playerDataService.loadPlayers() }
                     }
+                }
+            }
+            .animation(.easeInOut, value: showOnboarding)
+            .onChange(of: showOnboarding) { _, showing in
+                if !showing {
+                    UserDefaults.standard.set(true, forKey: OnboardingView.storageKey)
                 }
             }
             .environment(playerDataService)
@@ -40,9 +52,12 @@ struct StatSleutApp: App {
                 async let iap: Void     = purchaseService.loadProducts()
                 _ = await (players, iap)
             }
-            // Recharge hints whenever the app comes back to the foreground
+            // Recharge hints and clear badge whenever the app comes back to the foreground
             .onChange(of: scenePhase) { _, phase in
-                if phase == .active { progressService.rechargeHints() }
+                if phase == .active {
+                    progressService.rechargeHints()
+                    UNUserNotificationCenter.current().setBadgeCount(0)
+                }
             }
             // Handle deep links (statsleuth://play?...)
             .onOpenURL { url in

@@ -4,6 +4,7 @@ struct StatCardView: View {
 
     let player: Player
     let mode: GameMode
+    var revealedName: String? = nil  // set post-game to show the player's name instead of "Mystery Player"
 
     var body: some View {
         VStack(spacing: 0) {
@@ -26,7 +27,7 @@ struct StatCardView: View {
     private var cardHeader: some View {
         HStack {
             VStack(alignment: .leading, spacing: 4) {
-                Text("Mystery Player")
+                Text(revealedName ?? "Mystery Player")
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .textCase(.uppercase)
@@ -58,7 +59,7 @@ struct StatCardView: View {
                 return "\(year) season stats"
             }
             return "Season stats"
-        case .careerStats, .hallOfFame:
+        case .careerStats:
             return "Career totals"
         case .rookieSeason:
             if let year = player.rookieSeason?.year {
@@ -66,7 +67,7 @@ struct StatCardView: View {
             }
             return "Debut season stats"
         case .mysteryEra:
-            return "Stats from a mystery season — which year?"
+            return "Stats from a mystery year — which season?"
         }
     }
 

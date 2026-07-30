@@ -1,10 +1,17 @@
 import SwiftUI
+import StoreKit
 
 struct HomeView: View {
 
-    @Environment(PlayerDataService.self) private var playerDataService
+    @Environment(PlayerDataService.self)   private var playerDataService
     @Environment(UserProgressService.self) private var progressService
-    @Environment(GameCenterService.self) private var gameCenterService
+    @Environment(GameCenterService.self)   private var gameCenterService
+    @Environment(\.horizontalSizeClass)    private var horizontalSizeClass
+    @Environment(PurchaseService.self)    private var purchaseService
+    @Environment(\.requestReview)         private var requestReview
+
+    private static let reviewMilestones = [10, 50, 100]
+    private static let reviewShownKey   = "com.lucasazzopardi.StatSleuth.reviewShownAtWins"
 
     @State private var selectedMode: GameMode? = nil
     @State private var navigateToPackSelection = false
@@ -12,6 +19,7 @@ struct HomeView: View {
     @State private var navigateToDailyComplete = false
     @State private var showSettings = false
     @State private var showHowToPlay = false
+    @State private var showCustomGame = false
 
     private var progress: UserProgress { progressService.progress }
 
@@ -23,6 +31,7 @@ struct HomeView: View {
                     streakXPSection
                     dailyChallengeButton
                     modeGridSection
+                    customGameButton
                 }
                 .padding(.horizontal, 20)
                 .padding(.bottom, 32)
@@ -30,6 +39,16 @@ struct HomeView: View {
             .navigationTitle("StatSleuth")
             .navigationBarTitleDisplayMode(.large)
             .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    if gameCenterService.isAuthenticated {
+                        Button {
+                            gameCenterService.showDashboard()
+                        } label: {
+                            Image(systemName: "trophy")
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                }
                 ToolbarItem(placement: .topBarTrailing) {
                     HStack(spacing: 4) {
                         Button {
@@ -53,7 +72,7 @@ struct HomeView: View {
                 }
             }
             .navigationDestination(isPresented: $navigateToDaily) {
-                if let notablePack = playerDataService.buildPacks().first(where: { $0.name == "Notable Players" }) {
+                if let notablePack = playerDataService.packs.first(where: { $0.name == "Notable Players" }) {
                     GameView(mode: .daily, pack: notablePack)
                 }
             }
@@ -72,6 +91,28 @@ struct HomeView: View {
             }
             .sheet(isPresented: $showHowToPlay) {
                 HowToPlayView()
+            }
+            .sheet(isPresented: $showCustomGame) {
+                CustomGameView()
+            }
+            .onAppear {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                    requestReviewIfEligible()
+                }
+            }
+        }
+    }
+
+    // MARK: - Review prompt
+
+    private func requestReviewIfEligible() {
+        let wins    = progress.totalGamesWon
+        let shown   = UserDefaults.standard.integer(forKey: Self.reviewShownKey)
+        for milestone in Self.reviewMilestones {
+            if wins >= milestone && shown < milestone {
+                UserDefaults.standard.set(milestone, forKey: Self.reviewShownKey)
+                requestReview()
+                break
             }
         }
     }
@@ -164,14 +205,70 @@ struct HomeView: View {
         }
     }
 
+    private var hasEnoughPacksForCustomGame: Bool {
+        let allPacks = playerDataService.packs
+        let ownedPaidCount = allPacks.filter { pack in
+            !pack.isFree && (
+                progressService.progress.purchasedPackIDs.contains(pack.id)
+                || purchaseService.isOwned(pack: pack)
+            )
+        }.count
+        return ownedPaidCount >= 1
+    }
+
+    private var customGameButton: some View {
+        let enabled = hasEnoughPacksForCustomGame
+        return Button {
+            guard enabled else { return }
+            HapticEngine.tap()
+            showCustomGame = true
+        } label: {
+            HStack {
+                VStack(alignment: .leading, spacing: 4) {
+                    HStack(spacing: 6) {
+                        Image(systemName: enabled ? "slider.horizontal.3" : "lock.fill")
+                            .font(.headline)
+                        Text("Custom Game")
+                            .font(.headline)
+                            .fontWeight(.semibold)
+                    }
+                    Text(enabled
+                         ? "Mix any packs you own into one game"
+                         : "Unlock a pack to enable custom games")
+                        .font(.caption)
+                        .opacity(0.85)
+                }
+                Spacer()
+                Image(systemName: "chevron.right")
+                    .font(.subheadline)
+                    .opacity(0.7)
+            }
+            .foregroundStyle(enabled ? .white : .secondary)
+            .padding(18)
+            .background(
+                enabled
+                    ? AnyShapeStyle(LinearGradient(
+                        colors: [.purple, .indigo],
+                        startPoint: .leading,
+                        endPoint: .trailing))
+                    : AnyShapeStyle(Color(uiColor: .secondarySystemGroupedBackground)),
+                in: RoundedRectangle(cornerRadius: 16)
+            )
+        }
+        .disabled(!enabled)
+    }
+
     private var modeGridSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Game Modes")
                 .font(.headline)
                 .foregroundStyle(.primary)
 
-            let visibleModes = GameMode.allCases.filter { $0 != .daily && $0 != .hallOfFame }
-            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
+            let visibleModes = GameMode.allCases.filter { $0 != .daily }
+            let columns = horizontalSizeClass == .regular
+                ? [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())]
+                : [GridItem(.flexible()), GridItem(.flexible())]
+            LazyVGrid(columns: columns, spacing: 12) {
                 ForEach(visibleModes) { mode in
                     ModeCard(mode: mode, isUnlocked: true) {
                         HapticEngine.tap()

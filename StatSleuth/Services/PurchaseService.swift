@@ -103,13 +103,13 @@ extension PurchaseService {
         "com.lucasazzopardi.statsleuth.pack.division.nlcentral": [
             "com.lucasazzopardi.statsleuth.pack.chc",
             "com.lucasazzopardi.statsleuth.pack.cin",
-            "com.lucasazzopardi.statsleuth.pack.col",
             "com.lucasazzopardi.statsleuth.pack.mil",
             "com.lucasazzopardi.statsleuth.pack.pit",
             "com.lucasazzopardi.statsleuth.pack.stl"
         ],
         "com.lucasazzopardi.statsleuth.pack.division.nlwest": [
             "com.lucasazzopardi.statsleuth.pack.arizona",
+            "com.lucasazzopardi.statsleuth.pack.col",
             "com.lucasazzopardi.statsleuth.pack.lad",
             "com.lucasazzopardi.statsleuth.pack.sd",
             "com.lucasazzopardi.statsleuth.pack.sf"
@@ -152,25 +152,10 @@ final class PurchaseService {
     // MARK: - Load products
 
     func loadProducts() async {
-        print("🛒 Requesting \(Self.allProductIDs.count) IAP products…")
         do {
             let loaded = try await Product.products(for: Self.allProductIDs)
             for product in loaded { products[product.id] = product }
-            print("💰 Loaded \(loaded.count)/\(Self.allProductIDs.count) products")
-
-            if loaded.isEmpty {
-                print("""
-                ⚠️ StoreKit returned 0 products. Checklist:
-                  1. Scheme → Run → Options → StoreKit Configuration set to StatSleuth.storekit?
-                  2. On device without config: signed into Sandbox tester in Settings → App Store?
-                  3. All products in App Store Connect in "Ready to Submit" state?
-                  4. Paid Applications Agreement signed in App Store Connect?
-                  5. Bundle ID in Xcode matches App Store Connect exactly?
-                """)
-            }
-        } catch {
-            print("⚠️ Product.products(for:) threw: \(error)")
-        }
+        } catch { }
         isLoading = false
         await restorePurchases()
     }
@@ -188,7 +173,6 @@ final class PurchaseService {
         if products.isEmpty { await retryLoadProductsIfNeeded() }
 
         guard let product = products[productID] else {
-            print("⚠️ Product \(productID) not in loaded dict. Loaded: \(products.keys.sorted())")
             errorMessage = products.isEmpty
                 ? "Store unavailable. Check your internet connection and try again."
                 : "This product is temporarily unavailable."
@@ -212,7 +196,6 @@ final class PurchaseService {
             }
         } catch {
             errorMessage = "Purchase failed. Please try again."
-            print("⚠️ Purchase error: \(error)")
         }
         isLoading = false
     }
@@ -258,11 +241,10 @@ final class PurchaseService {
         let hintsToAdd = Self.hintCount(for: productID)
         if hintsToAdd > 0 {
             progressService.addHints(hintsToAdd)
-            print("💡 Awarded \(hintsToAdd) hints for product \(productID)")
             return
         }
 
-        let allPacks = playerDataService.buildPacks()
+        let allPacks = playerDataService.packs
 
         // Determine which product IDs to unlock (includes division → team cascade and unlock-all)
         var productIDsToUnlock: Set<String> = [productID]
@@ -282,7 +264,6 @@ final class PurchaseService {
             .map { $0.id }
 
         progressService.unlockPacks(packIDsToUnlock)
-        print("🔓 Unlocked \(packIDsToUnlock.count) pack(s) for product \(productID)")
     }
 
     // MARK: - Convenience
