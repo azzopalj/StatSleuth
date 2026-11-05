@@ -33,6 +33,24 @@ actor MLBAPIService {
 
     // MARK: - Assembled stats for one player (all in app model types)
 
+    /// Stats are requested per-rostered-player via `/people?hydrate=stats(...)` rather than
+    /// from the league-wide `/stats` endpoint. The latter paginates over every player in MLB
+    /// history (25,000+ career splits) to serve the ~1,300 players actually on a roster.
+    private enum StatHydration {
+        /// Phase 1 — current season plus career totals.
+        static let core = "currentTeam,stats(group=[hitting,pitching],type=[season,career])"
+        /// Phase 1 fallback — an explicit season, for players with no current-season line.
+        static func season(_ year: Int) -> String {
+            "stats(group=[hitting,pitching],type=[season],season=\(year))"
+        }
+        /// Phase 2 — every season of every career, which covers rookie and mystery years.
+        static let extended = "stats(group=[hitting,pitching],type=[yearByYear])"
+    }
+
+    /// Chunk size for `personIds`. Smaller chunks mean more requests, but they run
+    /// concurrently and measured faster than fewer large ones.
+    private let peopleChunkSize = 100
+
     private struct PlayerStats {
         var seasonHitter:   HitterStats?  = nil
         var seasonPitcher:  PitcherStats? = nil
@@ -58,38 +76,45 @@ actor MLBAPIService {
 
         // Step 1: 40-man rosters — returns [playerID: teamID] map
         let rosterMap = try await fetchAllRosterIDs()
-        progress(0.25)
+        progress(0.3)
 
-        // Step 2: Person info
-        let people = try await fetchPeopleInBulk(ids: Array(rosterMap.keys))
-        progress(0.45)
+        // Step 2: People and their season/career stats in one hydrated request per chunk
+        let people = await fetchPeople(ids: Array(rosterMap.keys), hydrate: StatHydration.core)
+        progress(0.8)
 
-        // Step 3: Bulk stats — paginated, returns [mlbID: HitterStats/PitcherStats] directly
-        async let csHit   = fetchBulkHitterStats(season: currentSeason)
-        async let csPitch = fetchBulkPitcherStats(season: currentSeason)
-        async let psHit   = fetchBulkHitterStats(season: fallbackSeason)
-        async let psPitch = fetchBulkPitcherStats(season: fallbackSeason)
-        async let cHit    = fetchBulkHitterStats(season: nil)
-        async let cPitch  = fetchBulkPitcherStats(season: nil)
-
-        let (curHit, curPitch, prevHit, prevPitch, carHit, carPitch) = await (
-            csHit, csPitch, psHit, psPitch, cHit, cPitch
-        )
+        // Step 3: Players with no current-season line (injured, called up late, prospects)
+        // fall back to the previous season, matching the old two-season behaviour.
+        let missingCurrent = people
+            .filter { $0.split(group: .hitting, type: .season) == nil
+                   && $0.split(group: .pitching, type: .season) == nil }
+            .map(\.id)
+        var fallbackByID: [Int: PersonSummary] = [:]
+        if !missingCurrent.isEmpty {
+            let fallbackPeople = await fetchPeople(
+                ids: missingCurrent,
+                hydrate: StatHydration.season(fallbackSeason)
+            )
+            fallbackByID = Dictionary(
+                fallbackPeople.map { ($0.id, $0) },
+                uniquingKeysWith: { _, new in new }
+            )
+        }
         progress(0.9)
 
         let players: [Player] = people.compactMap { person in
-            let usedCurrent = curHit[person.id] != nil || curPitch[person.id] != nil
-            let resolvedYear: Int?
-            if usedCurrent { resolvedYear = currentSeason }
-            else if prevHit[person.id] != nil || prevPitch[person.id] != nil { resolvedYear = fallbackSeason }
-            else { resolvedYear = nil }
+            // Each split carries the year it covers, so the resolved season year is exact.
+            let fallback = fallbackByID[person.id]
+            let seasonHitterSplit  = person.split(group: .hitting,  type: .season)
+                ?? fallback?.split(group: .hitting,  type: .season)
+            let seasonPitcherSplit = person.split(group: .pitching, type: .season)
+                ?? fallback?.split(group: .pitching, type: .season)
 
             let stats = PlayerStats(
-                seasonHitter:   curHit[person.id]  ?? prevHit[person.id],
-                seasonPitcher:  curPitch[person.id] ?? prevPitch[person.id],
-                careerHitter:   carHit[person.id],
-                careerPitcher:  carPitch[person.id],
-                seasonYear:     resolvedYear
+                seasonHitter:   makeHitterStats(seasonHitterSplit?.stat),
+                seasonPitcher:  makePitcherStats(seasonPitcherSplit?.stat),
+                careerHitter:   makeHitterStats(person.split(group: .hitting,  type: .career)?.stat),
+                careerPitcher:  makePitcherStats(person.split(group: .pitching, type: .career)?.stat),
+                seasonYear:     (seasonHitterSplit ?? seasonPitcherSplit)?.season.flatMap(Int.init)
             )
             // Use roster-derived teamID as authoritative team source
             return mapToPlayer(person: person, stats: stats, rosterTeamID: rosterMap[person.id])
@@ -103,47 +128,38 @@ actor MLBAPIService {
     /// Runs in the background after the app is already usable. Each distinct year is
     /// fetched exactly once even when it serves as both a debut year and a mystery year.
     func fetchExtendedStats(for players: [Player]) async -> [Int: ExtendedStats] {
-        let debutYears = Set(players.map(\.debutYear)).filter { $0 <= currentSeason }
-        let years = debutYears.union(mysteryYears)
-
-        typealias YearBatch = (year: Int, hitters: [Int: HitterStats], pitchers: [Int: PitcherStats])
-        var hittersForYear:  [Int: [Int: HitterStats]]  = [:]
-        var pitchersForYear: [Int: [Int: PitcherStats]] = [:]
-
-        await withTaskGroup(of: YearBatch.self) { group in
-            for year in years {
-                group.addTask {
-                    async let h = self.fetchBulkHitterStats(season: year)
-                    async let p = self.fetchBulkPitcherStats(season: year)
-                    return (year: year, hitters: await h, pitchers: await p)
-                }
-            }
-            for await batch in group {
-                hittersForYear[batch.year]  = batch.hitters
-                pitchersForYear[batch.year] = batch.pitchers
-            }
-        }
+        let debutYearByID = Dictionary(
+            players.compactMap { p in p.mlbID.map { ($0, p.debutYear) } },
+            uniquingKeysWith: { _, new in new }
+        )
+        let people = await fetchPeople(ids: Array(debutYearByID.keys), hydrate: StatHydration.extended)
 
         var result: [Int: ExtendedStats] = [:]
-        for player in players {
-            guard let mlbID = player.mlbID else { continue }
-            let isPitcher = player.isPitcher
+        for person in people {
+            guard let debutYear = debutYearByID[person.id] else { continue }
+            // A player's own year-by-year splits already cover both the debut year and
+            // every mystery year, so one request per chunk replaces a fetch per year.
+            let isPitcher = person.isPitcherByPosition
+            let group: PersonSummary.StatGroupName = isPitcher ? .pitching : .hitting
+            let byYear = person.splitsByYear(group: group, type: .yearByYear)
 
-            let rookieH = !isPitcher ? hittersForYear[player.debutYear]?[mlbID]  : nil
-            let rookieP =  isPitcher ? pitchersForYear[player.debutYear]?[mlbID] : nil
-            let rookieSeason = (rookieH != nil || rookieP != nil)
-                ? HistoricSeason(year: player.debutYear, war: 0, hitterStats: rookieH, pitcherStats: rookieP)
-                : nil
+            let rookieSeason = byYear[debutYear].flatMap { split -> HistoricSeason? in
+                let h = !isPitcher ? makeHitterStats(split.stat)  : nil
+                let p =  isPitcher ? makePitcherStats(split.stat) : nil
+                guard h != nil || p != nil else { return nil }
+                return HistoricSeason(year: debutYear, war: 0, hitterStats: h, pitcherStats: p)
+            }
 
             let mystery: [HistoricSeason] = mysteryYears.compactMap { year in
-                let h = !isPitcher ? hittersForYear[year]?[mlbID]  : nil
-                let p =  isPitcher ? pitchersForYear[year]?[mlbID] : nil
+                guard let split = byYear[year] else { return nil }
+                let h = !isPitcher ? makeHitterStats(split.stat)  : nil
+                let p =  isPitcher ? makePitcherStats(split.stat) : nil
                 guard h != nil || p != nil else { return nil }
                 return HistoricSeason(year: year, war: 0, hitterStats: h, pitcherStats: p)
             }.sorted { $0.year < $1.year }
 
             guard rookieSeason != nil || !mystery.isEmpty else { continue }
-            result[mlbID] = ExtendedStats(
+            result[person.id] = ExtendedStats(
                 rookieSeason: rookieSeason,
                 mysterySeasons: mystery.isEmpty ? nil : mystery
             )
@@ -166,76 +182,41 @@ actor MLBAPIService {
     }
 
     private func fetchTeamRosterMap(teamID: Int) async throws -> [Int: Int] {
-        let url = URL(string: "\(baseURL)/teams/\(teamID)/roster?rosterType=40Man&season=\(currentSeason)")!
+        guard let url = URL(string: "\(baseURL)/teams/\(teamID)/roster?rosterType=40Man&season=\(currentSeason)") else { return [:] }
         guard let (data, resp) = try? await session.data(from: url),
               (resp as? HTTPURLResponse)?.statusCode == 200 else { return [:] }
         let ids = (try? JSONDecoder().decode(RosterResponse.self, from: data))?.roster.map { $0.person.id } ?? []
-        return Dictionary(uniqueKeysWithValues: ids.map { ($0, teamID) })
+        // A roster can list the same player under more than one entry, so keys are not
+        // guaranteed unique — Dictionary(uniqueKeysWithValues:) would trap on that.
+        return Dictionary(ids.map { ($0, teamID) }, uniquingKeysWith: { _, new in new })
     }
 
     // MARK: - People
 
-    private func fetchPeopleInBulk(ids: [Int]) async throws -> [PersonSummary] {
-        var all: [PersonSummary] = []
-        for chunk in ids.chunked(by: 500) {
-            let idStr = chunk.map(String.init).joined(separator: ",")
-            guard let url = URL(string: "\(baseURL)/people?personIds=\(idStr)&hydrate=currentTeam"),
-                  let (data, _) = try? await session.data(from: url) else { continue }
-            all += (try? JSONDecoder().decode(PeopleResponse.self, from: data))?.people ?? []
-        }
-        return all
-    }
-
-    // MARK: - Bulk stats — returns app model types directly
-
-    private func fetchBulkHitterStats(season: Int?) async -> [Int: HitterStats] {
-        var result: [Int: HitterStats] = [:]
-        var offset = 0
-        while true {
-            var urlStr = "\(baseURL)/stats?stats=\(season == nil ? "career" : "season")&group=hitting&sportId=1&playerPool=All&limit=500&offset=\(offset)"
-            if let s = season { urlStr += "&season=\(s)" }
-            guard let url = URL(string: urlStr),
-                  let (data, resp) = try? await session.data(from: url),
-                  (resp as? HTTPURLResponse)?.statusCode == 200,
-                  let decoded = try? JSONDecoder().decode(BulkStatsResponse.self, from: data)
-            else { break }
-            let splits = decoded.stats.flatMap { $0.splits }
-            guard !splits.isEmpty else { break }
-            for split in splits {
-                guard let id = split.player?.id,
-                      let stats = makeHitterStats(split.stat) else { continue }
-                result[id] = stats
+    /// Fetches people with the given stat hydration. Chunks run concurrently — the
+    /// previous sequential loop was a large part of the cold-start cost.
+    private func fetchPeople(ids: [Int], hydrate: String) async -> [PersonSummary] {
+        await withTaskGroup(of: [PersonSummary].self) { group in
+            for chunk in ids.chunked(by: peopleChunkSize) {
+                group.addTask { await self.fetchPeopleChunk(ids: chunk, hydrate: hydrate) }
             }
-            if splits.count < 500 { break }
-            offset += 500
+            var all: [PersonSummary] = []
+            for await batch in group { all += batch }
+            return all
         }
-        return result
     }
 
-    private func fetchBulkPitcherStats(season: Int?) async -> [Int: PitcherStats] {
-        var result: [Int: PitcherStats] = [:]
-        var offset = 0
-        while true {
-            var urlStr = "\(baseURL)/stats?stats=\(season == nil ? "career" : "season")&group=pitching&sportId=1&playerPool=All&limit=500&offset=\(offset)"
-            if let s = season { urlStr += "&season=\(s)" }
-            guard let url = URL(string: urlStr),
-                  let (data, resp) = try? await session.data(from: url),
-                  (resp as? HTTPURLResponse)?.statusCode == 200,
-                  let decoded = try? JSONDecoder().decode(BulkStatsResponse.self, from: data)
-            else { break }
-            let splits = decoded.stats.flatMap { $0.splits }
-            guard !splits.isEmpty else { break }
-            for split in splits {
-                guard let id = split.player?.id,
-                      let stats = makePitcherStats(split.stat) else { continue }
-                result[id] = stats
-            }
-            if splits.count < 500 { break }
-            offset += 500
-        }
-        return result
+    private func fetchPeopleChunk(ids: [Int], hydrate: String) async -> [PersonSummary] {
+        var components = URLComponents(string: "\(baseURL)/people")
+        components?.queryItems = [
+            URLQueryItem(name: "personIds", value: ids.map(String.init).joined(separator: ",")),
+            URLQueryItem(name: "hydrate",   value: hydrate)
+        ]
+        guard let url = components?.url,
+              let (data, resp) = try? await session.data(from: url),
+              (resp as? HTTPURLResponse)?.statusCode == 200 else { return [] }
+        return (try? JSONDecoder().decode(PeopleResponse.self, from: data))?.people ?? []
     }
-
 
     // MARK: - Mapping
 
@@ -431,7 +412,7 @@ actor MLBAPIService {
 // MARK: - Array helper
 
 private extension Array {
-    func chunked(by size: Int) -> [[Element]] {
+    nonisolated func chunked(by size: Int) -> [[Element]] {
         stride(from: 0, to: count, by: size).map {
             Array(self[$0..<Swift.min($0 + size, count)])
         }
@@ -441,17 +422,17 @@ private extension Array {
 // MARK: - Response models
 
 
-private struct RosterResponse: @unchecked Sendable, Decodable {
+private nonisolated struct RosterResponse: @unchecked Sendable, Decodable {
     let roster: [Entry]
     struct Entry: @unchecked Sendable, Decodable { let person: Ref }
     struct Ref: @unchecked Sendable, Decodable { let id: Int }
 }
 
-private struct PeopleResponse: @unchecked Sendable, Decodable {
+private nonisolated struct PeopleResponse: @unchecked Sendable, Decodable {
     let people: [PersonSummary]
 }
 
-private struct PersonSummary: @unchecked Sendable, Decodable {
+private nonisolated struct PersonSummary: @unchecked Sendable, Decodable {
     let id: Int
     let fullName: String
     let firstName: String?
@@ -464,27 +445,55 @@ private struct PersonSummary: @unchecked Sendable, Decodable {
     let primaryPosition: PosRef?
     let currentTeam: TeamRef?
     let mlbDebutDate: String?
+    /// Present only when the request hydrates stats; absent otherwise.
+    let stats: [StatBlock]?
     struct PosRef: @unchecked Sendable, Decodable { let abbreviation: String }
     struct TeamRef: @unchecked Sendable, Decodable { let id: Int; let name: String }
+
+    // MARK: Hydrated stats
+
+    enum StatGroupName: String { case hitting, pitching }
+    enum StatTypeName:  String { case season, career, yearByYear }
+
+    struct StatBlock: @unchecked Sendable, Decodable {
+        let group: NameRef?
+        let type:  NameRef?
+        let splits: [Split]?
+        struct NameRef: @unchecked Sendable, Decodable { let displayName: String }
+        struct Split: @unchecked Sendable, Decodable {
+            /// Absent on career splits, present on season and yearByYear splits.
+            let season: String?
+            let stat: StatLine
+        }
+    }
+
+    private func block(_ group: StatGroupName, _ type: StatTypeName) -> StatBlock? {
+        stats?.first { $0.group?.displayName == group.rawValue && $0.type?.displayName == type.rawValue }
+    }
+
+    /// The single split for a season/career block.
+    func split(group: StatGroupName, type: StatTypeName) -> StatBlock.Split? {
+        block(group, type)?.splits?.first
+    }
+
+    /// Year-by-year splits keyed by season. A player can appear twice in one year after a
+    /// mid-season trade, so later entries win rather than trapping on a duplicate key.
+    func splitsByYear(group: StatGroupName, type: StatTypeName) -> [Int: StatBlock.Split] {
+        let splits = block(group, type)?.splits ?? []
+        return Dictionary(
+            splits.compactMap { split in split.season.flatMap(Int.init).map { ($0, split) } },
+            uniquingKeysWith: { _, new in new }
+        )
+    }
+
+    var isPitcherByPosition: Bool {
+        guard let abbr = primaryPosition?.abbreviation else { return false }
+        // Two-way players are treated as hitters, matching mapToPlayer.
+        return abbr != "TWP" && ["SP", "RP", "CL", "P"].contains(abbr)
+    }
 }
 
-private struct BulkStatsResponse: @unchecked Sendable, Decodable {
-    let stats: [StatGroup]
-    struct StatGroup: Decodable {
-        let group: GroupName?
-        let type: StatType?
-        let splits: [Split]
-    }
-    struct GroupName: @unchecked Sendable, Decodable { let displayName: String }
-    struct StatType: @unchecked Sendable, Decodable { let displayName: String }
-    struct Split: @unchecked Sendable, Decodable {
-        let player: PlayerRef?
-        let stat: StatLine
-    }
-    struct PlayerRef: @unchecked Sendable, Decodable { let id: Int }
-}
-
-private struct StatLine: @unchecked Sendable, Decodable {
+private nonisolated struct StatLine: @unchecked Sendable, Decodable {
     let gamesPlayed: Int?
     let atBats: Int?
     let hits: Int?

@@ -39,16 +39,21 @@ struct ContentView: View {
             return
         }
 
-        // Find or build the right pack
-        let pack: Pack
+        // Find or build the right pack. Packs may still be empty if the link arrives
+        // before loading finishes, so fall back rather than indexing.
+        let fallback: Pack?
         if packType == "notable" {
-            pack = allPacks.first { $0.name == "Notable Players" }
+            fallback = allPacks.first { $0.name == "Notable Players" }
                 ?? allPacks.first { $0.playerIDs.contains(player.id) }
-                ?? allPacks[0]
+                ?? allPacks.first
         } else {
-            pack = allPacks.first { $0.type.rawValue == packType && $0.playerIDs.contains(player.id) }
+            fallback = allPacks.first { $0.type.rawValue == packType && $0.playerIDs.contains(player.id) }
                 ?? allPacks.first { $0.playerIDs.contains(player.id) }
-                ?? allPacks[0]
+                ?? allPacks.first
+        }
+        guard let pack = fallback else {
+            deepLinkService.clearPendingLink()
+            return
         }
 
         deepLinkMode = mode

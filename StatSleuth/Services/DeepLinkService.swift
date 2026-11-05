@@ -26,9 +26,11 @@ final class DeepLinkService {
         guard let components = URLComponents(url: url, resolvingAgainstBaseURL: false),
               let queryItems = components.queryItems else { return false }
 
-        let params = Dictionary(uniqueKeysWithValues: queryItems.compactMap { item in
-            item.value.map { (item.name, $0) }
-        })
+        // A repeated query parameter (?mode=a&mode=a) must not trap — last value wins.
+        let params = Dictionary(
+            queryItems.compactMap { item in item.value.map { (item.name, $0) } },
+            uniquingKeysWith: { _, new in new }
+        )
 
         guard let mlbIDStr = params["mlbID"],
               let mlbID = Int(mlbIDStr),

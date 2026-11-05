@@ -40,7 +40,7 @@ final class PlayerDataService {
     /// (e.g. "19-1.4.0"). Bumps automatically on every App Store release; bump the
     /// integer manually whenever the player data schema changes between releases.
     private var cacheVersion: String {
-        let dataVersion = 24
+        let dataVersion = 25
         let appVersion  = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
         return "\(dataVersion)-\(appVersion)"
     }
