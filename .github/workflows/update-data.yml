@@ -32,8 +32,11 @@ jobs:
           python-version: "3.12"
 
       # No dependencies to install — the generator is standard library only.
-      - name: Generate data
+      - name: Generate MLB data
         run: python3 scripts/generate_data.py
+
+      - name: Generate NBA data
+        run: python3 scripts/generate_nba.py
 
       - name: Sanity-check output
         run: |
@@ -62,6 +65,16 @@ jobs:
               sys.exit(f"future daily picks not in notable pack: {future_unknown[:5]}")
 
           print(f"OK: {notable['count']} notable, {len(daily['picks'])} daily dates")
+
+          nba = json.load(open("data/nba.json"))
+          if nba["count"] < 200:
+              sys.exit(f"nba player set too small: {nba['count']}")
+          missing = [p["fullName"] for p in nba["players"]
+                     if not p.get("career", {}).get("stats")
+                     or not p.get("season", {}).get("stats")]
+          if missing:
+              sys.exit(f"nba players missing season/career stats: {missing[:5]}")
+          print(f"OK: {nba['count']} NBA players, season {nba['season']}")
           PY
 
       - name: Commit if changed
