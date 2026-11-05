@@ -128,18 +128,25 @@ final class PurchaseService {
     private(set) var isLoading = false
     private(set) var errorMessage: String?
 
-    // nonisolated(unsafe) lets deinit cancel the task without crossing actor boundaries.
+    // nonisolated lets deinit cancel the task without crossing actor boundaries.
     // Safe here because the task is only written once (at init) and cancelled once (at deinit).
-    nonisolated(unsafe) private var transactionListenerTask: Task<Void, Never>?
+    // Task is already Sendable, so `nonisolated(unsafe)` had no effect beyond a warning.
+    nonisolated private let transactionListenerBox = TaskBox()
+
+    /// Holds the listener task so `deinit` can cancel it from a nonisolated context.
+    nonisolated final class TaskBox: @unchecked Sendable {
+        var task: Task<Void, Never>?
+        func cancel() { task?.cancel() }
+    }
     private weak var progressService: UserProgressService?
     private weak var playerDataService: PlayerDataService?
 
     init() {
-        transactionListenerTask = Task { await self.listenForTransactions() }
+        transactionListenerBox.task = Task { await self.listenForTransactions() }
     }
 
     deinit {
-        transactionListenerTask?.cancel()
+        transactionListenerBox.cancel()
     }
 
     // MARK: - Setup
@@ -235,34 +242,31 @@ final class PurchaseService {
     private func unlock(productID: String) async {
         purchasedProductIDs.insert(productID)
 
-        guard let progressService, let playerDataService else { return }
+        guard let progressService else { return }
 
-        // Hint packs — consumable, award hints directly
+        // Hint packs — consumable, award hints directly. These must not depend on the
+        // player data service, which may not be wired up yet.
         let hintsToAdd = Self.hintCount(for: productID)
         if hintsToAdd > 0 {
             progressService.addHints(hintsToAdd)
             return
         }
 
-        let allPacks = playerDataService.packs
+        syncUnlockedPacks()
+    }
 
-        // Determine which product IDs to unlock (includes division → team cascade and unlock-all)
-        var productIDsToUnlock: Set<String> = [productID]
-
-        if productID == Self.unlockAllID {
-            productIDsToUnlock = Set(Self.teamPackIDs + Self.divisionPackIDs)
-        } else if let teamIDs = Self.divisionTeamIDs[productID] {
-            productIDsToUnlock.formUnion(teamIDs)
-        }
-
-        // Map product IDs → pack UUIDs and record in UserProgress
-        let packIDsToUnlock = allPacks
+    /// Mirrors entitlements into UserProgress as pack UUIDs. Packs may not be built yet
+    /// when entitlements arrive on launch, so this is safe to call again afterwards —
+    /// `ownsProduct` is the source of truth, this is only the persisted copy.
+    func syncUnlockedPacks() {
+        guard let progressService, let playerDataService else { return }
+        let packIDsToUnlock = playerDataService.packs
             .filter { pack in
                 guard let pid = pack.productID else { return false }
-                return productIDsToUnlock.contains(pid)
+                return ownsProduct(pid)
             }
             .map { $0.id }
-
+        guard !packIDsToUnlock.isEmpty else { return }
         progressService.unlockPacks(packIDsToUnlock)
     }
 
@@ -270,7 +274,35 @@ final class PurchaseService {
 
     func isOwned(pack: Pack) -> Bool {
         guard let pid = pack.productID else { return pack.isFree }
-        return purchasedProductIDs.contains(pid)
+        return ownsProduct(pid)
+    }
+
+    /// Resolves the unlock-all and division -> team cascades from the transacted product
+    /// IDs alone. This must not depend on `playerDataService.packs`: restorePurchases()
+    /// runs concurrently with the player load, so on a fresh install the packs are often
+    /// still empty when entitlements arrive, which previously left paid packs locked.
+    func ownsProduct(_ productID: String) -> Bool {
+        Self.grants(owned: purchasedProductIDs, productID: productID)
+    }
+
+    /// Pure entitlement rule, kept free of StoreKit and app state so it can be checked
+    /// directly.
+    static func grants(owned: Set<String>, productID: String) -> Bool {
+        if owned.contains(productID) { return true }
+
+        // Unlock-all covers every team and division pack (not consumable hint packs).
+        if owned.contains(unlockAllID),
+           teamPackIDs.contains(productID) || divisionPackIDs.contains(productID) {
+            return true
+        }
+
+        // Owning a division pack also grants the team packs inside it.
+        for (divisionID, teamIDs) in divisionTeamIDs
+        where owned.contains(divisionID) && teamIDs.contains(productID) {
+            return true
+        }
+
+        return false
     }
 
     func product(for pack: Pack) -> Product? {

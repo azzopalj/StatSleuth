@@ -12,8 +12,33 @@ actor MLBAPIService {
 
     static let shared = MLBAPIService()
     private let baseURL = "https://statsapi.mlb.com/api/v1"
-    private let currentSeason = 2026
-    private let fallbackSeason = 2025
+    /// Resolved from the API on first load. Hardcoding the year meant the app kept
+    /// fetching the previous year's rosters until a new build shipped.
+    private var resolvedSeason: Int?
+
+    private var currentSeason: Int { resolvedSeason ?? Self.calendarYearET() }
+    private var fallbackSeason: Int { currentSeason - 1 }
+
+    /// Today's year in ET, used only until the API answers.
+    private static func calendarYearET() -> Int {
+        var cal = Calendar(identifier: .gregorian)
+        cal.timeZone = TimeZone(identifier: "America/New_York") ?? .gmt
+        return cal.component(.year, from: Date())
+    }
+
+    /// Asks MLB which season is current. It stays on the finished season through the
+    /// offseason and flips when MLB does, which a calendar-year guess would get wrong
+    /// every January. Falls back to the calendar year if the call fails.
+    private func resolveCurrentSeason() async {
+        guard resolvedSeason == nil else { return }
+        guard let url = URL(string: "\(baseURL)/seasons/current?sportId=1"),
+              let (data, resp) = try? await session.data(from: url),
+              (resp as? HTTPURLResponse)?.statusCode == 200,
+              let decoded = try? JSONDecoder().decode(SeasonsResponse.self, from: data),
+              let year = decoded.seasons.first.flatMap({ Int($0.seasonId) })
+        else { return }
+        resolvedSeason = year
+    }
 
     private let session: URLSession = {
         let config = URLSessionConfiguration.default
@@ -63,8 +88,11 @@ actor MLBAPIService {
         var rookieYear:     Int? = nil
     }
 
-    // Even years across the last decade — gives a varied pool without too many API calls
-    private let mysteryYears = [2014, 2016, 2018, 2020, 2022, 2024]
+    // Even years across the last decade, relative to the current season so the window
+    // moves forward on its own instead of ageing out.
+    private var mysteryYears: [Int] {
+        Array(stride(from: currentSeason - 12, through: currentSeason - 2, by: 2))
+    }
 
     // MARK: - Public
 
@@ -73,6 +101,7 @@ actor MLBAPIService {
     /// extra per-year API calls; those load later via `fetchExtendedStats`.
     func fetchCorePlayers(progress: @escaping (Double) -> Void) async throws -> [Player] {
         progress(0.05)
+        await resolveCurrentSeason()
 
         // Step 1: 40-man rosters — returns [playerID: teamID] map
         let rosterMap = try await fetchAllRosterIDs()
@@ -128,6 +157,7 @@ actor MLBAPIService {
     /// Runs in the background after the app is already usable. Each distinct year is
     /// fetched exactly once even when it serves as both a debut year and a mystery year.
     func fetchExtendedStats(for players: [Player]) async -> [Int: ExtendedStats] {
+        await resolveCurrentSeason()
         let debutYearByID = Dictionary(
             players.compactMap { p in p.mlbID.map { ($0, p.debutYear) } },
             uniquingKeysWith: { _, new in new }
@@ -421,6 +451,11 @@ private extension Array {
 
 // MARK: - Response models
 
+
+private nonisolated struct SeasonsResponse: @unchecked Sendable, Decodable {
+    let seasons: [Season]
+    struct Season: @unchecked Sendable, Decodable { let seasonId: String }
+}
 
 private nonisolated struct RosterResponse: @unchecked Sendable, Decodable {
     let roster: [Entry]

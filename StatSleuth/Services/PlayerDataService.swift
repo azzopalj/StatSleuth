@@ -56,7 +56,11 @@ final class PlayerDataService {
             return true
         }
         guard let last = UserDefaults.standard.object(forKey: cacheKey) as? Date else { return true }
-        return !Calendar.current.isDateInToday(last)
+        // Roll the cache on the ET day boundary, matching the daily puzzle and streak
+        // logic. Using the device timezone here meant the data refreshed at a different
+        // moment than the puzzle flipped, which widened the window where two devices
+        // held different player pools.
+        return Self.easternDateKey(for: last) != Self.easternDateKey()
     }
 
     // MARK: - Load
@@ -262,20 +266,46 @@ final class PlayerDataService {
 
     func dailyPlayer(from players: [Player]) -> Player? {
         guard !players.isEmpty else { return nil }
-        // Sort by stable key so order is identical across all devices regardless of API/cache load order
-        let sorted = players.sorted {
-            if let a = $0.mlbID, let b = $1.mlbID { return a < b }
-            if $0.mlbID != nil { return true }
-            if $1.mlbID != nil { return false }
-            return $0.fullName < $1.fullName
-        }
-        // Hash today's date in ET (MLB's home timezone) so the puzzle flips at midnight ET for all users
+        let key = Self.easternDateKey()
+
+        // Score every player independently of the pool, then take the lowest.
+        //
+        // This used to index a sorted pool with `hash % count`, which silently gave
+        // different devices different puzzles: the pool is the Notable pack filtered by
+        // "has stats", and its size moves with roster changes and cache age, so a
+        // one-player difference shifts every index. Deriving the score from the player
+        // alone means a pool difference only matters if it involves the winner itself.
+        let scored = players.map { (player: $0, score: Self.dailyScore(key: key, player: $0)) }
+        return scored.min { a, b in
+            a.score != b.score ? a.score < b.score
+                               : Self.identity(a.player) < Self.identity(b.player)
+        }?.player
+    }
+
+    /// Today's date in ET — MLB's home timezone — so the puzzle flips at midnight ET
+    /// for everyone rather than at each device's local midnight.
+    static func easternDateKey(for date: Date = Date()) -> String {
         var cal = Calendar(identifier: .gregorian)
-        cal.timeZone = TimeZone(identifier: "America/New_York")!
-        let comps = cal.dateComponents([.year, .month, .day], from: Date())
-        let dateKey = "\(comps.year!)-\(comps.month!)-\(comps.day!)"
-        let hash = dateKey.utf8.reduce(UInt64(5381)) { ($0 &* 31) &+ UInt64($1) }
-        return sorted[Int(hash % UInt64(sorted.count))]
+        cal.timeZone = TimeZone(identifier: "America/New_York") ?? .gmt
+        let c = cal.dateComponents([.year, .month, .day], from: date)
+        return String(format: "%04d-%02d-%02d", c.year ?? 0, c.month ?? 0, c.day ?? 0)
+    }
+
+    /// Stable identity for a player across devices. mlbID is assigned by MLB, so it is
+    /// identical everywhere; the local `id` is a per-install UUID and must not be used.
+    private static func identity(_ player: Player) -> String {
+        player.mlbID.map(String.init) ?? player.fullName
+    }
+
+    /// FNV-1a over "<date>:<player>". Chosen over Swift's `Hashable`, which is seeded
+    /// per process and would give a different answer on every launch.
+    private static func dailyScore(key: String, player: Player) -> UInt64 {
+        var hash: UInt64 = 0xcbf29ce484222325
+        for byte in "\(key):\(identity(player))".utf8 {
+            hash ^= UInt64(byte)
+            hash = hash &* 0x100000001b3
+        }
+        return hash
     }
 
     // MARK: - Pack building

@@ -51,6 +51,9 @@ struct StatSleutApp: App {
                 async let players: Void = playerDataService.loadPlayers()
                 async let iap: Void     = purchaseService.loadProducts()
                 _ = await (players, iap)
+                // Entitlements usually arrive before the packs exist, so mirror them
+                // into UserProgress once both have finished.
+                purchaseService.syncUnlockedPacks()
             }
             // Recharge hints and clear badge whenever the app comes back to the foreground
             .onChange(of: scenePhase) { _, phase in

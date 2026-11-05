@@ -12,7 +12,7 @@
           "locale": "en_US"
         }
       ],
-      "productID": "com.lucasazzopardi.statsleuth.pack.team.tor",
+      "productID": "com.lucasazzopardi.statsleuth.pack.tor",
       "referenceName": "Toronto Blue Jays Pack",
       "type": "NonConsumable"
     },
@@ -27,7 +27,7 @@
           "locale": "en_US"
         }
       ],
-      "productID": "com.lucasazzopardi.statsleuth.pack.team.nyy",
+      "productID": "com.lucasazzopardi.statsleuth.pack.nyy",
       "referenceName": "New York Yankees Pack",
       "type": "NonConsumable"
     },
@@ -42,7 +42,7 @@
           "locale": "en_US"
         }
       ],
-      "productID": "com.lucasazzopardi.statsleuth.pack.team.bos",
+      "productID": "com.lucasazzopardi.statsleuth.pack.bos",
       "referenceName": "Boston Red Sox Pack",
       "type": "NonConsumable"
     },
@@ -57,7 +57,7 @@
           "locale": "en_US"
         }
       ],
-      "productID": "com.lucasazzopardi.statsleuth.pack.team.tb",
+      "productID": "com.lucasazzopardi.statsleuth.pack.tb",
       "referenceName": "Tampa Bay Rays Pack",
       "type": "NonConsumable"
     },
@@ -72,7 +72,7 @@
           "locale": "en_US"
         }
       ],
-      "productID": "com.lucasazzopardi.statsleuth.pack.team.bal",
+      "productID": "com.lucasazzopardi.statsleuth.pack.bal",
       "referenceName": "Baltimore Orioles Pack",
       "type": "NonConsumable"
     },
@@ -87,7 +87,7 @@
           "locale": "en_US"
         }
       ],
-      "productID": "com.lucasazzopardi.statsleuth.pack.team.cws",
+      "productID": "com.lucasazzopardi.statsleuth.pack.cws",
       "referenceName": "Chicago White Sox Pack",
       "type": "NonConsumable"
     },
@@ -102,7 +102,7 @@
           "locale": "en_US"
         }
       ],
-      "productID": "com.lucasazzopardi.statsleuth.pack.team.cle",
+      "productID": "com.lucasazzopardi.statsleuth.pack.cle",
       "referenceName": "Cleveland Guardians Pack",
       "type": "NonConsumable"
     },
@@ -117,7 +117,7 @@
           "locale": "en_US"
         }
       ],
-      "productID": "com.lucasazzopardi.statsleuth.pack.team.det",
+      "productID": "com.lucasazzopardi.statsleuth.pack.det",
       "referenceName": "Detroit Tigers Pack",
       "type": "NonConsumable"
     },
@@ -132,7 +132,7 @@
           "locale": "en_US"
         }
       ],
-      "productID": "com.lucasazzopardi.statsleuth.pack.team.kc",
+      "productID": "com.lucasazzopardi.statsleuth.pack.kc",
       "referenceName": "Kansas City Royals Pack",
       "type": "NonConsumable"
     },
@@ -147,7 +147,7 @@
           "locale": "en_US"
         }
       ],
-      "productID": "com.lucasazzopardi.statsleuth.pack.team.min",
+      "productID": "com.lucasazzopardi.statsleuth.pack.min",
       "referenceName": "Minnesota Twins Pack",
       "type": "NonConsumable"
     },
@@ -162,7 +162,7 @@
           "locale": "en_US"
         }
       ],
-      "productID": "com.lucasazzopardi.statsleuth.pack.team.hou",
+      "productID": "com.lucasazzopardi.statsleuth.pack.hou",
       "referenceName": "Houston Astros Pack",
       "type": "NonConsumable"
     },
@@ -177,7 +177,7 @@
           "locale": "en_US"
         }
       ],
-      "productID": "com.lucasazzopardi.statsleuth.pack.team.laa",
+      "productID": "com.lucasazzopardi.statsleuth.pack.laa",
       "referenceName": "Los Angeles Angels Pack",
       "type": "NonConsumable"
     },
@@ -207,7 +207,7 @@
           "locale": "en_US"
         }
       ],
-      "productID": "com.lucasazzopardi.statsleuth.pack.team.sea",
+      "productID": "com.lucasazzopardi.statsleuth.pack.sea",
       "referenceName": "Seattle Mariners Pack",
       "type": "NonConsumable"
     },
@@ -222,7 +222,7 @@
           "locale": "en_US"
         }
       ],
-      "productID": "com.lucasazzopardi.statsleuth.pack.team.tex",
+      "productID": "com.lucasazzopardi.statsleuth.pack.tex",
       "referenceName": "Texas Rangers Pack",
       "type": "NonConsumable"
     },
@@ -252,7 +252,7 @@
           "locale": "en_US"
         }
       ],
-      "productID": "com.lucasazzopardi.statsleuth.pack.team.mia",
+      "productID": "com.lucasazzopardi.statsleuth.pack.mia",
       "referenceName": "Miami Marlins Pack",
       "type": "NonConsumable"
     },
@@ -267,7 +267,7 @@
           "locale": "en_US"
         }
       ],
-      "productID": "com.lucasazzopardi.statsleuth.pack.team.nym",
+      "productID": "com.lucasazzopardi.statsleuth.pack.nym",
       "referenceName": "New York Mets Pack",
       "type": "NonConsumable"
     },
@@ -282,7 +282,7 @@
           "locale": "en_US"
         }
       ],
-      "productID": "com.lucasazzopardi.statsleuth.pack.team.phi",
+      "productID": "com.lucasazzopardi.statsleuth.pack.phi",
       "referenceName": "Philadelphia Phillies Pack",
       "type": "NonConsumable"
     },
@@ -297,7 +297,7 @@
           "locale": "en_US"
         }
       ],
-      "productID": "com.lucasazzopardi.statsleuth.pack.team.wsh",
+      "productID": "com.lucasazzopardi.statsleuth.pack.wsh",
       "referenceName": "Washington Nationals Pack",
       "type": "NonConsumable"
     },
@@ -312,7 +312,7 @@
           "locale": "en_US"
         }
       ],
-      "productID": "com.lucasazzopardi.statsleuth.pack.team.chc",
+      "productID": "com.lucasazzopardi.statsleuth.pack.chc",
       "referenceName": "Chicago Cubs Pack",
       "type": "NonConsumable"
     },
@@ -327,7 +327,7 @@
           "locale": "en_US"
         }
       ],
-      "productID": "com.lucasazzopardi.statsleuth.pack.team.cin",
+      "productID": "com.lucasazzopardi.statsleuth.pack.cin",
       "referenceName": "Cincinnati Reds Pack",
       "type": "NonConsumable"
     },
@@ -342,7 +342,7 @@
           "locale": "en_US"
         }
       ],
-      "productID": "com.lucasazzopardi.statsleuth.pack.team.col",
+      "productID": "com.lucasazzopardi.statsleuth.pack.col",
       "referenceName": "Colorado Rockies Pack",
       "type": "NonConsumable"
     },
@@ -357,7 +357,7 @@
           "locale": "en_US"
         }
       ],
-      "productID": "com.lucasazzopardi.statsleuth.pack.team.mil",
+      "productID": "com.lucasazzopardi.statsleuth.pack.mil",
       "referenceName": "Milwaukee Brewers Pack",
       "type": "NonConsumable"
     },
@@ -372,7 +372,7 @@
           "locale": "en_US"
         }
       ],
-      "productID": "com.lucasazzopardi.statsleuth.pack.team.pit",
+      "productID": "com.lucasazzopardi.statsleuth.pack.pit",
       "referenceName": "Pittsburgh Pirates Pack",
       "type": "NonConsumable"
     },
@@ -387,7 +387,7 @@
           "locale": "en_US"
         }
       ],
-      "productID": "com.lucasazzopardi.statsleuth.pack.team.stl",
+      "productID": "com.lucasazzopardi.statsleuth.pack.stl",
       "referenceName": "St. Louis Cardinals Pack",
       "type": "NonConsumable"
     },
@@ -417,7 +417,7 @@
           "locale": "en_US"
         }
       ],
-      "productID": "com.lucasazzopardi.statsleuth.pack.team.lad",
+      "productID": "com.lucasazzopardi.statsleuth.pack.lad",
       "referenceName": "Los Angeles Dodgers Pack",
       "type": "NonConsumable"
     },
@@ -432,7 +432,7 @@
           "locale": "en_US"
         }
       ],
-      "productID": "com.lucasazzopardi.statsleuth.pack.team.sd",
+      "productID": "com.lucasazzopardi.statsleuth.pack.sd",
       "referenceName": "San Diego Padres Pack",
       "type": "NonConsumable"
     },
@@ -447,7 +447,7 @@
           "locale": "en_US"
         }
       ],
-      "productID": "com.lucasazzopardi.statsleuth.pack.team.sf",
+      "productID": "com.lucasazzopardi.statsleuth.pack.sf",
       "referenceName": "San Francisco Giants Pack",
       "type": "NonConsumable"
     },
