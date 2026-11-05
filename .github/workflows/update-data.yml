@@ -1,0 +1,77 @@
+name: Update player data
+
+# Regenerates data/notable.json and data/daily.json from the MLB API and commits
+# them, so the app picks up roster changes and new daily puzzles without an
+# App Store release.
+
+on:
+  schedule:
+    # 09:00 UTC — early morning in ET, after any overnight transactions post and
+    # well before the ET day boundary the app uses for the daily puzzle.
+    - cron: "0 9 * * *"
+  workflow_dispatch:
+
+# Avoid two runs racing to push the same files.
+concurrency:
+  group: update-data
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      # No dependencies to install — the generator is standard library only.
+      - name: Generate data
+        run: python3 scripts/generate_data.py
+
+      - name: Sanity-check output
+        run: |
+          python3 - <<'PY'
+          import json, sys
+          notable = json.load(open("data/notable.json"))
+          daily   = json.load(open("data/daily.json"))
+
+          if notable["count"] < 100:
+              sys.exit(f"notable pack too small: {notable['count']}")
+          if len(notable["players"]) != notable["count"]:
+              sys.exit("notable count does not match players array")
+          if any(not p.get("mlbID") for p in notable["players"]):
+              sys.exit("notable entry missing mlbID")
+          if len(daily["picks"]) < 7:
+              sys.exit(f"daily schedule too short: {len(daily['picks'])}")
+
+          known = {p["mlbID"] for p in notable["players"]}
+          unknown = [d for d, pid in daily["picks"].items() if pid not in known]
+          # Past dates may reference someone who has since left the pack; only
+          # future picks have to be answerable.
+          import datetime
+          today = datetime.date.today().isoformat()
+          future_unknown = [d for d in unknown if d >= today]
+          if future_unknown:
+              sys.exit(f"future daily picks not in notable pack: {future_unknown[:5]}")
+
+          print(f"OK: {notable['count']} notable, {len(daily['picks'])} daily dates")
+          PY
+
+      - name: Commit if changed
+        run: |
+          if [ -z "$(git status --porcelain data docs/data)" ]; then
+            echo "No data changes."
+            exit 0
+          fi
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data docs/data
+          git commit -m "Update player data ($(date -u +%Y-%m-%d))"
+          git push

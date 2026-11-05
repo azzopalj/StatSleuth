@@ -60,6 +60,8 @@ struct StatSleutApp: App {
                 if phase == .active {
                     progressService.rechargeHints()
                     UNUserNotificationCenter.current().setBadgeCount(0)
+                    // The ET day may have rolled over while the app was backgrounded.
+                    Task { await playerDataService.refreshDailyPick() }
                 }
             }
             // Handle deep links (statsleuth://play?...)

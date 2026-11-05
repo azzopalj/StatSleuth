@@ -20,6 +20,8 @@ final class PlayerDataService {
 
     /// Tracks the background rookie/mystery-year fetch, separate from core loading.
     private(set) var extendedState: LoadState = .idle
+    /// Today's published daily answer (MLB id), if the schedule was reachable.
+    private(set) var remoteDailyPick: Int?
     @ObservationIgnored private var extendedTask: Task<Void, Never>?
 
     var isLoaded: Bool { if case .loaded = loadState { return true }; return false }
@@ -67,6 +69,7 @@ final class PlayerDataService {
 
     func loadPlayers() async {
         loadState = .loading(progress: 0)
+        await refreshDailyPick()
 
         if !cacheIsStale, let cached = loadCachedPlayers(), !cached.isEmpty {
             finishLoad(with: cached)
@@ -85,10 +88,18 @@ final class PlayerDataService {
                 Task { @MainActor in self?.loadState = .loading(progress: p * 0.9) }
             }
 
-            // Tag notable players
-            let notableNames = loadNotableNames()
+            // Tag notable players. Prefer the published list, which is keyed by MLB
+            // id and regenerated nightly; fall back to the bundled names only if the
+            // fetch and its on-disk copy both fail.
+            let remoteIDs = await RemoteDataService.shared.notableIDs()
+            let notableNames = remoteIDs == nil ? loadNotableNames() : []
             activePlayers = activePlayers.map { player in
-                let isNotable = notableNames.contains(player.fullName)
+                let isNotable: Bool
+                if let remoteIDs {
+                    isNotable = player.mlbID.map(remoteIDs.contains) ?? false
+                } else {
+                    isNotable = notableNames.contains(player.fullName)
+                }
                 return rebuildPlayer(player, tier: isNotable ? .notable : .fullRoster)
             }
 
@@ -109,6 +120,12 @@ final class PlayerDataService {
             }
             loadState = .failed("Unable to load player data. Please check your connection.")
         }
+    }
+
+    /// Primes today's published daily answer. Cheap and idempotent — also called
+    /// when the app returns to the foreground so a day rollover is picked up.
+    func refreshDailyPick() async {
+        remoteDailyPick = await RemoteDataService.shared.dailyPick(for: Self.easternDateKey())
     }
 
     private func finishLoad(with players: [Player]) {
@@ -264,7 +281,18 @@ final class PlayerDataService {
         )
     }
 
+    /// Resolves today's puzzle, preferring the published schedule so every device
+    /// gets the same answer. `remoteDailyPick` is primed during load.
     func dailyPlayer(from players: [Player]) -> Player? {
+        if let pick = remoteDailyPick,
+           let match = players.first(where: { $0.mlbID == pick }) {
+            return match
+        }
+        return locallyDerivedDailyPlayer(from: players)
+    }
+
+    /// Fallback used when the schedule is unreachable or does not cover today.
+    func locallyDerivedDailyPlayer(from players: [Player]) -> Player? {
         guard !players.isEmpty else { return nil }
         let key = Self.easternDateKey()
 

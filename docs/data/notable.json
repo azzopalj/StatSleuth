@@ -1,0 +1,891 @@
+{
+ "generated": "2026-11-05T01:06:44+00:00",
+ "season": 2026,
+ "count": 221,
+ "players": [
+  {
+   "mlbID": 660271,
+   "name": "Shohei Ohtani"
+  },
+  {
+   "mlbID": 592450,
+   "name": "Aaron Judge"
+  },
+  {
+   "mlbID": 545361,
+   "name": "Mike Trout"
+  },
+  {
+   "mlbID": 605141,
+   "name": "Mookie Betts"
+  },
+  {
+   "mlbID": 518692,
+   "name": "Freddie Freeman"
+  },
+  {
+   "mlbID": 547180,
+   "name": "Bryce Harper"
+  },
+  {
+   "mlbID": 571448,
+   "name": "Nolan Arenado"
+  },
+  {
+   "mlbID": 514888,
+   "name": "Jose Altuve"
+  },
+  {
+   "mlbID": 592518,
+   "name": "Manny Machado"
+  },
+  {
+   "mlbID": 519242,
+   "name": "Chris Sale"
+  },
+  {
+   "mlbID": 608070,
+   "name": "José Ramírez"
+  },
+  {
+   "mlbID": 547973,
+   "name": "Aroldis Chapman"
+  },
+  {
+   "mlbID": 621566,
+   "name": "Matt Olson"
+  },
+  {
+   "mlbID": 656941,
+   "name": "Kyle Schwarber"
+  },
+  {
+   "mlbID": 665742,
+   "name": "Juan Soto"
+  },
+  {
+   "mlbID": 521692,
+   "name": "Salvador Perez"
+  },
+  {
+   "mlbID": 596019,
+   "name": "Francisco Lindor"
+  },
+  {
+   "mlbID": 624413,
+   "name": "Pete Alonso"
+  },
+  {
+   "mlbID": 660670,
+   "name": "Ronald Acuña Jr."
+  },
+  {
+   "mlbID": 543760,
+   "name": "Marcus Semien"
+  },
+  {
+   "mlbID": 646240,
+   "name": "Rafael Devers"
+  },
+  {
+   "mlbID": 543037,
+   "name": "Gerrit Cole"
+  },
+  {
+   "mlbID": 519317,
+   "name": "Giancarlo Stanton"
+  },
+  {
+   "mlbID": 592885,
+   "name": "Christian Yelich"
+  },
+  {
+   "mlbID": 623352,
+   "name": "Josh Hader"
+  },
+  {
+   "mlbID": 670541,
+   "name": "Yordan Alvarez"
+  },
+  {
+   "mlbID": 641355,
+   "name": "Cody Bellinger"
+  },
+  {
+   "mlbID": 607208,
+   "name": "Trea Turner"
+  },
+  {
+   "mlbID": 594798,
+   "name": "Jacob deGrom"
+  },
+  {
+   "mlbID": 608324,
+   "name": "Alex Bregman"
+  },
+  {
+   "mlbID": 593428,
+   "name": "Xander Bogaerts"
+  },
+  {
+   "mlbID": 554430,
+   "name": "Zack Wheeler"
+  },
+  {
+   "mlbID": 608369,
+   "name": "Corey Seager"
+  },
+  {
+   "mlbID": 665487,
+   "name": "Fernando Tatis Jr."
+  },
+  {
+   "mlbID": 665489,
+   "name": "Vladimir Guerrero Jr."
+  },
+  {
+   "mlbID": 677951,
+   "name": "Bobby Witt Jr."
+  },
+  {
+   "mlbID": 606466,
+   "name": "Ketel Marte"
+  },
+  {
+   "mlbID": 621439,
+   "name": "Byron Buxton"
+  },
+  {
+   "mlbID": 663656,
+   "name": "Kyle Tucker"
+  },
+  {
+   "mlbID": 606192,
+   "name": "Teoscar Hernández"
+  },
+  {
+   "mlbID": 645277,
+   "name": "Ozzie Albies"
+  },
+  {
+   "mlbID": 575929,
+   "name": "Willson Contreras"
+  },
+  {
+   "mlbID": 608331,
+   "name": "Max Fried"
+  },
+  {
+   "mlbID": 571970,
+   "name": "Max Muncy"
+  },
+  {
+   "mlbID": 592663,
+   "name": "J.T. Realmuto"
+  },
+  {
+   "mlbID": 694973,
+   "name": "Paul Skenes"
+  },
+  {
+   "mlbID": 682998,
+   "name": "Corbin Carroll"
+  },
+  {
+   "mlbID": 656302,
+   "name": "Dylan Cease"
+  },
+  {
+   "mlbID": 691718,
+   "name": "Pete Crow-Armstrong"
+  },
+  {
+   "mlbID": 572233,
+   "name": "Christian Walker"
+  },
+  {
+   "mlbID": 677594,
+   "name": "Julio Rodríguez"
+  },
+  {
+   "mlbID": 621020,
+   "name": "Dansby Swanson"
+  },
+  {
+   "mlbID": 608379,
+   "name": "Michael Wacha"
+  },
+  {
+   "mlbID": 695243,
+   "name": "Mason Miller"
+  },
+  {
+   "mlbID": 605400,
+   "name": "Aaron Nola"
+  },
+  {
+   "mlbID": 593958,
+   "name": "Eduardo Rodriguez"
+  },
+  {
+   "mlbID": 543135,
+   "name": "Nathan Eovaldi"
+  },
+  {
+   "mlbID": 657277,
+   "name": "Logan Webb"
+  },
+  {
+   "mlbID": 607074,
+   "name": "Carlos Rodón"
+  },
+  {
+   "mlbID": 663586,
+   "name": "Austin Riley"
+  },
+  {
+   "mlbID": 661395,
+   "name": "Jhoan Duran"
+  },
+  {
+   "mlbID": 656305,
+   "name": "Matt Chapman"
+  },
+  {
+   "mlbID": 595879,
+   "name": "Javier Báez"
+  },
+  {
+   "mlbID": 621043,
+   "name": "Carlos Correa"
+  },
+  {
+   "mlbID": 650911,
+   "name": "Cristopher Sánchez"
+  },
+  {
+   "mlbID": 671922,
+   "name": "Cade Smith"
+  },
+  {
+   "mlbID": 605483,
+   "name": "Blake Snell"
+  },
+  {
+   "mlbID": 596115,
+   "name": "Trevor Story"
+  },
+  {
+   "mlbID": 645261,
+   "name": "Sandy Alcantara"
+  },
+  {
+   "mlbID": 682829,
+   "name": "Elly De La Cruz"
+  },
+  {
+   "mlbID": 682928,
+   "name": "CJ Abrams"
+  },
+  {
+   "mlbID": 668804,
+   "name": "Bryan Reynolds"
+  },
+  {
+   "mlbID": 650490,
+   "name": "Yandy Díaz"
+  },
+  {
+   "mlbID": 666200,
+   "name": "Jesús Luzardo"
+  },
+  {
+   "mlbID": 694819,
+   "name": "Jacob Misiorowski"
+  },
+  {
+   "mlbID": 682985,
+   "name": "Riley Greene"
+  },
+  {
+   "mlbID": 661388,
+   "name": "William Contreras"
+  },
+  {
+   "mlbID": 621242,
+   "name": "Edwin Díaz"
+  },
+  {
+   "mlbID": 663728,
+   "name": "Cal Raleigh"
+  },
+  {
+   "mlbID": 622491,
+   "name": "Luis Castillo"
+  },
+  {
+   "mlbID": 696100,
+   "name": "Hunter Goodman"
+  },
+  {
+   "mlbID": 691406,
+   "name": "Junior Caminero"
+  },
+  {
+   "mlbID": 642715,
+   "name": "Willy Adames"
+  },
+  {
+   "mlbID": 669302,
+   "name": "Logan Gilbert"
+  },
+  {
+   "mlbID": 641329,
+   "name": "Bryan Baker"
+  },
+  {
+   "mlbID": 656945,
+   "name": "Tanner Scott"
+  },
+  {
+   "mlbID": 664285,
+   "name": "Framber Valdez"
+  },
+  {
+   "mlbID": 643217,
+   "name": "Andrew Benintendi"
+  },
+  {
+   "mlbID": 656876,
+   "name": "Drew Rasmussen"
+  },
+  {
+   "mlbID": 624133,
+   "name": "Ranger Suarez"
+  },
+  {
+   "mlbID": 686973,
+   "name": "Louis Varland"
+  },
+  {
+   "mlbID": 683002,
+   "name": "Gunnar Henderson"
+  },
+  {
+   "mlbID": 666182,
+   "name": "Bo Bichette"
+  },
+  {
+   "mlbID": 607625,
+   "name": "Seth Lugo"
+  },
+  {
+   "mlbID": 682989,
+   "name": "Victor Mederos"
+  },
+  {
+   "mlbID": 808967,
+   "name": "Yoshinobu Yamamoto"
+  },
+  {
+   "mlbID": 662253,
+   "name": "Andrés Muñoz"
+  },
+  {
+   "mlbID": 657746,
+   "name": "Joe Ryan"
+  },
+  {
+   "mlbID": 670623,
+   "name": "Isaac Paredes"
+  },
+  {
+   "mlbID": 592178,
+   "name": "Kris Bryant"
+  },
+  {
+   "mlbID": 693645,
+   "name": "Cam Schlittler"
+  },
+  {
+   "mlbID": 656730,
+   "name": "Trevor Megill"
+  },
+  {
+   "mlbID": 671739,
+   "name": "Michael Harris II"
+  },
+  {
+   "mlbID": 695578,
+   "name": "James Wood"
+  },
+  {
+   "mlbID": 669257,
+   "name": "Will Smith"
+  },
+  {
+   "mlbID": 680757,
+   "name": "Steven Kwan"
+  },
+  {
+   "mlbID": 607043,
+   "name": "Brandon Nimmo"
+  },
+  {
+   "mlbID": 640455,
+   "name": "Sean Manaea"
+  },
+  {
+   "mlbID": 665161,
+   "name": "Jeremy Peña"
+  },
+  {
+   "mlbID": 700250,
+   "name": "Ben Rice"
+  },
+  {
+   "mlbID": 641857,
+   "name": "Ryan McMahon"
+  },
+  {
+   "mlbID": 642207,
+   "name": "Devin Williams"
+  },
+  {
+   "mlbID": 656641,
+   "name": "Jacob Latz"
+  },
+  {
+   "mlbID": 669203,
+   "name": "Corbin Burnes"
+  },
+  {
+   "mlbID": 668909,
+   "name": "Gavin Williams"
+  },
+  {
+   "mlbID": 665926,
+   "name": "Andrés Giménez"
+  },
+  {
+   "mlbID": 668930,
+   "name": "Brice Turang"
+  },
+  {
+   "mlbID": 671277,
+   "name": "Luis García Jr."
+  },
+  {
+   "mlbID": 663158,
+   "name": "Robert Suarez"
+  },
+  {
+   "mlbID": 647304,
+   "name": "Josh Naylor"
+  },
+  {
+   "mlbID": 672282,
+   "name": "Reid Detmers"
+  },
+  {
+   "mlbID": 701762,
+   "name": "Nick Kurtz"
+  },
+  {
+   "mlbID": 668939,
+   "name": "Adley Rutschman"
+  },
+  {
+   "mlbID": 693433,
+   "name": "Bryan Woo"
+  },
+  {
+   "mlbID": 677800,
+   "name": "Wilyer Abreu"
+  },
+  {
+   "mlbID": 800048,
+   "name": "Parker Messick"
+  },
+  {
+   "mlbID": 678246,
+   "name": "Miguel Vargas"
+  },
+  {
+   "mlbID": 669127,
+   "name": "Shea Langeliers"
+  },
+  {
+   "mlbID": 701538,
+   "name": "Jackson Merrill"
+  },
+  {
+   "mlbID": 656546,
+   "name": "Jeff Hoffman"
+  },
+  {
+   "mlbID": 669022,
+   "name": "MacKenzie Gore"
+  },
+  {
+   "mlbID": 669923,
+   "name": "George Kirby"
+  },
+  {
+   "mlbID": 678882,
+   "name": "Ceddanne Rafaela"
+  },
+  {
+   "mlbID": 680776,
+   "name": "Jarren Duran"
+  },
+  {
+   "mlbID": 518876,
+   "name": "Merrill Kelly"
+  },
+  {
+   "mlbID": 671737,
+   "name": "Taj Bradley"
+  },
+  {
+   "mlbID": 676475,
+   "name": "Alec Burleson"
+  },
+  {
+   "mlbID": 695505,
+   "name": "Chase Burns"
+  },
+  {
+   "mlbID": 676617,
+   "name": "Riley O'Brien"
+  },
+  {
+   "mlbID": 694192,
+   "name": "Jackson Chourio"
+  },
+  {
+   "mlbID": 656811,
+   "name": "Ryan O'Hearn"
+  },
+  {
+   "mlbID": 686613,
+   "name": "Hunter Brown"
+  },
+  {
+   "mlbID": 667670,
+   "name": "Brent Rooker"
+  },
+  {
+   "mlbID": 593871,
+   "name": "Jorge Polanco"
+  },
+  {
+   "mlbID": 690997,
+   "name": "Nolan McLean"
+  },
+  {
+   "mlbID": 686948,
+   "name": "Drake Baldwin"
+  },
+  {
+   "mlbID": 663538,
+   "name": "Nico Hoerner"
+  },
+  {
+   "mlbID": 607192,
+   "name": "Tyler Glasnow"
+  },
+  {
+   "mlbID": 687263,
+   "name": "Zach Neto"
+  },
+  {
+   "mlbID": 691023,
+   "name": "Jordan Walker"
+  },
+  {
+   "mlbID": 693307,
+   "name": "Dillon Dingler"
+  },
+  {
+   "mlbID": 669394,
+   "name": "Jake Burger"
+  },
+  {
+   "mlbID": 663556,
+   "name": "Shane McClanahan"
+  },
+  {
+   "mlbID": 650489,
+   "name": "Willi Castro"
+  },
+  {
+   "mlbID": 679529,
+   "name": "Spencer Torkelson"
+  },
+  {
+   "mlbID": 672695,
+   "name": "Geraldo Perdomo"
+  },
+  {
+   "mlbID": 621244,
+   "name": "José Berríos"
+  },
+  {
+   "mlbID": 676440,
+   "name": "Tanner Bibee"
+  },
+  {
+   "mlbID": 669016,
+   "name": "Brandon Marsh"
+  },
+  {
+   "mlbID": 622663,
+   "name": "Luis Severino"
+  },
+  {
+   "mlbID": 573262,
+   "name": "Mike Yastrzemski"
+  },
+  {
+   "mlbID": 623993,
+   "name": "Anthony Santander"
+  },
+  {
+   "mlbID": 681624,
+   "name": "Andy Pages"
+  },
+  {
+   "mlbID": 665833,
+   "name": "Oneil Cruz"
+  },
+  {
+   "mlbID": 677952,
+   "name": "Braxton Ashcraft"
+  },
+  {
+   "mlbID": 676917,
+   "name": "Cade Cavalli"
+  },
+  {
+   "mlbID": 641933,
+   "name": "Tyler O'Neill"
+  },
+  {
+   "mlbID": 579328,
+   "name": "Yusei Kikuchi"
+  },
+  {
+   "mlbID": 630105,
+   "name": "Jake Cronenworth"
+  },
+  {
+   "mlbID": 664854,
+   "name": "Ryan Helsley"
+  },
+  {
+   "mlbID": 680732,
+   "name": "Sean Burke"
+  },
+  {
+   "mlbID": 669242,
+   "name": "Tommy Edman"
+  },
+  {
+   "mlbID": 672386,
+   "name": "Alejandro Kirk"
+  },
+  {
+   "mlbID": 666176,
+   "name": "Jo Adell"
+  },
+  {
+   "mlbID": 671096,
+   "name": "Andrew Abbott"
+  },
+  {
+   "mlbID": 667755,
+   "name": "José Soriano"
+  },
+  {
+   "mlbID": 672515,
+   "name": "Gabriel Moreno"
+  },
+  {
+   "mlbID": 596133,
+   "name": "Luke Weaver"
+  },
+  {
+   "mlbID": 701398,
+   "name": "Sal Stewart"
+  },
+  {
+   "mlbID": 666808,
+   "name": "Camilo Doval"
+  },
+  {
+   "mlbID": 808959,
+   "name": "Munetaka Murakami"
+  },
+  {
+   "mlbID": 656605,
+   "name": "Mitch Keller"
+  },
+  {
+   "mlbID": 676879,
+   "name": "Aaron Ashby"
+  },
+  {
+   "mlbID": 640448,
+   "name": "Kyle Finnegan"
+  },
+  {
+   "mlbID": 625643,
+   "name": "Reynaldo López"
+  },
+  {
+   "mlbID": 676974,
+   "name": "Max Meyer"
+  },
+  {
+   "mlbID": 693821,
+   "name": "Bryce Elder"
+  },
+  {
+   "mlbID": 676282,
+   "name": "Joey Cantillo"
+  },
+  {
+   "mlbID": 676477,
+   "name": "Garrett Whitlock"
+  },
+  {
+   "mlbID": 681082,
+   "name": "Bryson Stott"
+  },
+  {
+   "mlbID": 666018,
+   "name": "Jonathan Aranda"
+  },
+  {
+   "mlbID": 691587,
+   "name": "Eury Pérez"
+  },
+  {
+   "mlbID": 680694,
+   "name": "Kyle Bradish"
+  },
+  {
+   "mlbID": 801139,
+   "name": "Payton Tolle"
+  },
+  {
+   "mlbID": 666160,
+   "name": "Mickey Moniak"
+  },
+  {
+   "mlbID": 664983,
+   "name": "Jake McCarthy"
+  },
+  {
+   "mlbID": 682254,
+   "name": "Mason Montgomery"
+  },
+  {
+   "mlbID": 669065,
+   "name": "Kyle Stowers"
+  },
+  {
+   "mlbID": 643377,
+   "name": "Griffin Jax"
+  },
+  {
+   "mlbID": 683734,
+   "name": "Andrew Vaughn"
+  },
+  {
+   "mlbID": 668709,
+   "name": "JJ Bleday"
+  },
+  {
+   "mlbID": 669358,
+   "name": "Shane Baz"
+  },
+  {
+   "mlbID": 686469,
+   "name": "Vinnie Pasquantino"
+  },
+  {
+   "mlbID": 571927,
+   "name": "Steven Matz"
+  },
+  {
+   "mlbID": 691799,
+   "name": "Grant Taylor"
+  },
+  {
+   "mlbID": 622554,
+   "name": "Seranthony Domínguez"
+  },
+  {
+   "mlbID": 701542,
+   "name": "Will Warren"
+  },
+  {
+   "mlbID": 680736,
+   "name": "Justin Wrobleski"
+  },
+  {
+   "mlbID": 664056,
+   "name": "Harrison Bader"
+  },
+  {
+   "mlbID": 672640,
+   "name": "Otto Lopez"
+  },
+  {
+   "mlbID": 678662,
+   "name": "Ezequiel Tovar"
+  },
+  {
+   "mlbID": 668715,
+   "name": "Spencer Steer"
+  },
+  {
+   "mlbID": 683737,
+   "name": "Michael Busch"
+  },
+  {
+   "mlbID": 665019,
+   "name": "Kody Clemens"
+  },
+  {
+   "mlbID": 663567,
+   "name": "Peter Lambert"
+  },
+  {
+   "mlbID": 671056,
+   "name": "Iván Herrera"
+  },
+  {
+   "mlbID": 677960,
+   "name": "Ryan Weathers"
+  },
+  {
+   "mlbID": 673962,
+   "name": "Josh Jung"
+  },
+  {
+   "mlbID": 663687,
+   "name": "Hogan Harris"
+  },
+  {
+   "mlbID": 680869,
+   "name": "Zack Gelof"
+  },
+  {
+   "mlbID": 661563,
+   "name": "Luis Gil"
+  }
+ ]
+}
