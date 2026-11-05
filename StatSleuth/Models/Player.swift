@@ -230,6 +230,72 @@ struct Player: Identifiable, Codable {
     // The specific season picked for THIS game session (nil until session starts)
     var mysterySeason: HistoricSeason?
 
+    // MARK: - Non-baseball sports
+    //
+    // Baseball keeps its typed stats above. Sports added later carry the same
+    // information in sport-agnostic stat lines, described by SportProfile.
+    // All of these are optional so existing cached players decode unchanged.
+
+    /// nil means baseball, so players cached before multi-sport still decode.
+    let sport: Sport?
+    /// Display team for sports without an MLBTeam case.
+    let teamName: String?
+    let conference: String?
+    let divisionName: String?
+    /// Raw position label, e.g. "PG". Baseball uses `position` instead.
+    let positionCode: String?
+
+    let seasonLine: StatLine?
+    let careerLine: StatLine?
+    let rookieLine: StatLine?
+    /// Past seasons to draw a Mystery Year puzzle from.
+    let mysteryLines: [StatLine]?
+    /// The season picked for THIS session.
+    var mysteryLine: StatLine?
+
+    /// Explicit rather than synthesized so the multi-sport fields can default,
+    /// keeping the baseball call sites unchanged.
+    nonisolated init(id: UUID, mlbID: Int?, firstName: String, lastName: String,
+         legalFirstName: String?, team: MLBTeam, teams: [MLBTeam],
+         position: Position, age: Int, nationality: String, debutYear: Int,
+         jerseyNumber: Int, tier: PlayerTier, seasonYear: Int?, careerSpan: String?,
+         hitterStats: HitterStats?, pitcherStats: PitcherStats?,
+         careerHitterStats: HitterStats?, careerPitcherStats: PitcherStats?,
+         historicSeason: HistoricSeason?, rookieSeason: HistoricSeason?,
+         mysterySeasons: [HistoricSeason]?, mysterySeason: HistoricSeason? = nil,
+         sport: Sport? = nil, teamName: String? = nil, conference: String? = nil,
+         divisionName: String? = nil, positionCode: String? = nil,
+         seasonLine: StatLine? = nil, careerLine: StatLine? = nil,
+         rookieLine: StatLine? = nil, mysteryLines: [StatLine]? = nil,
+         mysteryLine: StatLine? = nil) {
+        self.id = id; self.mlbID = mlbID
+        self.firstName = firstName; self.lastName = lastName
+        self.legalFirstName = legalFirstName
+        self.team = team; self.teams = teams; self.position = position
+        self.age = age; self.nationality = nationality
+        self.debutYear = debutYear; self.jerseyNumber = jerseyNumber
+        self.tier = tier; self.seasonYear = seasonYear; self.careerSpan = careerSpan
+        self.hitterStats = hitterStats; self.pitcherStats = pitcherStats
+        self.careerHitterStats = careerHitterStats
+        self.careerPitcherStats = careerPitcherStats
+        self.historicSeason = historicSeason; self.rookieSeason = rookieSeason
+        self.mysterySeasons = mysterySeasons; self.mysterySeason = mysterySeason
+        self.sport = sport; self.teamName = teamName
+        self.conference = conference; self.divisionName = divisionName
+        self.positionCode = positionCode
+        self.seasonLine = seasonLine; self.careerLine = careerLine
+        self.rookieLine = rookieLine; self.mysteryLines = mysteryLines
+        self.mysteryLine = mysteryLine
+    }
+
+    /// Players cached before multi-sport have no sport recorded.
+    var resolvedSport: Sport { sport ?? .baseball }
+    var isBaseball: Bool { resolvedSport == .baseball }
+    /// Team as shown to the player, whichever sport they are from.
+    var teamDisplayName: String { teamName ?? team.rawValue }
+    /// Position as shown to the player.
+    var positionDisplay: String { positionCode ?? position.displayName }
+
     var fullName: String { "\(firstName) \(lastName)" }
     var headshotURL: URL? {
         guard let mlbID else { return nil }
@@ -240,6 +306,17 @@ struct Player: Identifiable, Codable {
     var isHistoric: Bool { tier == .historic }
 
     // MARK: - Mode-aware stat access
+
+    /// Generic equivalent of `hitterStatsFor` / `pitcherStatsFor`, used by every
+    /// sport except baseball.
+    func statLineFor(mode: GameMode) -> StatLine? {
+        switch mode {
+        case .careerStats:            return careerLine
+        case .rookieSeason:           return rookieLine
+        case .mysteryEra:             return mysteryLine ?? mysteryLines?.first
+        case .seasonStats, .daily:    return seasonLine
+        }
+    }
 
     func hitterStatsFor(mode: GameMode) -> HitterStats? {
         switch mode {
@@ -279,5 +356,7 @@ struct Player: Identifiable, Codable {
         case rookieSeason
         case mysterySeasons
         case mysterySeason
+        case sport, teamName, conference, divisionName, positionCode
+        case seasonLine, careerLine, rookieLine, mysteryLines, mysteryLine
     }
 }

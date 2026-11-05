@@ -10,7 +10,9 @@ struct StatCardView: View {
         VStack(spacing: 0) {
             cardHeader
             Divider()
-            if player.isPitcher {
+            if !player.isBaseball {
+                genericStatsGrid
+            } else if player.isPitcher {
                 pitcherStatsGrid
             } else {
                 hitterStatsGrid
@@ -89,6 +91,30 @@ struct StatCardView: View {
                     StatCell(label: "BB",  value: "\(stats.walks)")
                     StatCell(label: "SO",  value: "\(stats.strikeouts)")
                     StatCell(label: "G",   value: "\(stats.gamesPlayed)")
+                }
+            } else {
+                Text("No stats available for this mode")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .padding()
+            }
+        }
+        .padding(.bottom, 4)
+    }
+
+    // MARK: - Generic stats (every sport except baseball)
+
+    /// Driven by the sport's profile rather than concrete stat types, so adding
+    /// a sport is a data change rather than a new grid here.
+    private var genericStatsGrid: some View {
+        Group {
+            if let profile = SportProfile.profile(for: player.resolvedSport),
+               let line = player.statLineFor(mode: mode), !line.isEmpty {
+                let shown = profile.cardKeys.filter { line[$0] != nil }
+                LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 3), spacing: 0) {
+                    ForEach(shown, id: \.self) { key in
+                        StatCell(label: key, value: profile.format(key, line[key] ?? 0))
+                    }
                 }
             } else {
                 Text("No stats available for this mode")

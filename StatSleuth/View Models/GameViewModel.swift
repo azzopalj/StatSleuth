@@ -107,6 +107,13 @@ final class GameViewModel {
     // MARK: - Stats check (used post-selection to skip players with no usable stats)
 
     private func hasStats(_ player: Player, for mode: GameMode) -> Bool {
+        // Non-baseball players carry generic stat lines, not typed stats.
+        guard player.isBaseball else {
+            if mode == .mysteryEra {
+                return !(player.mysteryLines ?? []).isEmpty
+            }
+            return !(player.statLineFor(mode: mode)?.isEmpty ?? true)
+        }
         switch mode {
         case .seasonStats, .daily:
             return player.hitterStats != nil || player.pitcherStats != nil
@@ -211,6 +218,11 @@ final class GameViewModel {
 
     private func generateFeedback(guessed: Player, target: Player) -> GuessFeedback {
         let mode = session?.mode ?? .seasonStats
+        // Baseball compares typed stats and enum teams; other sports are
+        // described by their SportProfile and compared on string fields.
+        guard target.isBaseball else {
+            return genericFeedback(guessed: guessed, target: target, mode: mode)
+        }
         return GuessFeedback(
             position: comparePosition(guessed.position, target.position),
             team: compareTeam(guessed.team, target.team),
@@ -221,6 +233,50 @@ final class GameViewModel {
             primaryStat1: comparePrimaryStat1(guessed: guessed, target: target, mode: mode),
             primaryStat2: comparePrimaryStat2(guessed: guessed, target: target, mode: mode)
         )
+    }
+
+    /// Feedback for sports whose stats are generic stat lines.
+    private func genericFeedback(guessed: Player, target: Player, mode: GameMode) -> GuessFeedback {
+        let profile = SportProfile.profile(for: target.resolvedSport)
+        let g = guessed.statLineFor(mode: mode)
+        let t = target.statLineFor(mode: mode)
+
+        func compareKey(_ index: Int) -> ComparisonResult {
+            guard let profile, profile.primaryKeys.count > index,
+                  let g, let t else { return .noMatch }
+            let key = profile.primaryKeys[index]
+            guard let a = g[key], let b = t[key] else { return .noMatch }
+            if a == b { return .match }
+            if profile.isCloseEnough(key, a, b) { return .close }
+            return a > b ? .higher : .lower
+        }
+
+        return GuessFeedback(
+            position: compareGenericPosition(guessed, target, profile: profile),
+            team: guessed.teamDisplayName == target.teamDisplayName ? .match : .noMatch,
+            division: compareOptional(guessed.divisionName, target.divisionName),
+            league: compareOptional(guessed.conference, target.conference),
+            age: compareNumeric(Double(guessed.age), Double(target.age), closeness: 3),
+            nationality: guessed.nationality == target.nationality ? .match : .noMatch,
+            primaryStat1: compareKey(0),
+            primaryStat2: compareKey(1)
+        )
+    }
+
+    private func compareGenericPosition(_ a: Player, _ b: Player,
+                                        profile: SportProfile?) -> ComparisonResult {
+        let pa = a.positionDisplay, pb = b.positionDisplay
+        if pa == pb { return .match }
+        // Same grouping is a near miss, as infield/outfield is for baseball.
+        if let profile, let ga = profile.group(for: pa), ga == profile.group(for: pb) {
+            return .close
+        }
+        return .noMatch
+    }
+
+    private func compareOptional(_ a: String?, _ b: String?) -> ComparisonResult {
+        guard let a, let b, !a.isEmpty, !b.isEmpty else { return .noMatch }
+        return a == b ? .match : .noMatch
     }
 
     private func comparePosition(_ a: Position, _ b: Position) -> ComparisonResult {

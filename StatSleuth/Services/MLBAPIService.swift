@@ -327,7 +327,7 @@ actor MLBAPIService {
         )
     }
 
-    private func makeHitterStats(_ s: StatLine?) -> HitterStats? {
+    private func makeHitterStats(_ s: RawStatLine?) -> HitterStats? {
         guard let s,
               let avg = Double(s.avg ?? ""),
               let obp = Double(s.obp ?? ""),
@@ -343,7 +343,7 @@ actor MLBAPIService {
         )
     }
 
-    private func makePitcherStats(_ s: StatLine?) -> PitcherStats? {
+    private func makePitcherStats(_ s: RawStatLine?) -> PitcherStats? {
         guard let s,
               let era  = Double(s.era  ?? ""),
               let whip = Double(s.whip ?? ""),
@@ -498,7 +498,7 @@ private nonisolated struct PersonSummary: @unchecked Sendable, Decodable {
         struct Split: @unchecked Sendable, Decodable {
             /// Absent on career splits, present on season and yearByYear splits.
             let season: String?
-            let stat: StatLine
+            let stat: RawStatLine
         }
     }
 
@@ -528,7 +528,7 @@ private nonisolated struct PersonSummary: @unchecked Sendable, Decodable {
     }
 }
 
-private nonisolated struct StatLine: @unchecked Sendable, Decodable {
+private nonisolated struct RawStatLine: @unchecked Sendable, Decodable {
     let gamesPlayed: Int?
     let atBats: Int?
     let hits: Int?

@@ -103,7 +103,8 @@ final class PlayerDataService {
                 return rebuildPlayer(player, tier: isNotable ? .notable : .fullRoster)
             }
 
-            let merged = (activePlayers + loadHistoricPlayers())
+            let nbaPlayers = await loadNBAPlayers()
+            let merged = (activePlayers + loadHistoricPlayers() + nbaPlayers)
                 .sorted { $0.lastName < $1.lastName }
 
             loadState = .loading(progress: 0.95)
@@ -120,6 +121,14 @@ final class PlayerDataService {
             }
             loadState = .failed("Unable to load player data. Please check your connection.")
         }
+    }
+
+    /// NBA players come from the file the nightly workflow publishes, not a live
+    /// API — ESPN only returns stat values one athlete at a time.
+    private func loadNBAPlayers() async -> [Player] {
+        let players = await NBADataService.shared.loadPlayers()
+        print("🏀 NBA players loaded: \(players.count)")
+        return players
     }
 
     /// Primes today's published daily answer. Cheap and idempotent — also called
@@ -343,7 +352,7 @@ final class PlayerDataService {
         var packs: [Pack] = []
 
         // Notable pack — free, always available
-        let notableIDs = allPlayers.filter { $0.tier == .notable }.map { $0.id }
+        let notableIDs = allPlayers.filter { $0.isBaseball && $0.tier == .notable }.map { $0.id }
         packs.append(Pack(
             id: stableID("notable"),
             name: "Notable Players",
@@ -353,7 +362,7 @@ final class PlayerDataService {
         ))
 
         // Legends pack — free, always available, shown immediately after Notable
-        let legendIDs = allPlayers.filter { $0.tier == .historic }.map { $0.id }
+        let legendIDs = allPlayers.filter { $0.isBaseball && $0.tier == .historic }.map { $0.id }
         if !legendIDs.isEmpty {
             packs.append(Pack(
                 id: stableID("legends"),
@@ -364,13 +373,37 @@ final class PlayerDataService {
             ))
         }
 
+        // NBA packs — free while the sport is new, so it can be played without a
+        // purchase decision before the content is proven.
+        let nba = allPlayers.filter { $0.resolvedSport == .basketball }
+        if !nba.isEmpty {
+            packs.append(Pack(
+                id: stableID("nba-all"),
+                name: "NBA Players",
+                description: "Guess the NBA player from their stats.",
+                type: .base, playerIDs: nba.map(\.id),
+                isPurchased: true, price: nil, sport: .basketball, productID: nil
+            ))
+            for conference in Set(nba.compactMap(\.conference)).sorted() where !conference.isEmpty {
+                let ids = nba.filter { $0.conference == conference }.map(\.id)
+                guard ids.count >= 20 else { continue }
+                packs.append(Pack(
+                    id: stableID("nba-conf-\(conference)"),
+                    name: conference,
+                    description: "All current \(conference) players.",
+                    type: .division, playerIDs: ids,
+                    isPurchased: true, price: nil, sport: .basketball, productID: nil
+                ))
+            }
+        }
+
         // Team packs — current full roster + historic players with that team stint
         for team in MLBTeam.allCases {
             let currentIDs = allPlayers
-                .filter { $0.tier != .historic && $0.team == team }
+                .filter { $0.isBaseball && $0.tier != .historic && $0.team == team }
                 .map { $0.id }
             let historicIDs = allPlayers
-                .filter { $0.tier == .historic && $0.teams.contains(team) }
+                .filter { $0.isBaseball && $0.tier == .historic && $0.teams.contains(team) }
                 .map { $0.id }
             let ids = currentIDs + historicIDs
             guard !ids.isEmpty else { continue }
@@ -387,7 +420,7 @@ final class PlayerDataService {
         // Division packs — current players only; purchasing also unlocks contained team packs
         for division in MLBDivision.allCases {
             let ids = allPlayers
-                .filter { $0.tier != .historic && $0.team.division == division }
+                .filter { $0.isBaseball && $0.tier != .historic && $0.team.division == division }
                 .map { $0.id }
             guard !ids.isEmpty else { continue }
             packs.append(Pack(
