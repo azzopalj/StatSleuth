@@ -19,10 +19,11 @@ from __future__ import annotations
 import json
 import os
 import sys
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from espn_common import (SITE_API, WEB_API, get_many, split_made_attempted,  # noqa: E402
+from espn_common import (SITE_API, WEB_API, get, get_many, split_made_attempted,  # noqa: E402
                          team_groups, teams, to_float)
 
 SPORT_PATH = "basketball/nba"
@@ -49,18 +50,63 @@ def roster_players(team_ids: list[str]) -> list[dict]:
 
 
 def season_rows(categories: list[dict], name: str) -> dict[int, dict[str, str]]:
-    """Season year -> {label: display value} for one ESPN stat category."""
+    """Season year -> {label: display value} for one ESPN stat category.
+
+    A player traded mid-season gets three rows for that year: one per team plus
+    a combined row whose teamSlug reads like "2024-25 Totals". Pick the combined
+    row explicitly. Relying on it being last worked, but silently depended on
+    ESPN's ordering — if that ever changed we would publish half a season.
+    """
     for category in categories:
         if category.get("name") != name:
             continue
         labels = category.get("labels") or []
-        rows: dict[int, dict[str, str]] = {}
+        by_year: dict[int, list[tuple[bool, dict[str, str]]]] = {}
         for entry in category.get("statistics") or []:
             year = (entry.get("season") or {}).get("year")
-            if year:
-                rows[int(year)] = dict(zip(labels, entry.get("stats") or []))
+            if not year:
+                continue
+            slug = str(entry.get("teamSlug") or "")
+            combined = slug.lower().endswith("totals")
+            by_year.setdefault(int(year), []).append(
+                (combined, dict(zip(labels, entry.get("stats") or []))))
+
+        rows: dict[int, dict[str, str]] = {}
+        for year, entries in by_year.items():
+            combined = [row for is_combined, row in entries if is_combined]
+            if combined:
+                rows[year] = combined[0]
+            elif len(entries) == 1:
+                rows[year] = entries[0][1]
+            else:
+                # Split season with no combined row: take the longer stint rather
+                # than guessing, and let the caller's cross-check catch it.
+                rows[year] = max((row for _, row in entries),
+                                 key=lambda r: to_float(r.get("GP"), 0) or 0)
         return rows
     return {}
+
+
+def authoritative_career(pid: int) -> dict[str, float] | None:
+    """ESPN's own published career line, from the athlete overview.
+
+    Preferred over deriving one from the season rows so the numbers are not an
+    inference of ours. The derived figure is still computed and compared.
+    """
+    doc = get(f"{WEB_API}/{SPORT_PATH}/athletes/{pid}/overview")
+    stats = doc.get("statistics") or {}
+    labels = stats.get("labels") or []
+    for row in stats.get("splits") or []:
+        if (row.get("displayName") or "").strip().lower() != "career":
+            continue
+        raw = dict(zip(labels, row.get("stats") or []))
+        out: dict[str, float] = {}
+        for key in CARD_KEYS:
+            value = to_float(raw.get(key))
+            if value is not None:
+                out[key] = int(value) if key == "GP" else round(value, 3)
+        return out or None
+    return None
 
 
 def per_game(row: dict[str, str]) -> dict[str, float]:
@@ -109,16 +155,32 @@ def career_stats(totals: dict[int, dict], averages: dict[int, dict]) -> dict[str
 
 
 def build_player(athlete: dict, stats_doc: dict, team_meta: dict,
-                 groups: dict[str, tuple[str, str]]) -> dict | None:
+                 groups: dict[str, tuple[str, str]],
+                 published_career: dict[str, float] | None,
+                 mismatches: list[str]) -> dict | None:
     categories = stats_doc.get("categories") or []
     averages = season_rows(categories, "averages")
     totals = season_rows(categories, "totals")
     if not averages:
         return None
 
-    career = career_stats(totals, averages)
+    derived = career_stats(totals, averages)
+    career = published_career or derived
     if not career or career.get("GP", 0) < MIN_CAREER_GAMES:
         return None
+
+    # Cross-check the two. They agreed on every player when this was written;
+    # a disagreement means an assumption here has gone stale, so surface it
+    # rather than quietly shipping a number.
+    if published_career and derived:
+        for key in ("GP", "PTS", "REB", "AST"):
+            a, b = published_career.get(key), derived.get(key)
+            if a is None or b is None:
+                continue
+            tolerance = 1.0 if key == "GP" else 0.15
+            if abs(a - b) > tolerance:
+                mismatches.append(
+                    f"{athlete.get('displayName')} {key}: published={a} derived={b}")
 
     years = sorted(averages)
     current = max(years)
@@ -172,14 +234,29 @@ def main() -> int:
     urls = [f"{WEB_API}/{SPORT_PATH}/athletes/{a['id']}/stats" for a in athletes]
     docs = get_many(urls, workers=16)
 
-    players, season = [], 0
-    for athlete, doc in zip(athletes, docs):
-        built = build_player(athlete, doc, team_meta.get(athlete["_teamID"], {}), groups)
+    # ESPN publishes a career line of its own; prefer it over deriving one.
+    with ThreadPoolExecutor(16) as ex:
+        careers = list(ex.map(lambda a: authoritative_career(int(a["id"])), athletes))
+    print(f"published career lines found: {sum(1 for c in careers if c)}/{len(athletes)}")
+
+    players, season, mismatches = [], 0, []
+    for athlete, doc, published in zip(athletes, docs, careers):
+        built = build_player(athlete, doc, team_meta.get(athlete["_teamID"], {}),
+                             groups, published, mismatches)
         if built:
             players.append(built)
             season = max(season, built["season"]["year"])
     players.sort(key=lambda p: (p["lastName"], p["firstName"]))
     print(f"players with usable stats: {len(players)}")
+    if mismatches:
+        print(f"WARNING: {len(mismatches)} career cross-check mismatches", file=sys.stderr)
+        for line in mismatches[:10]:
+            print(f"   {line}", file=sys.stderr)
+        # A handful could be an ESPN data quirk; widespread disagreement means
+        # the derivation is wrong and the file should not be published.
+        if len(mismatches) > len(players) * 0.05:
+            print("ERROR: too many mismatches, refusing to publish", file=sys.stderr)
+            return 1
     if len(players) < 200:
         print("ERROR: too few players, refusing to publish", file=sys.stderr)
         return 1
