@@ -13,6 +13,8 @@ private struct DivisionGroup: Identifiable {
 
 struct CustomGameView: View {
 
+    let sport: Sport
+
     @Environment(PlayerDataService.self)  private var playerDataService
     @Environment(UserProgressService.self) private var progressService
     @Environment(PurchaseService.self)    private var purchaseService
@@ -24,7 +26,9 @@ struct CustomGameView: View {
     @State private var mergedPack: Pack? = nil
 
     private var progress: UserProgress { progressService.progress }
-    private var allPacks: [Pack] { playerDataService.packs }
+    /// One sport at a time — a merged pack spanning sports would compare each
+    /// guess against the wrong fields.
+    private var allPacks: [Pack] { playerDataService.packs(for: sport) }
 
     // MARK: - Division groups
 
@@ -37,7 +41,10 @@ struct CustomGameView: View {
         ("nlwest",    "NL West"),
     ]
 
+    /// Baseball's team packs are grouped by division. Other sports have no
+    /// equivalent structure yet, so they fall back to a flat list.
     private var divisionGroups: [DivisionGroup] {
+        guard sport == .baseball else { return [] }
         let packs = allPacks
         return Self.divisionOrder.map { (key, name) in
             let divProductID  = "com.lucasazzopardi.statsleuth.pack.division.\(key)"
@@ -117,12 +124,13 @@ struct CustomGameView: View {
             List {
                 modePicker
                 freeSection
+                otherPacksSection
                 ForEach(divisionGroups) { group in
                     divisionSection(group)
                 }
             }
             .listStyle(.insetGrouped)
-            .navigationTitle("Custom Game")
+            .navigationTitle("\(sport.displayName) Custom Game")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
@@ -171,6 +179,21 @@ struct CustomGameView: View {
                 ForEach(freePacks) { pack in
                     packRow(pack)
                 }
+            }
+        }
+    }
+
+    /// Paid packs that aren't part of a division grouping — every sport except
+    /// baseball, for now.
+    @ViewBuilder
+    private var otherPacksSection: some View {
+        let grouped = Set(divisionGroups.flatMap { group in
+            group.teamPacks.map(\.id) + [group.divisionPack?.id].compactMap { $0 }
+        })
+        let rest = allPacks.filter { !$0.isFree && !grouped.contains($0.id) }
+        if !rest.isEmpty {
+            Section("Packs") {
+                ForEach(rest) { packRow($0) }
             }
         }
     }

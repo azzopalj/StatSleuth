@@ -4,6 +4,7 @@ import StoreKit
 struct PackSelectionView: View {
 
     let mode: GameMode
+    let sport: Sport
 
     @Environment(PlayerDataService.self)  private var playerDataService
     @Environment(UserProgressService.self) private var progressService
@@ -18,17 +19,18 @@ struct PackSelectionView: View {
 
     private var progress: UserProgress { progressService.progress }
 
-    private var allPacks: [Pack] { playerDataService.packs }
+    /// Only this sport's packs. Every guess is compared field by field against
+    /// the answer, so a pack is tied to one sport.
+    private var allPacks: [Pack] { playerDataService.packs(for: sport) }
 
     private var filteredPacks: [Pack] {
         guard !searchQuery.isEmpty else { return allPacks }
         return allPacks.filter { $0.name.localizedCaseInsensitiveContains(searchQuery) }
     }
 
-    private var notablePacks: [Pack]  { filteredPacks.filter { $0.type == .base && $0.name != "Legends" } }
-    private var legendsPacks: [Pack]  { filteredPacks.filter { $0.name == "Legends" } }
-    private var teamPacks: [Pack]     { filteredPacks.filter { $0.type == .team } }
-    private var divisionPacks: [Pack] { filteredPacks.filter { $0.type == .division } }
+    private var freePacks: [Pack] { filteredPacks.filter { $0.isFree } }
+    private var teamPacks: [Pack] { filteredPacks.filter { $0.type == .team && !$0.isFree } }
+    private var divisionPacks: [Pack] { filteredPacks.filter { $0.type == .division && !$0.isFree } }
 
     var body: some View {
         List {
@@ -38,7 +40,7 @@ struct PackSelectionView: View {
             paidSections
         }
         .listStyle(.insetGrouped)
-        .navigationTitle("Choose a Pack")
+        .navigationTitle("\(sport.displayName) Packs")
         .navigationBarTitleDisplayMode(.inline)
         .searchable(text: $searchQuery, prompt: "Search packs")
         .navigationDestination(isPresented: $navigateToGame) {
@@ -65,14 +67,11 @@ struct PackSelectionView: View {
 
     @ViewBuilder
     private var freeSections: some View {
-        if !notablePacks.isEmpty {
+        if !freePacks.isEmpty {
+            // One section rather than a hardcoded "Free" / "Legends" pair, so a
+            // sport without legends doesn't need a special case here.
             Section("Free") {
-                ForEach(notablePacks) { packRow($0) }
-            }
-        }
-        if !legendsPacks.isEmpty {
-            Section("Legends") {
-                ForEach(legendsPacks) { packRow($0) }
+                ForEach(freePacks) { packRow($0) }
             }
         }
     }
@@ -100,7 +99,9 @@ struct PackSelectionView: View {
 
     @ViewBuilder
     private var unlockAllBanner: some View {
-        let hasAnyLocked = allPacks.contains { !isOwned($0) && !$0.isFree }
+        // "Unlock Everything" is the baseball bundle; other sports are free for
+        // now and have nothing to sell.
+        let hasAnyLocked = sport == .baseball && allPacks.contains { !isOwned($0) && !$0.isFree }
         if hasAnyLocked {
             Section {
                 Button {

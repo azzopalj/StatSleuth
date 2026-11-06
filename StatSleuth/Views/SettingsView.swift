@@ -156,7 +156,8 @@ struct SettingsView: View {
         center.removePendingNotificationRequests(withIdentifiers: ["daily-reminder"])
 
         let content = UNMutableNotificationContent()
-        content.title = "⚾ StatSleuth"
+        // Sport-neutral: the reminder covers whichever dailies are still open.
+        content.title = "StatSleuth"
         content.body = streakBody
         content.sound = .default
         content.badge = 1

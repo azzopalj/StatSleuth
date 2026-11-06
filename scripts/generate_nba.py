@@ -7,11 +7,16 @@ keys the file declares, so adding the NFL later needs no new client code.
   {
     "generated": "...", "sport": "basketball", "league": "nba", "season": 2027,
     "statKeys": {"card": [...], "primary": [...]},
-    "players": [ { ...identity..., "season": {...}, "career": {...},
+    "players": [ { ...identity..., "notable": true, "headshot": "https://...",
+                   "season": {...}, "career": {...},
                    "rookie": {...}, "seasons": [...] } ]
   }
 
-Career totals are computed here because ESPN publishes no career row.
+Career lines come from ESPN's own published career split; a line derived from
+the season rows is computed alongside it purely as a cross-check.
+
+Also writes data/nba_daily.json — the NBA daily-puzzle schedule, so every
+device gets the same answer (see daily_schedule.py).
 """
 
 from __future__ import annotations
@@ -20,9 +25,10 @@ import json
 import os
 import sys
 from concurrent.futures import ThreadPoolExecutor
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import daily_schedule  # noqa: E402
 from espn_common import (SITE_API, WEB_API, get, get_many, split_made_attempted,  # noqa: E402
                          team_groups, teams, to_float)
 
@@ -36,6 +42,9 @@ PRIMARY_KEYS = ["PTS", "REB"]
 MIN_GAMES_FOR_CURRENT_SEASON = 15
 # Below this a player is deep bench or two-way, and makes for an unfair puzzle.
 MIN_CAREER_GAMES = 20
+# How many players land in the Notables pack — the free default pack, and the
+# pool the daily puzzle is drawn from.
+NOTABLE_COUNT = 150
 
 
 def roster_players(team_ids: list[str]) -> list[dict]:
@@ -154,6 +163,36 @@ def career_stats(totals: dict[int, dict], averages: dict[int, dict]) -> dict[str
     return out
 
 
+def prominence(player: dict) -> float:
+    """How recognisable a player is, used to pick the Notables pack.
+
+    Top-chart scoring alone would drop a veteran having a quiet year, so this
+    blends current production with career accumulation: a 30-point-a-game
+    scorer and a 1,200-game veteran both clear the bar. The weights are a
+    judgement call, not a published metric — the point is only to order the
+    pool, and the cut is wide enough (150 of ~430) that near-ties don't matter.
+    """
+    season = player["season"]["stats"]
+    career = player["career"]["stats"]
+    games = career.get("GP", 0) or 0
+    career_points = (career.get("PTS", 0) or 0) * games   # career total points
+    return (
+        career_points / 100              # 20,000 career points -> 200
+        + (season.get("PTS", 0) or 0) * 8    # 30 points a game   -> 240
+        + (season.get("AST", 0) or 0) * 6
+        + (season.get("REB", 0) or 0) * 4
+        + games / 10                     # 1,000 games           -> 100
+    )
+
+
+def mark_notable(players: list[dict], count: int = NOTABLE_COUNT) -> None:
+    """Flags the top `count` players by prominence, in place."""
+    ranked = sorted(players, key=lambda p: (-prominence(p), p["fullName"]))
+    notable = {p["id"] for p in ranked[:count]}
+    for player in players:
+        player["notable"] = player["id"] in notable
+
+
 def build_player(athlete: dict, stats_doc: dict, team_meta: dict,
                  groups: dict[str, tuple[str, str]],
                  published_career: dict[str, float] | None,
@@ -206,6 +245,9 @@ def build_player(athlete: dict, stats_doc: dict, team_meta: dict,
         "position": (athlete.get("position") or {}).get("abbreviation") or "",
         "age": athlete.get("age"),
         "nationality": birth.get("country") or "",
+        # Published rather than built from an id so the app needs no per-sport
+        # URL pattern. ESPN supplies one for every rostered athlete.
+        "headshot": (athlete.get("headshot") or {}).get("href") or None,
         "jersey": to_float(athlete.get("jersey")),
         "debutYear": rookie_year,
         "season": {"year": current, "stats": per_game(averages[current])},
@@ -246,8 +288,11 @@ def main() -> int:
         if built:
             players.append(built)
             season = max(season, built["season"]["year"])
+    mark_notable(players)
+    notables = sorted((p for p in players if p["notable"]),
+                      key=lambda p: -prominence(p))
     players.sort(key=lambda p: (p["lastName"], p["firstName"]))
-    print(f"players with usable stats: {len(players)}")
+    print(f"players with usable stats: {len(players)} (notable: {len(notables)})")
     if mismatches:
         print(f"WARNING: {len(mismatches)} career cross-check mismatches", file=sys.stderr)
         for line in mismatches[:10]:
@@ -270,14 +315,32 @@ def main() -> int:
         "count": len(players),
         "players": players,
     }
+    # The daily is drawn from the notables, most prominent first, and already
+    # published dates are never rewritten.
+    today = datetime.now(timezone.utc).astimezone(
+        timezone(timedelta(hours=-5))).date()   # ET-ish; the exact offset doesn't matter
+    existing = daily_schedule.load(os.path.join(repo_root, "data", "nba_daily.json"))
+    daily_doc = {
+        "generated": doc["generated"],
+        "season": season,
+        **daily_schedule.extend(existing, [p["id"] for p in notables], today),
+    }
+    print(f"daily schedule: {len(daily_doc['picks'])} dates "
+          f"(through {max(daily_doc['picks']) if daily_doc['picks'] else 'n/a'})")
+
     for base in ("", "docs"):
         path = os.path.join(repo_root, base, "data", "nba.json")
         os.makedirs(os.path.dirname(path), exist_ok=True)
         with open(path, "w", encoding="utf-8") as f:
             json.dump(doc, f, ensure_ascii=False, separators=(",", ":"))
             f.write("\n")
+        daily_path = os.path.join(repo_root, base, "data", "nba_daily.json")
+        with open(daily_path, "w", encoding="utf-8") as f:
+            json.dump(daily_doc, f, indent=1, ensure_ascii=False)
+            f.write("\n")
     size = os.path.getsize(os.path.join(repo_root, "data", "nba.json"))
     print(f"wrote data/nba.json — season {season}, {len(players)} players, {size/1024:.0f} KB")
+    print("top 10 notables:", ", ".join(p["fullName"] for p in notables[:10]))
     return 0
 
 

@@ -20,8 +20,9 @@ final class PlayerDataService {
 
     /// Tracks the background rookie/mystery-year fetch, separate from core loading.
     private(set) var extendedState: LoadState = .idle
-    /// Today's published daily answer (MLB id), if the schedule was reachable.
-    private(set) var remoteDailyPick: Int?
+    /// Today's published daily answer per sport, keyed by `Sport.rawValue`.
+    /// The value is that sport's own player id — see `Player.sharedID`.
+    private(set) var remoteDailyPicks: [String: Int] = [:]
     @ObservationIgnored private var extendedTask: Task<Void, Never>?
 
     var isLoaded: Bool { if case .loaded = loadState { return true }; return false }
@@ -30,8 +31,22 @@ final class PlayerDataService {
 
     var isExtendedLoaded: Bool { if case .loaded = extendedState { return true }; return false }
 
-    /// Modes that need rookie/mystery-year data can only start once phase 2 finishes.
-    func isReady(for mode: GameMode) -> Bool {
+    /// Sports that actually have players loaded, in a fixed order. A sport whose
+    /// data file isn't published yet simply doesn't appear, so no UI needs to
+    /// know which sports exist.
+    var availableSports: [Sport] {
+        let present = Set(allPlayers.map(\.resolvedSport))
+        return Sport.allCases
+            .filter { present.contains($0) }
+            .sorted { $0.sortOrder < $1.sortOrder }
+    }
+
+    /// Modes that need rookie/mystery-year data can only start once phase 2
+    /// finishes — but phase 2 is the MLB stats fetch. Other sports publish
+    /// those seasons in their own data file and are ready as soon as they load,
+    /// so they must not be made to wait on baseball.
+    func isReady(for mode: GameMode, sport: Sport) -> Bool {
+        guard sport == .baseball else { return true }
         switch mode {
         case .rookieSeason, .mysteryEra: return isExtendedLoaded
         default:                         return true
@@ -42,7 +57,7 @@ final class PlayerDataService {
     /// (e.g. "19-1.4.0"). Bumps automatically on every App Store release; bump the
     /// integer manually whenever the player data schema changes between releases.
     private var cacheVersion: String {
-        let dataVersion = 25
+        let dataVersion = 26
         let appVersion  = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
         return "\(dataVersion)-\(appVersion)"
     }
@@ -73,6 +88,10 @@ final class PlayerDataService {
 
         if !cacheIsStale, let cached = loadCachedPlayers(), !cached.isEmpty {
             finishLoad(with: cached)
+            // The first pass only knew about baseball, since which sports exist
+            // is derived from the loaded players. Now that they are in, pick up
+            // the schedules for the rest.
+            await refreshDailyPick()
             // The cache is written twice: once after phase 1, again after phase 2.
             // Only the second write sets this flag.
             if UserDefaults.standard.string(forKey: extendedCacheKey) == cacheVersion {
@@ -110,6 +129,7 @@ final class PlayerDataService {
             loadState = .loading(progress: 0.95)
             persistCache(merged)
             finishLoad(with: merged)
+            await refreshDailyPick()
             startExtendedLoad()
 
         } catch {
@@ -131,10 +151,20 @@ final class PlayerDataService {
         return players
     }
 
-    /// Primes today's published daily answer. Cheap and idempotent — also called
-    /// when the app returns to the foreground so a day rollover is picked up.
+    /// Primes today's published daily answer for every sport in play. Cheap and
+    /// idempotent — also called when the app returns to the foreground so a day
+    /// rollover is picked up.
     func refreshDailyPick() async {
-        remoteDailyPick = await RemoteDataService.shared.dailyPick(for: Self.easternDateKey())
+        let key = Self.easternDateKey()
+        // Baseball is always present; the rest only once their data has loaded.
+        let sports = availableSports.isEmpty ? [.baseball] : availableSports
+        var picks: [String: Int] = [:]
+        for sport in sports {
+            if let pick = await RemoteDataService.shared.dailyPick(for: key, sport: sport) {
+                picks[sport.rawValue] = pick
+            }
+        }
+        remoteDailyPicks = picks
     }
 
     private func finishLoad(with players: [Player]) {
@@ -194,7 +224,25 @@ final class PlayerDataService {
     private func loadHistoricPlayers() -> [Player] {
         guard let url = Bundle.main.url(forResource: "historic_players", withExtension: "json"),
               let data = try? Data(contentsOf: url) else { return [] }
-        return (try? JSONDecoder().decode([Player].self, from: data)) ?? []
+        return Self.decodePlayers(data, source: "historic_players.json")
+    }
+
+    /// Bundled player files decoded loudly.
+    ///
+    /// These used to be read with `try?`, which turned a bad file into an empty
+    /// array and no symptom beyond a pack quietly going missing — the Legends
+    /// pack was absent for months that way, first because one team name didn't
+    /// match the enum and then because every id was an invalid UUID. A bundled
+    /// file is ours, so a decode failure is a build mistake and should stop a
+    /// debug run rather than ship silently.
+    private static func decodePlayers(_ data: Data, source: String) -> [Player] {
+        do {
+            return try JSONDecoder().decode([Player].self, from: data)
+        } catch {
+            assertionFailure("\(source) failed to decode: \(error)")
+            print("⚠️ \(source) failed to decode: \(error)")
+            return []
+        }
     }
 
     // MARK: - Notable names
@@ -226,7 +274,16 @@ final class PlayerDataService {
             historicSeason: p.historicSeason,
             rookieSeason: rookieSeason ?? p.rookieSeason,
             mysterySeasons: mysterySeasons ?? p.mysterySeasons,
-            mysterySeason: p.mysterySeason
+            mysterySeason: p.mysterySeason,
+            // Carried through explicitly: dropping these would strip a
+            // non-baseball player of their sport, stats and headshot. Nothing
+            // currently rebuilds one, but nothing should have to know that.
+            sport: p.sport, externalID: p.externalID, headshotPath: p.headshotPath,
+            teamName: p.teamName, teamCode: p.teamCode, conference: p.conference,
+            divisionName: p.divisionName, positionCode: p.positionCode,
+            seasonLine: p.seasonLine, careerLine: p.careerLine,
+            rookieLine: p.rookieLine, mysteryLines: p.mysteryLines,
+            mysteryLine: p.mysteryLine
         )
     }
 
@@ -250,7 +307,8 @@ final class PlayerDataService {
     private func loadBundledPlayers() -> [Player]? {
         guard let url = Bundle.main.url(forResource: "players", withExtension: "json"),
               let data = try? Data(contentsOf: url) else { return nil }
-        return try? JSONDecoder().decode([Player].self, from: data)
+        let players = Self.decodePlayers(data, source: "players.json")
+        return players.isEmpty ? nil : players
     }
 
     // MARK: - Querying
@@ -259,19 +317,32 @@ final class PlayerDataService {
         return allPlayers.filter { pack.playerIDs.contains($0.id) }
     }
 
-    func search(_ query: String) -> [Player] {
+    /// `sport` scopes the results to one sport. A guess is compared against the
+    /// answer field by field, so a cross-sport guess has no meaning — passing
+    /// the game's sport keeps those out of the picker entirely.
+    func search(_ query: String, sport: Sport? = nil) -> [Player] {
         guard !query.isEmpty else { return [] }
         let opts: String.CompareOptions = [.caseInsensitive, .diacriticInsensitive]
-        let results = allPlayers.filter {
-            $0.fullName.range(of: query, options: opts) != nil ||
-            $0.firstName.range(of: query, options: opts) != nil ||
-            $0.lastName.range(of: query, options: opts) != nil ||
-            ($0.legalFirstName?.range(of: query, options: opts) != nil)
+        return allPlayers.filter { player in
+            if let sport, player.resolvedSport != sport { return false }
+            return player.fullName.range(of: query, options: opts) != nil ||
+                   player.firstName.range(of: query, options: opts) != nil ||
+                   player.lastName.range(of: query, options: opts) != nil ||
+                   (player.legalFirstName?.range(of: query, options: opts) != nil)
         }
-        return results
     }
 
     func player(withID id: UUID) -> Player? { allPlayers.first { $0.id == id } }
+
+    func packs(for sport: Sport) -> [Pack] { packs.filter { $0.sport == sport } }
+
+    /// The pack a sport's daily challenge is drawn from: its first free base
+    /// pack, which is the notables in both sports that exist so far. Keeping the
+    /// daily inside a curated pack is what stops the answer being a player
+    /// nobody has heard of.
+    func dailyPack(for sport: Sport) -> Pack? {
+        packs.first { $0.sport == sport && $0.type == .base }
+    }
 
     /// Merges multiple packs into a single ephemeral pack, deduplicating by player ID.
     func mergedPack(from packs: [Pack]) -> Pack {
@@ -285,16 +356,19 @@ final class PlayerDataService {
             playerIDs: merged,
             isPurchased: true,
             price: nil,
-            sport: .baseball,
+            // Custom games are built from one sport's packs, so take the sport
+            // from the selection rather than assuming baseball.
+            sport: packs.first?.sport ?? .baseball,
             productID: nil
         )
     }
 
-    /// Resolves today's puzzle, preferring the published schedule so every device
-    /// gets the same answer. `remoteDailyPick` is primed during load.
-    func dailyPlayer(from players: [Player]) -> Player? {
-        if let pick = remoteDailyPick,
-           let match = players.first(where: { $0.mlbID == pick }) {
+    /// Resolves today's puzzle for one sport, preferring the published schedule
+    /// so every device gets the same answer. `remoteDailyPicks` is primed during
+    /// load and refreshed on foreground.
+    func dailyPlayer(from players: [Player], sport: Sport) -> Player? {
+        if let pick = remoteDailyPicks[sport.rawValue],
+           let match = players.first(where: { $0.sharedID == pick }) {
             return match
         }
         return locallyDerivedDailyPlayer(from: players)
@@ -328,10 +402,11 @@ final class PlayerDataService {
         return String(format: "%04d-%02d-%02d", c.year ?? 0, c.month ?? 0, c.day ?? 0)
     }
 
-    /// Stable identity for a player across devices. mlbID is assigned by MLB, so it is
-    /// identical everywhere; the local `id` is a per-install UUID and must not be used.
+    /// Stable identity for a player across devices. `sharedID` comes from the sport's
+    /// own data source, so it is identical everywhere; the local `id` is a per-install
+    /// UUID and must not be used.
     private static func identity(_ player: Player) -> String {
-        player.mlbID.map(String.init) ?? player.fullName
+        player.sharedID.map(String.init) ?? player.fullName
     }
 
     /// FNV-1a over "<date>:<player>". Chosen over Swift's `Hashable`, which is seeded
@@ -377,10 +452,23 @@ final class PlayerDataService {
         // purchase decision before the content is proven.
         let nba = allPlayers.filter { $0.resolvedSport == .basketball }
         if !nba.isEmpty {
+            // Notables mirror baseball's free default pack: the top ~150 by
+            // prominence, scored in the generator. The daily is drawn from here,
+            // so the answer is always someone a fan would recognise.
+            let notable = nba.filter { $0.tier == .notable }
+            if !notable.isEmpty {
+                packs.append(Pack(
+                    id: stableID("nba-notable"),
+                    name: "NBA Notables",
+                    description: "The biggest names in the NBA right now.",
+                    type: .base, playerIDs: notable.map(\.id),
+                    isPurchased: true, price: nil, sport: .basketball, productID: nil
+                ))
+            }
             packs.append(Pack(
                 id: stableID("nba-all"),
-                name: "NBA Players",
-                description: "Guess the NBA player from their stats.",
+                name: "All NBA Players",
+                description: "Every rostered player in the league.",
                 type: .base, playerIDs: nba.map(\.id),
                 isPurchased: true, price: nil, sport: .basketball, productID: nil
             ))

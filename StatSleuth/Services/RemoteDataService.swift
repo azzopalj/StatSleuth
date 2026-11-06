@@ -40,8 +40,21 @@ actor RemoteDataService {
 
     struct DailySchedule: Codable, Sendable {
         let generated: String?
-        /// ISO date ("2026-11-04") to MLB player id.
+        /// ISO date ("2026-11-04") to the player's id in that sport's data
+        /// source — an MLB id for baseball, an ESPN athlete id otherwise.
         let picks: [String: Int]
+    }
+
+    /// Each sport publishes its own schedule, so each has its own daily puzzle.
+    /// Baseball keeps the original filename so links and caches still resolve.
+    private static func dailyFile(for sport: Sport) -> String {
+        switch sport {
+        case .baseball:   return "daily.json"
+        case .basketball: return "nba_daily.json"
+        case .football:   return "nfl_daily.json"
+        case .hockey:     return "nhl_daily.json"
+        case .soccer:     return "mls_daily.json"
+        }
     }
 
     // MARK: - Fetching
@@ -59,14 +72,15 @@ actor RemoteDataService {
     }
 
     /// Returns the published pick for `dateKey`, or nil to fall back on-device.
-    func dailyPick(for dateKey: String) async -> Int? {
-        if let fresh: DailySchedule = await fetch("daily.json") {
-            cache(fresh, as: "daily.json")
+    func dailyPick(for dateKey: String, sport: Sport) async -> Int? {
+        let file = Self.dailyFile(for: sport)
+        if let fresh: DailySchedule = await fetch(file) {
+            cache(fresh, as: file)
             if let pick = fresh.picks[dateKey] { return pick }
         }
         // The schedule is published weeks ahead, so a cached copy usually still
         // covers today even after several days offline.
-        return (loadCached("daily.json") as DailySchedule?)?.picks[dateKey]
+        return (loadCached(file) as DailySchedule?)?.picks[dateKey]
     }
 
     private func fetch<T: Decodable>(_ file: String) async -> T? {

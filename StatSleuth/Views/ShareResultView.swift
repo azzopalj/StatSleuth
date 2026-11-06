@@ -7,6 +7,8 @@ struct ShareCardView: View {
     let session: GameSession
     let deepLinkURL: URL?
 
+    private var sport: Sport { session.targetPlayer.resolvedSport }
+
     private var won: Bool {
         if case .won = session.state { return true }
         return false
@@ -27,11 +29,11 @@ struct ShareCardView: View {
         VStack(spacing: 16) {
             // Header
             HStack {
-                Text("⚾ StatSleuth")
+                Text("\(sport.icon) StatSleuth")
                     .font(.headline)
                     .fontWeight(.bold)
                 Spacer()
-                Text(session.mode.displayName)
+                Text("\(sport.displayName) · \(session.mode.displayName)")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -85,14 +87,16 @@ struct ShareResultView: View {
     @Environment(\.dismiss) private var dismiss
 
     private var deepLinkURL: URL? {
-        guard let mlbID = session.targetPlayer.mlbID else { return nil }
-        let packType = session.pack.type.rawValue
+        guard let playerID = session.targetPlayer.sharedID else { return nil }
         return deepLinkService.buildURL(
-            mlbID: mlbID,
+            playerID: playerID,
+            sport: session.targetPlayer.resolvedSport,
             mode: session.mode,
-            packType: packType
+            packType: session.pack.type.rawValue
         )
     }
+
+    private var sport: Sport { session.targetPlayer.resolvedSport }
 
     private var won: Bool {
         if case .won = session.state { return true }
@@ -132,7 +136,8 @@ struct ShareResultView: View {
 
                     // Action buttons
                     VStack(spacing: 12) {
-                        ShareLink(item: shareText, preview: SharePreview("⚾ StatSleuth")) {
+                        ShareLink(item: shareText,
+                                  preview: SharePreview("\(sport.icon) StatSleuth")) {
                             Label("Share Challenge", systemImage: "square.and.arrow.up")
                                 .font(.headline)
                                 .frame(maxWidth: .infinity)
@@ -177,7 +182,7 @@ struct ShareResultView: View {
 
     private var shareText: String {
         var lines = [
-            "⚾ StatSleuth — \(session.mode.displayName)",
+            "\(sport.icon) StatSleuth \(sport.displayName) — \(session.mode.displayName)",
             won ? "I got it in \(guessesUsed)/\(session.maxGuesses)! \(emojiGrid)" : "I couldn't get it in \(session.maxGuesses) guesses \(emojiGrid)",
             "Think you can beat me?"
         ]

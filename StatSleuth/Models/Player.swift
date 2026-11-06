@@ -238,8 +238,19 @@ struct Player: Identifiable, Codable {
 
     /// nil means baseball, so players cached before multi-sport still decode.
     let sport: Sport?
+    /// The id this player has in their sport's own data source (an ESPN athlete
+    /// id for the NBA). `mlbID` is baseball's; this is every other sport's, and
+    /// is what makes a shared link or a published daily pick resolve to the same
+    /// player on every device.
+    let externalID: Int?
+    /// Headshot URL published with the player's data. Baseball builds its own
+    /// from `mlbID`; other sports carry theirs so no per-sport URL pattern has
+    /// to live in the app.
+    let headshotPath: String?
     /// Display team for sports without an MLBTeam case.
     let teamName: String?
+    /// Short team code ("LAL"), for the tight cells in the guess grid.
+    let teamCode: String?
     let conference: String?
     let divisionName: String?
     /// Raw position label, e.g. "PG". Baseball uses `position` instead.
@@ -263,7 +274,8 @@ struct Player: Identifiable, Codable {
          careerHitterStats: HitterStats?, careerPitcherStats: PitcherStats?,
          historicSeason: HistoricSeason?, rookieSeason: HistoricSeason?,
          mysterySeasons: [HistoricSeason]?, mysterySeason: HistoricSeason? = nil,
-         sport: Sport? = nil, teamName: String? = nil, conference: String? = nil,
+         sport: Sport? = nil, externalID: Int? = nil, headshotPath: String? = nil,
+         teamName: String? = nil, teamCode: String? = nil, conference: String? = nil,
          divisionName: String? = nil, positionCode: String? = nil,
          seasonLine: StatLine? = nil, careerLine: StatLine? = nil,
          rookieLine: StatLine? = nil, mysteryLines: [StatLine]? = nil,
@@ -280,7 +292,9 @@ struct Player: Identifiable, Codable {
         self.careerPitcherStats = careerPitcherStats
         self.historicSeason = historicSeason; self.rookieSeason = rookieSeason
         self.mysterySeasons = mysterySeasons; self.mysterySeason = mysterySeason
-        self.sport = sport; self.teamName = teamName
+        self.sport = sport
+        self.externalID = externalID; self.headshotPath = headshotPath
+        self.teamName = teamName; self.teamCode = teamCode
         self.conference = conference; self.divisionName = divisionName
         self.positionCode = positionCode
         self.seasonLine = seasonLine; self.careerLine = careerLine
@@ -293,15 +307,26 @@ struct Player: Identifiable, Codable {
     var isBaseball: Bool { resolvedSport == .baseball }
     /// Team as shown to the player, whichever sport they are from.
     var teamDisplayName: String { teamName ?? team.rawValue }
+    /// Short team code, for places too tight for the full name.
+    var teamCodeDisplay: String {
+        if let teamCode, !teamCode.isEmpty { return teamCode }
+        return isBaseball ? team.abbreviation : (teamName ?? "--")
+    }
     /// Position as shown to the player.
     var positionDisplay: String { positionCode ?? position.displayName }
 
     var fullName: String { "\(firstName) \(lastName)" }
     var headshotURL: URL? {
+        if let headshotPath, let url = URL(string: headshotPath) { return url }
         guard let mlbID else { return nil }
         let str = "https://img.mlbstatic.com/mlb-photos/image/upload/w_213,q_auto:best/v1/people/\(mlbID)/headshot/67/current"
         return URL(string: str)
     }
+
+    /// The id that identifies this player to other devices — `mlbID` for
+    /// baseball, the sport's own id otherwise. Used for shared links and for
+    /// matching the published daily pick.
+    var sharedID: Int? { isBaseball ? mlbID : externalID }
     var isPitcher: Bool { position.isPitcher }
     var isHistoric: Bool { tier == .historic }
 
@@ -356,7 +381,8 @@ struct Player: Identifiable, Codable {
         case rookieSeason
         case mysterySeasons
         case mysterySeason
-        case sport, teamName, conference, divisionName, positionCode
+        case sport, externalID, headshotPath
+        case teamName, teamCode, conference, divisionName, positionCode
         case seasonLine, careerLine, rookieLine, mysteryLines, mysteryLine
     }
 }

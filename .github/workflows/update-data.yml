@@ -1,8 +1,9 @@
 name: Update player data
 
-# Regenerates data/notable.json and data/daily.json from the MLB API and commits
-# them, so the app picks up roster changes and new daily puzzles without an
-# App Store release.
+# Regenerates every sport's published data and commits it, so the app picks up
+# roster changes and new daily puzzles without an App Store release:
+#   MLB  data/notable.json, data/daily.json      (MLB Stats API)
+#   NBA  data/nba.json,     data/nba_daily.json  (ESPN)
 
 on:
   schedule:
@@ -66,7 +67,8 @@ jobs:
 
           print(f"OK: {notable['count']} notable, {len(daily['picks'])} daily dates")
 
-          nba = json.load(open("data/nba.json"))
+          nba       = json.load(open("data/nba.json"))
+          nba_daily = json.load(open("data/nba_daily.json"))
           if nba["count"] < 200:
               sys.exit(f"nba player set too small: {nba['count']}")
           missing = [p["fullName"] for p in nba["players"]
@@ -74,7 +76,22 @@ jobs:
                      or not p.get("season", {}).get("stats")]
           if missing:
               sys.exit(f"nba players missing season/career stats: {missing[:5]}")
-          print(f"OK: {nba['count']} NBA players, season {nba['season']}")
+
+          # The Notables pack is the free default and the daily pool, so it has
+          # to be populated and every future pick has to be answerable from it.
+          notables = {p["id"] for p in nba["players"] if p.get("notable")}
+          if len(notables) < 100:
+              sys.exit(f"nba notables too small: {len(notables)}")
+          if len(nba_daily["picks"]) < 7:
+              sys.exit(f"nba daily schedule too short: {len(nba_daily['picks'])}")
+          stray = [d for d, pid in nba_daily["picks"].items()
+                   if d >= today and pid not in notables]
+          if stray:
+              sys.exit(f"future nba daily picks not in notables: {stray[:5]}")
+          if any(not p.get("headshot") for p in nba["players"]):
+              print("WARNING: some NBA players have no headshot", file=sys.stderr)
+          print(f"OK: {nba['count']} NBA players ({len(notables)} notable), "
+                f"{len(nba_daily['picks'])} daily dates, season {nba['season']}")
           PY
 
       - name: Commit if changed

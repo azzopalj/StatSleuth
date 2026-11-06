@@ -5,7 +5,8 @@ struct HintPanelView: View {
 
     let hintsAvailable: Int
     let hintsUsed: [Hint]
-    let packHasHistoricPlayers: Bool
+    /// Which hints make sense for this answer — see `GameViewModel.availableHintTypes`.
+    let availableHintTypes: [HintType]
     let onRequestHint: (HintType) -> Void
 
     @Environment(UserProgressService.self) private var progressService
@@ -13,13 +14,6 @@ struct HintPanelView: View {
 
     @State private var showHintPicker = false
     @State private var showBuyHints = false
-
-    private var availableHintTypes: [HintType] {
-        var types: [HintType] = [.position, .team, .nationality]
-        if packHasHistoricPlayers { types.append(.era) }
-        types += [.jerseyNumber, .initials, .firstNameOnly]
-        return types
-    }
 
     private var unusedHintTypes: [HintType] {
         let usedTypes = Set(hintsUsed.map { $0.type })

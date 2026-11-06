@@ -28,22 +28,25 @@ struct ContentView: View {
     }
 
     private func handleDeepLink(_ link: DeepLink) {
-        guard case .play(let mlbID, let mode, let packType) = link else { return }
+        guard case .play(let playerID, let sport, let mode, let packType) = link else { return }
 
-        // Find the player by mlbID
-        let allPacks  = playerDataService.packs
+        // Match on the id the link's sport uses — an MLB id, or that sport's own.
         let allPlayers = playerDataService.allPlayers
-
-        guard let player = allPlayers.first(where: { $0.mlbID == mlbID }) else {
+        guard let player = allPlayers.first(where: {
+            $0.resolvedSport == sport && $0.sharedID == playerID
+        }) else {
             deepLinkService.clearPendingLink()
             return
         }
 
-        // Find or build the right pack. Packs may still be empty if the link arrives
-        // before loading finishes, so fall back rather than indexing.
+        // Find or build the right pack, from the same sport as the player — a
+        // pack from another sport would compare every guess against the wrong
+        // fields. Packs may still be empty if the link arrives before loading
+        // finishes, so fall back rather than indexing.
+        let allPacks = playerDataService.packs.filter { $0.sport == sport }
         let fallback: Pack?
         if packType == "notable" {
-            fallback = allPacks.first { $0.name == "Notable Players" }
+            fallback = allPacks.first { $0.type == .base && $0.playerIDs.contains(player.id) }
                 ?? allPacks.first { $0.playerIDs.contains(player.id) }
                 ?? allPacks.first
         } else {

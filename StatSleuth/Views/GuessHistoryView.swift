@@ -51,7 +51,7 @@ private struct GuessRow: View {
                 .font(.subheadline)
                 .fontWeight(.semibold)
             Spacer()
-            Text(guess.player.team.abbreviation)
+            Text(guess.player.teamCodeDisplay)
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }
@@ -69,7 +69,55 @@ private struct GuessRow: View {
         }
     }
 
+    @ViewBuilder
     private var comparisonGrid: some View {
+        if targetPlayer.isBaseball {
+            baseballGrid
+        } else {
+            genericGrid
+        }
+    }
+
+    /// Grid for sports described by a `SportProfile` rather than typed stats.
+    /// The two stat cells come from the profile's primary keys, so a new sport
+    /// needs no change here.
+    private var genericGrid: some View {
+        let feedback = guess.feedback
+        let sport    = targetPlayer.resolvedSport
+        let profile  = SportProfile.profile(for: sport)
+        let line     = guess.player.statLineFor(mode: mode)
+        let keys     = profile?.primaryKeys ?? []
+
+        func statCell(_ index: Int, _ result: ComparisonResult) -> some View {
+            let key   = index < keys.count ? keys[index] : "--"
+            let value = line?[key]
+            return FeedbackCell(
+                label: key,
+                value: value.flatMap { v in profile.map { $0.format(key, v) } } ?? "--",
+                result: result
+            )
+        }
+
+        return LazyVGrid(
+            columns: Array(repeating: GridItem(.flexible()), count: 4),
+            spacing: 6
+        ) {
+            FeedbackCell(label: "POS", value: guess.player.positionDisplay, result: feedback.position)
+            FeedbackCell(label: sport.conferenceLabel,
+                         value: abbreviate(guess.player.conference), result: feedback.league)
+            FeedbackCell(label: "DIV", value: abbreviate(guess.player.divisionName), result: feedback.division)
+            FeedbackCell(label: "TEAM", value: guess.player.teamCodeDisplay, result: feedback.team)
+            FeedbackCell(label: "AGE", value: "\(guess.player.age)", result: feedback.age)
+            FeedbackCell(label: "NAT",
+                         value: String(guess.player.nationality.prefix(3)).uppercased(),
+                         result: feedback.nationality)
+            statCell(0, feedback.primaryStat1)
+            statCell(1, feedback.primaryStat2)
+        }
+        .padding(.top, 8)
+    }
+
+    private var baseballGrid: some View {
         let feedback  = guess.feedback
         let isPitcher = targetPlayer.isPitcher
 
@@ -113,6 +161,27 @@ private struct GuessRow: View {
             }
         }
         .padding(.top, 8)
+    }
+
+    /// Conference and division names are published as prose ("Eastern
+    /// Conference", "Northwest") and these cells are tiny, so shorten them.
+    /// Compass compounds get their initials — "Southeast" and "Southwest"
+    /// would otherwise both truncate to the same three letters.
+    private func abbreviate(_ name: String?) -> String {
+        guard let name, !name.isEmpty else { return "--" }
+        let core = name
+            .replacingOccurrences(of: "Conference", with: "")
+            .replacingOccurrences(of: "Division", with: "")
+            .trimmingCharacters(in: .whitespaces)
+        let compass = ["Northeast": "NE", "Northwest": "NW",
+                       "Southeast": "SE", "Southwest": "SW"]
+        if let short = compass[core] { return short }
+        let words = core.split(separator: " ")
+        guard let first = words.first else { return "--" }
+        if words.count > 1 {
+            return words.compactMap(\.first).map(String.init).joined().uppercased()
+        }
+        return String(first.prefix(4)).uppercased()
     }
 
     private func divisionAbbr(_ division: MLBDivision) -> String {

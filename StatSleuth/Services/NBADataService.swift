@@ -38,6 +38,10 @@ actor NBADataService {
             let nationality: String
             let jersey: Double?
             let debutYear: Int
+            /// Top ~150 by prominence, chosen in the generator. These make up
+            /// the free Notables pack and the daily pool.
+            let notable: Bool?
+            let headshot: String?
             let season: Line
             let career: Line
             let rookie: Line
@@ -74,7 +78,8 @@ actor NBADataService {
         return Player(
             id: UUID(),
             // mlbID is baseball's identifier; an NBA id here would produce wrong
-            // headshot URLs and deep links, so it stays nil.
+            // headshot URLs and deep links, so it stays nil. The ESPN id goes in
+            // externalID instead.
             mlbID: nil,
             firstName: entry.firstName,
             lastName: entry.lastName.isEmpty ? entry.fullName : entry.lastName,
@@ -89,14 +94,17 @@ actor NBADataService {
             nationality: entry.nationality,
             debutYear: entry.debutYear,
             jerseyNumber: Int(entry.jersey ?? 0),
-            tier: .fullRoster,
+            tier: (entry.notable ?? false) ? .notable : .fullRoster,
             seasonYear: entry.season.year,
             careerSpan: nil,
             hitterStats: nil, pitcherStats: nil,
             careerHitterStats: nil, careerPitcherStats: nil,
             historicSeason: nil, rookieSeason: nil, mysterySeasons: nil,
             sport: .basketball,
+            externalID: entry.id,
+            headshotPath: entry.headshot,
             teamName: entry.teamName,
+            teamCode: entry.team,
             conference: entry.conference,
             divisionName: entry.division,
             positionCode: entry.position,

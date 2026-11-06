@@ -2,6 +2,8 @@ import SwiftUI
 
 struct HowToPlayView: View {
 
+    @Environment(SportSelectionService.self) private var sportSelection
+
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
@@ -33,7 +35,7 @@ struct HowToPlayView: View {
 
     private var heroSection: some View {
         VStack(spacing: 10) {
-            Text("⚾").font(.system(size: 56))
+            Text(sportSelection.selected.icon).font(.system(size: 56))
             Text("Guess the mystery player from their stats.")
                 .font(.title3).fontWeight(.semibold).multilineTextAlignment(.center)
             Text("Each wrong guess reveals how close you are.")
@@ -47,6 +49,7 @@ struct HowToPlayView: View {
     private var objectiveSection: some View {
         InfoCard(title: "The Basics", icon: "target", iconColor: .blue) {
             VStack(alignment: .leading, spacing: 8) {
+                BulletRow("Pick a sport, then a pack — each sport has its own packs, puzzles and daily challenge.")
                 BulletRow("A mystery player is chosen from your selected pack.")
                 BulletRow("You see their stats — but not their name or photo.")
                 BulletRow("Type a player's name to make a guess.")
@@ -100,7 +103,7 @@ struct HowToPlayView: View {
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
                         VStack(alignment: .leading, spacing: 4) {
-                            ForEach(["Team", "League", "Nationality", "Key Stat 2"], id: \.self) { label in
+                            ForEach(["Team", "League / Conference", "Nationality", "Key Stat 2"], id: \.self) { label in
                                 Label(label, systemImage: "checkmark.circle.fill")
                                     .font(.caption)
                                     .foregroundStyle(.secondary)

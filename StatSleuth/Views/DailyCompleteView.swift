@@ -2,10 +2,17 @@ import SwiftUI
 
 struct DailyCompleteView: View {
 
-    let won: Bool
-    let guessCount: Int
+    let sport: Sport
+    /// nil only if this is reached before the sport's daily was recorded.
+    let record: DailyRecord?
     let maxGuesses: Int
+    /// Sports whose daily is still open today — each sport has its own puzzle.
+    let remainingSports: [Sport]
+    let onPickSport: (Sport) -> Void
     let onPlayOtherModes: () -> Void
+
+    private var won: Bool { record?.won ?? false }
+    private var guessCount: Int { record?.guessCount ?? maxGuesses }
 
     var body: some View {
         VStack(spacing: 32) {
@@ -16,7 +23,9 @@ struct DailyCompleteView: View {
                 Text(won ? "🎉" : "😅")
                     .font(.system(size: 72))
 
-                Text(won ? "You got today's player!" : "Today's challenge beat you")
+                Text(won
+                     ? "You got today's \(sport.displayName) player!"
+                     : "Today's \(sport.displayName) challenge beat you")
                     .font(.title3)
                     .fontWeight(.bold)
                     .multilineTextAlignment(.center)
@@ -34,7 +43,7 @@ struct DailyCompleteView: View {
 
             // Countdown
             VStack(spacing: 8) {
-                Text("Next challenge in")
+                Text("Next \(sport.displayName) challenge in")
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .textCase(.uppercase)
@@ -54,6 +63,39 @@ struct DailyCompleteView: View {
 
             Spacer()
 
+            // Another sport's daily is a separate puzzle, so offer it rather
+            // than making today look finished.
+            if !remainingSports.isEmpty {
+                VStack(spacing: 8) {
+                    Text("Still to play today")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .textCase(.uppercase)
+                        .tracking(1)
+
+                    HStack(spacing: 10) {
+                        ForEach(remainingSports, id: \.self) { other in
+                            Button {
+                                HapticEngine.tap()
+                                onPickSport(other)
+                            } label: {
+                                HStack(spacing: 6) {
+                                    Text(other.icon)
+                                    Text("\(other.displayName) Daily")
+                                        .font(.subheadline)
+                                        .fontWeight(.semibold)
+                                }
+                                .padding(.vertical, 12)
+                                .frame(maxWidth: .infinity)
+                                .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
+                                .foregroundStyle(.primary)
+                            }
+                        }
+                    }
+                }
+                .padding(.horizontal, 24)
+            }
+
             // CTA
             Button(action: onPlayOtherModes) {
                 Label("Play Other Modes", systemImage: "gamecontroller.fill")
@@ -69,7 +111,7 @@ struct DailyCompleteView: View {
             .padding(.horizontal, 24)
             .padding(.bottom, 32)
         }
-        .navigationTitle("Daily Challenge")
+        .navigationTitle("\(sport.displayName) Daily")
         .navigationBarTitleDisplayMode(.inline)
     }
 

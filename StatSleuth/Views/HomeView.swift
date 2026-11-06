@@ -8,6 +8,7 @@ struct HomeView: View {
     @Environment(GameCenterService.self)   private var gameCenterService
     @Environment(\.horizontalSizeClass)    private var horizontalSizeClass
     @Environment(PurchaseService.self)    private var purchaseService
+    @Environment(SportSelectionService.self) private var sportSelection
     @Environment(\.requestReview)         private var requestReview
 
     private static let reviewMilestones = [10, 50, 100]
@@ -23,11 +24,18 @@ struct HomeView: View {
 
     private var progress: UserProgress { progressService.progress }
 
+    /// Sport is a context, not a step: it is remembered between launches and
+    /// everything below — the daily, the modes, the pack list — follows it.
+    private var sport: Sport { sportSelection.selected }
+    private var availableSports: [Sport] { playerDataService.availableSports }
+    private var hasPlayedDaily: Bool { progress.hasPlayedDailyToday(sport: sport) }
+
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 24) {
                     headerSection
+                    sportPicker
                     streakXPSection
                     dailyChallengeButton
                     modeGridSection
@@ -68,19 +76,24 @@ struct HomeView: View {
             }
             .navigationDestination(isPresented: $navigateToPackSelection) {
                 if let mode = selectedMode {
-                    PackSelectionView(mode: mode)
+                    PackSelectionView(mode: mode, sport: sport)
                 }
             }
             .navigationDestination(isPresented: $navigateToDaily) {
-                if let notablePack = playerDataService.packs.first(where: { $0.name == "Notable Players" }) {
-                    GameView(mode: .daily, pack: notablePack)
+                if let dailyPack = playerDataService.dailyPack(for: sport) {
+                    GameView(mode: .daily, pack: dailyPack)
                 }
             }
             .navigationDestination(isPresented: $navigateToDailyComplete) {
                 DailyCompleteView(
-                    won: progress.lastDailyWon,
-                    guessCount: progress.lastDailyGuessCount,
+                    sport: sport,
+                    record: progress.dailyRecord(for: sport),
                     maxGuesses: GameMode.daily.maxGuesses,
+                    remainingSports: progress.sportsWithDailyRemaining(from: availableSports),
+                    onPickSport: { other in
+                        sportSelection.select(other)
+                        navigateToDailyComplete = false
+                    },
                     onPlayOtherModes: {
                         navigateToDailyComplete = false
                     }
@@ -93,12 +106,18 @@ struct HomeView: View {
                 HowToPlayView()
             }
             .sheet(isPresented: $showCustomGame) {
-                CustomGameView()
+                CustomGameView(sport: sport)
             }
             .onAppear {
+                sportSelection.reconcile(available: availableSports)
                 DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
                     requestReviewIfEligible()
                 }
+            }
+            .onChange(of: availableSports) { _, sports in
+                // A sport whose data file became unreachable shouldn't leave the
+                // player on an empty screen.
+                sportSelection.reconcile(available: sports)
             }
         }
     }
@@ -121,14 +140,62 @@ struct HomeView: View {
 
     private var headerSection: some View {
         VStack(spacing: 4) {
-            Text("⚾")
+            Text(sport.icon)
                 .font(.system(size: 48))
-            Text("Guess the player from their stats")
+                .contentTransition(.opacity)
+            Text(sport.tagline)
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
         }
         .padding(.top, 8)
+        .animation(.easeInOut, value: sport)
+    }
+
+    // MARK: - Sport picker
+
+    /// Hidden until there is a choice to make, so a single-sport install looks
+    /// exactly as it did before.
+    @ViewBuilder
+    private var sportPicker: some View {
+        let sports = availableSports
+        if sports.count > 1 {
+            HStack(spacing: 8) {
+                ForEach(sports, id: \.self) { option in
+                    let selected = option == sport
+                    Button {
+                        guard !selected else { return }
+                        HapticEngine.selection()
+                        withAnimation(.easeInOut(duration: 0.2)) {
+                            sportSelection.select(option)
+                        }
+                    } label: {
+                        HStack(spacing: 6) {
+                            Text(option.icon)
+                            Text(option.displayName)
+                                .font(.subheadline)
+                                .fontWeight(.semibold)
+                            if !progress.hasPlayedDailyToday(sport: option) {
+                                // A quiet nudge that this sport's daily is open.
+                                Circle()
+                                    .fill(.orange)
+                                    .frame(width: 6, height: 6)
+                            }
+                        }
+                        .foregroundStyle(selected ? Color.white : Color.primary)
+                        .padding(.vertical, 10)
+                        .frame(maxWidth: .infinity)
+                        .background(
+                            selected ? AnyShapeStyle(Color.accentColor)
+                                     : AnyShapeStyle(.regularMaterial),
+                            in: Capsule()
+                        )
+                    }
+                    .accessibilityLabel("\(option.displayName) players")
+                    .accessibilityAddTraits(selected ? [.isSelected, .isButton] : .isButton)
+                }
+            }
+        }
     }
 
     private var streakXPSection: some View {
@@ -166,7 +233,7 @@ struct HomeView: View {
     private var dailyChallengeButton: some View {
         Button {
             HapticEngine.tap()
-            if progress.hasPlayedDailyToday {
+            if hasPlayedDaily {
                 navigateToDailyComplete = true
             } else {
                 navigateToDaily = true
@@ -177,11 +244,13 @@ struct HomeView: View {
                     HStack(spacing: 6) {
                         Image(systemName: "calendar")
                             .font(.headline)
-                        Text("Daily Challenge")
+                        Text("\(sport.displayName) Daily Challenge")
                             .font(.headline)
                             .fontWeight(.semibold)
                     }
-                    Text("New player every day • Same for everyone")
+                    Text(hasPlayedDaily
+                         ? "Done for today • See how you did"
+                         : "New player every day • Same for everyone")
                         .font(.caption)
                         .opacity(0.85)
                 }
@@ -206,7 +275,9 @@ struct HomeView: View {
     }
 
     private var hasEnoughPacksForCustomGame: Bool {
-        let allPacks = playerDataService.packs
+        // Scoped to the selected sport: a custom game mixes packs, and mixing
+        // sports would compare every guess against the wrong fields.
+        let allPacks = playerDataService.packs(for: sport)
         let ownedPaidCount = allPacks.filter { pack in
             !pack.isFree && (
                 progressService.progress.purchasedPackIDs.contains(pack.id)
@@ -233,8 +304,8 @@ struct HomeView: View {
                             .fontWeight(.semibold)
                     }
                     Text(enabled
-                         ? "Mix any packs you own into one game"
-                         : "Unlock a pack to enable custom games")
+                         ? "Mix any \(sport.displayName) packs you own into one game"
+                         : "Unlock a \(sport.displayName) pack to enable custom games")
                         .font(.caption)
                         .opacity(0.85)
                 }

@@ -20,7 +20,7 @@ struct GameView: View {
 
     var body: some View {
         Group {
-            if !playerDataService.isReady(for: mode) {
+            if !playerDataService.isReady(for: mode, sport: pack.sport) {
                 modeDataLoadingView
             } else if let vm = viewModel {
                 gameContent(vm: vm)
@@ -60,7 +60,7 @@ struct GameView: View {
     }
 
     private func startIfReady() {
-        guard viewModel == nil, playerDataService.isReady(for: mode) else { return }
+        guard viewModel == nil, playerDataService.isReady(for: mode, sport: pack.sport) else { return }
         let vm = GameViewModel(
             playerDataService: playerDataService,
             progressService: progressService,
@@ -116,7 +116,7 @@ struct GameView: View {
                     HintPanelView(
                         hintsAvailable: vm.hintsAvailable,
                         hintsUsed: vm.hintsUsed,
-                        packHasHistoricPlayers: vm.packHasHistoricPlayers
+                        availableHintTypes: vm.availableHintTypes
                     ) { type in vm.requestHint(type: type) }
                 }
                 Color.clear.frame(height: 80)
@@ -188,6 +188,9 @@ struct GameView: View {
     // MARK: - Guess History (shared between layouts)
 
     private func guessHistory(vm: GameViewModel) -> some View {
+        // There are no guesses to show before a target exists, so the
+        // placeholder is never rendered — it only has to carry the pack's sport
+        // so the grid doesn't briefly pick baseball's layout.
         GuessHistoryView(
             guesses: vm.guesses,
             targetPlayer: vm.targetPlayer ?? Player(
@@ -199,7 +202,8 @@ struct GameView: View {
                 hitterStats: nil, pitcherStats: nil,
                 careerHitterStats: nil, careerPitcherStats: nil,
                 historicSeason: nil, rookieSeason: nil,
-                mysterySeasons: nil, mysterySeason: nil
+                mysterySeasons: nil, mysterySeason: nil,
+                sport: pack.sport
             ),
             mode: mode
         )

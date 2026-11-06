@@ -59,12 +59,14 @@ final class GameViewModel {
         if let forced = forcedPlayer {
             target = forced
         } else if mode == .daily {
-            // Prevent replaying the daily via deep link or programmatic call
-            if forcedPlayer == nil && progressService.progress.hasPlayedDailyToday {
-                errorMessage = "You've already completed today's daily challenge. Come back tomorrow!"
+            // Prevent replaying the daily via deep link or programmatic call.
+            // Each sport has its own daily, so this only blocks the one played.
+            if forcedPlayer == nil,
+               progressService.progress.hasPlayedDailyToday(sport: pack.sport) {
+                errorMessage = "You've already completed today's \(pack.sport.displayName) daily challenge. Come back tomorrow!"
                 return
             }
-            target = playerDataService.dailyPlayer(from: pool)
+            target = playerDataService.dailyPlayer(from: pool, sport: pack.sport)
         } else {
             // Anti-repeat cycling only applies to the Notable Players pack.
             // Team/division packs are smaller paid packs — full random is fine there.
@@ -91,9 +93,14 @@ final class GameViewModel {
 
         var resolvedTarget = target
         if mode == .mysteryEra {
-            let seasons = target.mysterySeasons ?? []
-            if let picked = seasons.randomElement() {
-                resolvedTarget.mysterySeason = picked
+            if target.isBaseball {
+                if let picked = (target.mysterySeasons ?? []).randomElement() {
+                    resolvedTarget.mysterySeason = picked
+                }
+            } else if let picked = (target.mysteryLines ?? []).randomElement() {
+                // Other sports carry generic stat lines, and without this the
+                // card fell back to the first one for everybody.
+                resolvedTarget.mysteryLine = picked
             }
         }
 
@@ -140,9 +147,12 @@ final class GameViewModel {
             searchResults = []
         } else {
             let alreadyGuessed = Set(guesses.map { $0.player.id })
-            // Search shows ALL players — eligibility only restricts who can be the puzzle answer
-            // This ensures IL players, prospects etc. are always guessable
-            searchResults = playerDataService.search(query)
+            // Every player in the sport is guessable — eligibility only restricts
+            // who can be the answer, so IL players and prospects stay searchable.
+            // Scoped to the sport being played: a guess is compared field by
+            // field against the answer, so a cross-sport guess means nothing.
+            searchResults = playerDataService
+                .search(query, sport: session?.targetPlayer.resolvedSport)
                 .filter { !alreadyGuessed.contains($0.id) }
         }
     }
@@ -176,32 +186,36 @@ final class GameViewModel {
 
     @discardableResult
     func requestHint(type: HintType) -> Hint? {
+        // The value is resolved before the hint is charged: a sport that doesn't
+        // publish, say, a jersey number must not cost the player a hint to
+        // reveal a blank chip.
         guard var currentSession = session,
               let target = targetPlayer,
+              let value = hintValue(for: type, player: target),
               progressService.useHint(cost: type.hintCost) else { return nil }
 
-        let value = hintValue(for: type, player: target)
         let hint = Hint(type: type, value: value)
         currentSession.useHint(hint)
         session = currentSession
         return hint
     }
 
-    private func hintValue(for type: HintType, player: Player) -> String {
+    /// nil when this sport or this player has nothing to reveal for that hint.
+    private func hintValue(for type: HintType, player: Player) -> String? {
         switch type {
-        case .position:     return player.position.displayName
-        case .team:         return player.team.displayName
-        case .nationality:  return player.nationality
+        case .position:     return player.positionDisplay.isEmpty ? nil : player.positionDisplay
+        case .team:         return player.teamDisplayName.isEmpty ? nil : player.teamDisplayName
+        case .nationality:  return player.nationality.isEmpty ? nil : player.nationality
         case .era:          return eraHint(for: player)
-        case .draftInfo:    return "Debut: \(player.debutYear)"
-        case .jerseyNumber: return "#\(player.jerseyNumber)"
+        case .draftInfo:    return player.debutYear > 0 ? "Debut: \(player.debutYear)" : nil
+        case .jerseyNumber: return player.jerseyNumber > 0 ? "#\(player.jerseyNumber)" : nil
         case .initials:     return "\(player.firstName.prefix(1)).\(player.lastName.prefix(1))."
-        case .firstNameOnly: return player.firstName
+        case .firstNameOnly: return player.firstName.isEmpty ? nil : player.firstName
         }
     }
 
     private func eraHint(for player: Player) -> String {
-        if !player.isHistoric { return "Current player" }
+        if !player.isHistoric && player.isBaseball { return "Current player" }
         // Use the historic season year or debut year to determine decade
         let year = player.historicSeason?.year ?? player.debutYear
         switch year {
@@ -367,5 +381,18 @@ extension GameViewModel {
     var packHasHistoricPlayers: Bool {
         guard let session else { return false }
         return playerDataService.players(in: session.pack).contains { $0.isHistoric }
+    }
+
+    /// Hints worth offering for this answer, in the order they are shown.
+    ///
+    /// Era only tells you anything when a pack mixes current and historic
+    /// players, and some sports don't publish every field — a hint with no
+    /// answer is left out rather than sold as a blank chip.
+    var availableHintTypes: [HintType] {
+        guard let target = targetPlayer else { return [] }
+        var order: [HintType] = [.position, .team, .nationality]
+        if packHasHistoricPlayers { order.append(.era) }
+        order += [.jerseyNumber, .initials, .firstNameOnly]
+        return order.filter { hintValue(for: $0, player: target) != nil }
     }
 }

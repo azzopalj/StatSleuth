@@ -28,7 +28,10 @@ import urllib.error
 import urllib.parse
 import urllib.request
 from concurrent.futures import ThreadPoolExecutor
-from datetime import date, datetime, timedelta, timezone
+from datetime import datetime, timedelta, timezone
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import daily_schedule  # noqa: E402
 
 API = "https://statsapi.mlb.com/api/v1"
 UA = "StatSleuth-DataBot/1.0 (+https://github.com/azzopalj/StatSleuth)"
@@ -39,10 +42,6 @@ TEAM_IDS = [141, 147, 111, 139, 110, 145, 114, 116, 118, 142,
 
 # How many players end up in the Notable pack.
 NOTABLE_COUNT = 220
-# How many days of daily puzzles to keep scheduled ahead of today.
-DAILY_LOOKAHEAD = 21
-# Don't reuse a daily answer within this many days.
-DAILY_NO_REPEAT_DAYS = 120
 # Award weight by kind, and how far back to look.
 AWARD_WEIGHTS = {"MVP": 10, "CY": 9, "ROY": 5, "AS": 4, "SS": 3, "GG": 3}
 AWARD_IDS = ["ALAS", "NLAS", "ALMVP", "NLMVP", "ALCY", "NLCY",
@@ -191,41 +190,9 @@ def pick_notable(rows: dict[int, dict], majors: set[int]) -> list[dict]:
     return out
 
 
-def build_daily(existing: dict, notable: list[dict], today: date) -> dict:
-    """Extends the schedule without ever rewriting a date that already exists.
-
-    Changing a published date would hand two users different puzzles depending
-    on when they last fetched, which is the bug this file exists to prevent.
-    """
-    picks: dict[str, int] = dict(existing.get("picks", {}))
-    # A pool ordered by score keeps the daily recognisable rather than obscure.
-    pool = [p["mlbID"] for p in notable]
-    if not pool:
-        return {"picks": picks}
-
-    def recent_ids(before: date, days: int) -> set[int]:
-        out = set()
-        for offset in range(1, days + 1):
-            key = (before - timedelta(days=offset)).isoformat()
-            if key in picks:
-                out.add(picks[key])
-        return out
-
-    for offset in range(DAILY_LOOKAHEAD + 1):
-        day = today + timedelta(days=offset)
-        key = day.isoformat()
-        if key in picks:
-            continue
-        used = recent_ids(day, DAILY_NO_REPEAT_DAYS)
-        # Deterministic from the date alone, so a re-run produces the same answer.
-        seed = int.from_bytes(key.encode(), "big")
-        candidates = [pid for pid in pool if pid not in used] or pool
-        picks[key] = candidates[seed % len(candidates)]
-
-    # Keep the file small; old dates are of no use to the app.
-    cutoff = (today - timedelta(days=DAILY_NO_REPEAT_DAYS + 7)).isoformat()
-    picks = {k: v for k, v in picks.items() if k >= cutoff}
-    return {"picks": dict(sorted(picks.items()))}
+def build_daily(existing: dict, notable: list[dict], today) -> dict:
+    """Schedules the MLB daily from the notable pack, ordered by score."""
+    return daily_schedule.extend(existing, [p["mlbID"] for p in notable], today)
 
 
 def write_json(path: str, payload: dict) -> None:
@@ -271,14 +238,7 @@ def main() -> int:
     }
 
     # Published daily picks must never change, so start from what is already live.
-    daily_path_root = os.path.join(repo_root, "data", "daily.json")
-    existing = {}
-    if os.path.exists(daily_path_root):
-        try:
-            with open(daily_path_root, encoding="utf-8") as f:
-                existing = json.load(f)
-        except json.JSONDecodeError:
-            existing = {}
+    existing = daily_schedule.load(os.path.join(repo_root, "data", "daily.json"))
     daily_doc = build_daily(existing, notable, today)
     daily_doc = {"generated": generated, "season": season, **daily_doc}
     print(f"daily schedule: {len(daily_doc['picks'])} dates "

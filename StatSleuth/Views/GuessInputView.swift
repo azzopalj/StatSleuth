@@ -123,12 +123,12 @@ private struct PlayerResultRow: View {
     var body: some View {
         Button(action: onTap) {
             HStack(spacing: 12) {
-                Text(player.position.displayName)
+                Text(player.positionDisplay)
                     .font(.caption2)
                     .fontWeight(.bold)
                     .foregroundStyle(.white)
                     .frame(width: 32, height: 32)
-                    .background(positionColor(player.position))
+                    .background(badgeColor)
                     .clipShape(RoundedRectangle(cornerRadius: 8))
 
                 VStack(alignment: .leading, spacing: 2) {
@@ -136,7 +136,7 @@ private struct PlayerResultRow: View {
                         .font(.subheadline)
                         .fontWeight(.medium)
                         .foregroundStyle(.primary)
-                    Text(player.team.abbreviation)
+                    Text(player.teamCodeDisplay)
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -152,6 +152,22 @@ private struct PlayerResultRow: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+    }
+
+    /// Baseball colours the badge by position group. Other sports have their
+    /// own groupings in `SportProfile`, so colour by that instead of by a
+    /// baseball enum that holds a placeholder value for them.
+    private var badgeColor: Color {
+        guard player.isBaseball else {
+            let profile = SportProfile.profile(for: player.resolvedSport)
+            switch profile?.group(for: player.positionDisplay) {
+            case "Guard":   return .blue
+            case "Forward": return .green
+            case "Center":  return .brown
+            default:        return .gray
+            }
+        }
+        return positionColor(player.position)
     }
 
     private func positionColor(_ position: Position) -> Color {

@@ -1,5 +1,15 @@
 import Foundation
 
+// MARK: - Daily Record
+
+/// How one sport's daily challenge went. Each sport has its own puzzle, so each
+/// gets its own record; the streak below is shared across all of them.
+struct DailyRecord: Codable, Hashable {
+    var date: Date
+    var won: Bool
+    var guessCount: Int
+}
+
 // MARK: - User Progress
 
 struct UserProgress: Codable {
@@ -17,9 +27,13 @@ struct UserProgress: Codable {
     var recentlySeenPlayers: [String: [UUID]]
 
     // MARK: - Daily challenge completion (persisted across launches)
-    var lastDailyDate: Date?       // ET date the daily was last completed
-    var lastDailyWon: Bool         // true if won, false if lost
-    var lastDailyGuessCount: Int   // guesses used in that session
+
+    /// Keyed by `Sport.rawValue` — one daily puzzle per sport per day.
+    var dailyRecords: [String: DailyRecord]
+    /// The ET day the shared streak last advanced. Completing any sport's daily
+    /// advances the streak once; the others that day are free to play without
+    /// counting again.
+    var lastStreakDate: Date?
 
     // MARK: - Hint recharge
     // One hint regenerates every hintRechargeInterval seconds up to naturalHintMax.
@@ -42,8 +56,10 @@ struct UserProgress: Codable {
         case xp, level, currentStreak, longestStreak, lastPlayedDate
         case totalGamesPlayed, totalGamesWon, hintsAvailable
         case purchasedPackIDs, unlockedModes, recentlySeenPlayers
-        case lastDailyDate, lastDailyWon, lastDailyGuessCount
+        case dailyRecords, lastStreakDate
         case hintsRechargeStartedAt
+        // Pre-multi-sport keys, read once to migrate an existing save.
+        case lastDailyDate, lastDailyWon, lastDailyGuessCount
         case totalHintlessWins, currentConsecutiveWins, longestConsecutiveWins, consecutiveFirstGuessWins
     }
 
@@ -60,14 +76,52 @@ struct UserProgress: Codable {
         purchasedPackIDs         = try c.decode(Set<UUID>.self,        forKey: .purchasedPackIDs)
         unlockedModes            = try c.decode(Set<GameMode>.self,    forKey: .unlockedModes)
         recentlySeenPlayers      = try c.decode([String: [UUID]].self, forKey: .recentlySeenPlayers)
-        lastDailyDate            = try c.decodeIfPresent(Date.self,    forKey: .lastDailyDate)
-        lastDailyWon             = try c.decode(Bool.self,             forKey: .lastDailyWon)
-        lastDailyGuessCount      = try c.decode(Int.self,              forKey: .lastDailyGuessCount)
         hintsRechargeStartedAt   = try c.decodeIfPresent(Date.self,    forKey: .hintsRechargeStartedAt)
+
+        // The daily used to be a single record, implicitly baseball. Carry it
+        // over so an existing player keeps today's completion and their streak.
+        let legacyDate = try c.decodeIfPresent(Date.self, forKey: .lastDailyDate)
+        if let records = try c.decodeIfPresent([String: DailyRecord].self, forKey: .dailyRecords) {
+            dailyRecords = records
+        } else if let legacyDate {
+            let legacyWon    = try c.decodeIfPresent(Bool.self, forKey: .lastDailyWon) ?? false
+            let legacyCount  = try c.decodeIfPresent(Int.self,  forKey: .lastDailyGuessCount) ?? 0
+            dailyRecords = [Sport.baseball.rawValue: DailyRecord(
+                date: legacyDate, won: legacyWon, guessCount: legacyCount
+            )]
+        } else {
+            dailyRecords = [:]
+        }
+        lastStreakDate = try c.decodeIfPresent(Date.self, forKey: .lastStreakDate) ?? legacyDate
         totalHintlessWins        = try c.decodeIfPresent(Int.self,     forKey: .totalHintlessWins)        ?? 0
         currentConsecutiveWins   = try c.decodeIfPresent(Int.self,     forKey: .currentConsecutiveWins)   ?? 0
         longestConsecutiveWins   = try c.decodeIfPresent(Int.self,     forKey: .longestConsecutiveWins)   ?? 0
         consecutiveFirstGuessWins = try c.decodeIfPresent(Int.self,    forKey: .consecutiveFirstGuessWins) ?? 0
+    }
+
+    /// Written out by hand because the CodingKeys above keep three retired keys
+    /// for migration, which leaves nothing for the compiler to synthesize.
+    /// Only the current keys are written, so a save made here stays small.
+    func encode(to encoder: Encoder) throws {
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        try c.encode(xp,                        forKey: .xp)
+        try c.encode(level,                     forKey: .level)
+        try c.encode(currentStreak,             forKey: .currentStreak)
+        try c.encode(longestStreak,             forKey: .longestStreak)
+        try c.encodeIfPresent(lastPlayedDate,   forKey: .lastPlayedDate)
+        try c.encode(totalGamesPlayed,          forKey: .totalGamesPlayed)
+        try c.encode(totalGamesWon,             forKey: .totalGamesWon)
+        try c.encode(hintsAvailable,            forKey: .hintsAvailable)
+        try c.encode(purchasedPackIDs,          forKey: .purchasedPackIDs)
+        try c.encode(unlockedModes,             forKey: .unlockedModes)
+        try c.encode(recentlySeenPlayers,       forKey: .recentlySeenPlayers)
+        try c.encode(dailyRecords,              forKey: .dailyRecords)
+        try c.encodeIfPresent(lastStreakDate,   forKey: .lastStreakDate)
+        try c.encodeIfPresent(hintsRechargeStartedAt, forKey: .hintsRechargeStartedAt)
+        try c.encode(totalHintlessWins,         forKey: .totalHintlessWins)
+        try c.encode(currentConsecutiveWins,    forKey: .currentConsecutiveWins)
+        try c.encode(longestConsecutiveWins,    forKey: .longestConsecutiveWins)
+        try c.encode(consecutiveFirstGuessWins, forKey: .consecutiveFirstGuessWins)
     }
 
     init(
@@ -75,7 +129,7 @@ struct UserProgress: Codable {
         totalGamesPlayed: Int, totalGamesWon: Int, hintsAvailable: Int,
         purchasedPackIDs: Set<UUID>, unlockedModes: Set<GameMode>,
         recentlySeenPlayers: [String: [UUID]],
-        lastDailyDate: Date?, lastDailyWon: Bool, lastDailyGuessCount: Int,
+        dailyRecords: [String: DailyRecord] = [:], lastStreakDate: Date? = nil,
         hintsRechargeStartedAt: Date?,
         totalHintlessWins: Int = 0, currentConsecutiveWins: Int = 0,
         longestConsecutiveWins: Int = 0, consecutiveFirstGuessWins: Int = 0
@@ -87,8 +141,7 @@ struct UserProgress: Codable {
         self.hintsAvailable = hintsAvailable
         self.purchasedPackIDs = purchasedPackIDs; self.unlockedModes = unlockedModes
         self.recentlySeenPlayers = recentlySeenPlayers
-        self.lastDailyDate = lastDailyDate; self.lastDailyWon = lastDailyWon
-        self.lastDailyGuessCount = lastDailyGuessCount
+        self.dailyRecords = dailyRecords; self.lastStreakDate = lastStreakDate
         self.hintsRechargeStartedAt = hintsRechargeStartedAt
         self.totalHintlessWins = totalHintlessWins
         self.currentConsecutiveWins = currentConsecutiveWins
@@ -98,12 +151,27 @@ struct UserProgress: Codable {
 
     // MARK: - Computed
 
-    /// True if the daily challenge has already been completed today (ET timezone)
-    var hasPlayedDailyToday: Bool {
-        guard let date = lastDailyDate else { return false }
+    /// MLB's home timezone — the daily flips at midnight ET for everyone rather
+    /// than at each device's local midnight.
+    static var easternCalendar: Calendar {
         var cal = Calendar(identifier: .gregorian)
-        cal.timeZone = TimeZone(identifier: "America/New_York")!
-        return cal.isDateInToday(date)
+        cal.timeZone = TimeZone(identifier: "America/New_York") ?? .gmt
+        return cal
+    }
+
+    func dailyRecord(for sport: Sport) -> DailyRecord? {
+        dailyRecords[sport.rawValue]
+    }
+
+    /// True if this sport's daily has already been completed today (ET).
+    func hasPlayedDailyToday(sport: Sport) -> Bool {
+        guard let record = dailyRecord(for: sport) else { return false }
+        return Self.easternCalendar.isDateInToday(record.date)
+    }
+
+    /// Sports whose daily is still open today, out of those given.
+    func sportsWithDailyRemaining(from sports: [Sport]) -> [Sport] {
+        sports.filter { !hasPlayedDailyToday(sport: $0) }
     }
 
     /// Seconds until the next hint regenerates. nil if hints are full or timer isn't running.
@@ -149,9 +217,8 @@ struct UserProgress: Codable {
             purchasedPackIDs: [],
             unlockedModes: [.daily, .seasonStats, .careerStats],
             recentlySeenPlayers: [:],
-            lastDailyDate: nil,
-            lastDailyWon: false,
-            lastDailyGuessCount: 0,
+            dailyRecords: [:],
+            lastStreakDate: nil,
             hintsRechargeStartedAt: nil
         )
     }
@@ -181,24 +248,26 @@ struct UserProgress: Codable {
             }
             // Daily streak only advances when the daily challenge is won
             if session.mode == .daily {
-                updateDailyStreak()
+                advanceDailyStreak()
             }
         } else {
             currentConsecutiveWins = 0
             consecutiveFirstGuessWins = 0
-            // Daily streak only resets when the daily challenge is lost
-            if session.mode == .daily {
+            // A lost daily only breaks the streak if nothing has kept it alive
+            // today — losing the NBA daily shouldn't undo an MLB daily already won.
+            if session.mode == .daily, !streakAlreadyCountedToday {
                 currentStreak = 0
             }
         }
 
         lastPlayedDate = Date()
 
-        // Track daily separately so we can show the "come back tomorrow" screen
+        // Track each sport's daily separately so the "come back tomorrow" screen
+        // only blocks the sport that was actually played.
         if session.mode == .daily {
-            lastDailyDate = Date()
-            lastDailyWon = won
-            lastDailyGuessCount = guessCount
+            dailyRecords[session.targetPlayer.resolvedSport.rawValue] = DailyRecord(
+                date: Date(), won: won, guessCount: guessCount
+            )
         }
     }
 
@@ -255,16 +324,24 @@ struct UserProgress: Codable {
         }
     }
 
-    private mutating func updateDailyStreak() {
-        var cal = Calendar(identifier: .gregorian)
-        cal.timeZone = TimeZone(identifier: "America/New_York")!
-        if let last = lastDailyDate, cal.isDateInYesterday(last) {
+    private var streakAlreadyCountedToday: Bool {
+        guard let last = lastStreakDate else { return false }
+        return Self.easternCalendar.isDateInToday(last)
+    }
+
+    /// Advances the shared streak at most once per ET day, whichever sport's
+    /// daily was won. A gap of two days or more restarts it at 1 — the old
+    /// version left the streak untouched across a gap, so a missed day could
+    /// go unnoticed.
+    private mutating func advanceDailyStreak() {
+        guard !streakAlreadyCountedToday else { return }
+        let cal = Self.easternCalendar
+        if let last = lastStreakDate, cal.isDateInYesterday(last) {
             currentStreak += 1
-        } else if lastDailyDate == nil {
+        } else {
             currentStreak = 1
         }
-        // If lastDailyDate is today the user already completed the daily — don't double-count.
-        // (startSession guards against replaying, but this makes recordGame safe regardless.)
+        lastStreakDate = Date()
         longestStreak = max(longestStreak, currentStreak)
     }
 

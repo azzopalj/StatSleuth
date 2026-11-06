@@ -199,7 +199,7 @@ struct ResultsView: View {
                         .foregroundStyle(.secondary)
                 }
 
-                Text("\(player.team.displayName) · \(player.position.displayName)")
+                Text("\(player.teamDisplayName) · \(player.positionDisplay)")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
 
@@ -220,9 +220,10 @@ struct ResultsView: View {
                     .background(.yellow.opacity(0.15), in: Capsule())
                 }
 
-                // Mystery Year reveal
+                // Mystery Year reveal — baseball carries a typed season, other
+                // sports a generic stat line.
                 if session.mode == .mysteryEra,
-                   let year = player.mysterySeason?.year {
+                   let year = player.mysterySeason?.year ?? player.mysteryLine?.year {
                     HStack(spacing: 6) {
                         Image(systemName: "calendar.badge.checkmark")
                             .font(.caption2)
@@ -268,7 +269,7 @@ struct ResultsView: View {
                         .font(.subheadline)
                         .foregroundStyle(guess.isCorrect ? .primary : .secondary)
                     Spacer()
-                    Text(guess.player.team.abbreviation)
+                    Text(guess.player.teamCodeDisplay)
                         .font(.caption)
                         .foregroundStyle(.tertiary)
                 }

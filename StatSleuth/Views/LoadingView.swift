@@ -4,11 +4,13 @@ struct LoadingView: View {
     let loadState: LoadState
     let onRetry: () -> Void
 
+    @Environment(SportSelectionService.self) private var sportSelection
+
     var body: some View {
         VStack(spacing: 32) {
             Spacer()
 
-            Text("⚾")
+            Text(sportSelection.selected.icon)
                 .font(.system(size: 72))
 
             Text("StatSleuth")
