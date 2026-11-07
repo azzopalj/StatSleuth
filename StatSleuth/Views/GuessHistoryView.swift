@@ -86,7 +86,7 @@ private struct GuessRow: View {
         let sport    = targetPlayer.resolvedSport
         let profile  = SportProfile.profile(for: sport)
         let line     = guess.player.statLineFor(mode: mode)
-        let keys     = profile?.primaryKeys ?? []
+        let keys     = profile?.primaryKeys(for: targetPlayer.statGroup) ?? []
 
         func statCell(_ index: Int, _ result: ComparisonResult) -> some View {
             let key   = index < keys.count ? keys[index] : "--"
@@ -163,20 +163,37 @@ private struct GuessRow: View {
         .padding(.top, 8)
     }
 
-    /// Conference and division names are published as prose ("Eastern
-    /// Conference", "Northwest") and these cells are tiny, so shorten them.
-    /// Compass compounds get their initials — "Southeast" and "Southwest"
-    /// would otherwise both truncate to the same three letters.
+    /// Conference and division names are published as prose ("American
+    /// Football Conference", "AFC West") and these cells are tiny.
+    ///
+    /// A lookup rather than a rule: initials would turn the AFC into "AF",
+    /// and "Southeast" and "Southwest" both truncate to the same three
+    /// letters. Anything unlisted still shortens sensibly.
+    private static let shortNames = [
+        "American Football": "AFC", "National Football": "NFC",
+        "Northeast": "NE", "Northwest": "NW",
+        "Southeast": "SE", "Southwest": "SW",
+        "North": "NORTH", "South": "SOUTH", "East": "EAST", "West": "WEST",
+        "Eastern": "EAST", "Western": "WEST",
+        "Central": "CEN", "Atlantic": "ATL", "Pacific": "PAC"
+    ]
+
     private func abbreviate(_ name: String?) -> String {
         guard let name, !name.isEmpty else { return "--" }
         let core = name
             .replacingOccurrences(of: "Conference", with: "")
             .replacingOccurrences(of: "Division", with: "")
             .trimmingCharacters(in: .whitespaces)
-        let compass = ["Northeast": "NE", "Northwest": "NW",
-                       "Southeast": "SE", "Southwest": "SW"]
-        if let short = compass[core] { return short }
-        let words = core.split(separator: " ")
+        if let short = Self.shortNames[core] { return short }
+
+        // "AFC West" -> "WEST": the conference has a cell of its own already.
+        var words = core.split(separator: " ").map(String.init)
+        if words.count > 1, let first = words.first,
+           first == first.uppercased(), first.count <= 3 {
+            words.removeFirst()
+        }
+        let rest = words.joined(separator: " ")
+        if let short = Self.shortNames[rest] { return short }
         guard let first = words.first else { return "--" }
         if words.count > 1 {
             return words.compactMap(\.first).map(String.init).joined().uppercased()

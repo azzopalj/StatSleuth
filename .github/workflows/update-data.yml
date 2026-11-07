@@ -4,6 +4,7 @@ name: Update player data
 # roster changes and new daily puzzles without an App Store release:
 #   MLB  data/notable.json, data/daily.json      (MLB Stats API)
 #   NBA  data/nba.json,     data/nba_daily.json  (ESPN)
+#   NFL  data/nfl.json,     data/nfl_daily.json  (ESPN)
 
 on:
   schedule:
@@ -38,6 +39,9 @@ jobs:
 
       - name: Generate NBA data
         run: python3 scripts/generate_nba.py
+
+      - name: Generate NFL data
+        run: python3 scripts/generate_nfl.py
 
       - name: Sanity-check output
         run: |
@@ -92,6 +96,36 @@ jobs:
               print("WARNING: some NBA players have no headshot", file=sys.stderr)
           print(f"OK: {nba['count']} NBA players ({len(notables)} notable), "
                 f"{len(nba_daily['picks'])} daily dates, season {nba['season']}")
+
+          nfl       = json.load(open("data/nfl.json"))
+          nfl_daily = json.load(open("data/nfl_daily.json"))
+          if nfl["count"] < 500:
+              sys.exit(f"nfl player set too small: {nfl['count']}")
+          groups = set(nfl["statKeys"]["byGroup"])
+          # Every player must be readable: a role the app has no stat set for
+          # would render an empty card.
+          stray = {p["group"] for p in nfl["players"]} - groups
+          if stray:
+              sys.exit(f"nfl players in unknown position groups: {sorted(stray)}")
+          # And must carry the stats their own role is compared on.
+          for p in nfl["players"]:
+              primary = nfl["statKeys"]["primaryByGroup"][p["group"]]
+              if not any(k in p["career"]["stats"] for k in primary):
+                  sys.exit(f"nfl player with no career stats for their role: {p['fullName']}")
+              if not p.get("season", {}).get("stats"):
+                  sys.exit(f"nfl player missing a season line: {p['fullName']}")
+
+          notables = {p["id"] for p in nfl["players"] if p.get("notable")}
+          if len(notables) < 100:
+              sys.exit(f"nfl notables too small: {len(notables)}")
+          if len(nfl_daily["picks"]) < 7:
+              sys.exit(f"nfl daily schedule too short: {len(nfl_daily['picks'])}")
+          stray = [d for d, pid in nfl_daily["picks"].items()
+                   if d >= today and pid not in notables]
+          if stray:
+              sys.exit(f"future nfl daily picks not in notables: {stray[:5]}")
+          print(f"OK: {nfl['count']} NFL players ({len(notables)} notable), "
+                f"{len(nfl_daily['picks'])} daily dates, season {nfl['season']}")
           PY
 
       - name: Commit if changed

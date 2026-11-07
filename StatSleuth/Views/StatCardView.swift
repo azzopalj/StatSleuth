@@ -110,7 +110,7 @@ struct StatCardView: View {
         Group {
             if let profile = SportProfile.profile(for: player.resolvedSport),
                let line = player.statLineFor(mode: mode), !line.isEmpty {
-                let shown = profile.cardKeys.filter { line[$0] != nil }
+                let shown = profile.cardKeys(for: player.statGroup).filter { line[$0] != nil }
                 LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 3), spacing: 0) {
                     ForEach(shown, id: \.self) { key in
                         StatCell(label: key, value: profile.format(key, line[key] ?? 0))

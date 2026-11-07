@@ -159,12 +159,13 @@ private struct PlayerResultRow: View {
     /// baseball enum that holds a placeholder value for them.
     private var badgeColor: Color {
         guard player.isBaseball else {
-            let profile = SportProfile.profile(for: player.resolvedSport)
-            switch profile?.group(for: player.positionDisplay) {
-            case "Guard":   return .blue
-            case "Forward": return .green
-            case "Center":  return .brown
-            default:        return .gray
+            switch player.statGroup {
+            case "Guard", "Quarterback":    return .blue
+            case "Forward", "Running Back": return .green
+            case "Center", "Receiver":      return .brown
+            case "Defense":                 return .purple
+            case "Kicker":                  return .orange
+            default:                        return .gray
             }
         }
         return positionColor(player.position)

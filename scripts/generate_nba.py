@@ -196,7 +196,7 @@ def mark_notable(players: list[dict], count: int = NOTABLE_COUNT) -> None:
 def build_player(athlete: dict, stats_doc: dict, team_meta: dict,
                  groups: dict[str, tuple[str, str]],
                  published_career: dict[str, float] | None,
-                 mismatches: list[str]) -> dict | None:
+                 mismatches: list[str], partial: list[str]) -> dict | None:
     categories = stats_doc.get("categories") or []
     averages = season_rows(categories, "averages")
     totals = season_rows(categories, "totals")
@@ -211,6 +211,11 @@ def build_player(athlete: dict, stats_doc: dict, team_meta: dict,
     # Cross-check the two. They agreed on every player when this was written;
     # a disagreement means an assumption here has gone stale, so surface it
     # rather than quietly shipping a number.
+    #
+    # The games-played comparison does double duty: ESPN's per-athlete stats
+    # can begin partway through a career, and when they do the seasons on hand
+    # are not the whole story and the earliest of them is not a rookie season.
+    complete = True
     if published_career and derived:
         for key in ("GP", "PTS", "REB", "AST"):
             a, b = published_career.get(key), derived.get(key)
@@ -218,8 +223,12 @@ def build_player(athlete: dict, stats_doc: dict, team_meta: dict,
                 continue
             tolerance = 1.0 if key == "GP" else 0.15
             if abs(a - b) > tolerance:
+                if key == "GP":
+                    complete = False
                 mismatches.append(
                     f"{athlete.get('displayName')} {key}: published={a} derived={b}")
+    if not complete:
+        partial.append(f"{athlete.get('displayName')} (rows from {min(averages)})")
 
     years = sorted(averages)
     current = max(years)
@@ -252,7 +261,10 @@ def build_player(athlete: dict, stats_doc: dict, team_meta: dict,
         "debutYear": rookie_year,
         "season": {"year": current, "stats": per_game(averages[current])},
         "career": {"stats": career},
-        "rookie": {"year": rookie_year, "stats": per_game(averages[rookie_year])},
+        # Only a genuine debut season counts as the rookie line; with early
+        # seasons missing this would be whichever year ESPN happens to start at.
+        "rookie": ({"year": rookie_year, "stats": per_game(averages[rookie_year])}
+                   if complete else {"year": None, "stats": {}}),
         "seasons": [{"year": y, "stats": per_game(averages[y])} for y in years],
     }
 
@@ -281,10 +293,10 @@ def main() -> int:
         careers = list(ex.map(lambda a: authoritative_career(int(a["id"])), athletes))
     print(f"published career lines found: {sum(1 for c in careers if c)}/{len(athletes)}")
 
-    players, season, mismatches = [], 0, []
+    players, season, mismatches, partial = [], 0, [], []
     for athlete, doc, published in zip(athletes, docs, careers):
         built = build_player(athlete, doc, team_meta.get(athlete["_teamID"], {}),
-                             groups, published, mismatches)
+                             groups, published, mismatches, partial)
         if built:
             players.append(built)
             season = max(season, built["season"]["year"])
@@ -293,6 +305,11 @@ def main() -> int:
                       key=lambda p: -prominence(p))
     players.sort(key=lambda p: (p["lastName"], p["firstName"]))
     print(f"players with usable stats: {len(players)} (notable: {len(notables)})")
+    if partial:
+        print(f"note: {len(partial)} of {len(players)} players have an incomplete season "
+              f"history; their rookie line is omitted")
+        for line in partial[:5]:
+            print(f"   {line}")
     if mismatches:
         print(f"WARNING: {len(mismatches)} career cross-check mismatches", file=sys.stderr)
         for line in mismatches[:10]:

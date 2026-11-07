@@ -255,6 +255,12 @@ struct Player: Identifiable, Codable {
     let divisionName: String?
     /// Raw position label, e.g. "PG". Baseball uses `position` instead.
     let positionCode: String?
+    /// The group whose stat line this player gets, where the sport publishes
+    /// one. Football needs it: a quarterback and a cornerback are judged on
+    /// entirely different numbers, the way baseball splits hitters from
+    /// pitchers. Sports that don't publish it fall back to their profile's
+    /// position grouping.
+    let positionGroup: String?
 
     let seasonLine: StatLine?
     let careerLine: StatLine?
@@ -277,6 +283,7 @@ struct Player: Identifiable, Codable {
          sport: Sport? = nil, externalID: Int? = nil, headshotPath: String? = nil,
          teamName: String? = nil, teamCode: String? = nil, conference: String? = nil,
          divisionName: String? = nil, positionCode: String? = nil,
+         positionGroup: String? = nil,
          seasonLine: StatLine? = nil, careerLine: StatLine? = nil,
          rookieLine: StatLine? = nil, mysteryLines: [StatLine]? = nil,
          mysteryLine: StatLine? = nil) {
@@ -297,6 +304,7 @@ struct Player: Identifiable, Codable {
         self.teamName = teamName; self.teamCode = teamCode
         self.conference = conference; self.divisionName = divisionName
         self.positionCode = positionCode
+        self.positionGroup = positionGroup
         self.seasonLine = seasonLine; self.careerLine = careerLine
         self.rookieLine = rookieLine; self.mysteryLines = mysteryLines
         self.mysteryLine = mysteryLine
@@ -314,6 +322,12 @@ struct Player: Identifiable, Codable {
     }
     /// Position as shown to the player.
     var positionDisplay: String { positionCode ?? position.displayName }
+
+    /// Which stat set this player is read with — published by sports that
+    /// split by role, otherwise derived from the sport's position grouping.
+    var statGroup: String? {
+        positionGroup ?? SportProfile.profile(for: resolvedSport)?.group(for: positionDisplay)
+    }
 
     var fullName: String { "\(firstName) \(lastName)" }
     var headshotURL: URL? {
@@ -382,7 +396,7 @@ struct Player: Identifiable, Codable {
         case mysterySeasons
         case mysterySeason
         case sport, externalID, headshotPath
-        case teamName, teamCode, conference, divisionName, positionCode
+        case teamName, teamCode, conference, divisionName, positionCode, positionGroup
         case seasonLine, careerLine, rookieLine, mysteryLines, mysteryLine
     }
 }

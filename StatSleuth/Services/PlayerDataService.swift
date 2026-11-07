@@ -122,8 +122,8 @@ final class PlayerDataService {
                 return rebuildPlayer(player, tier: isNotable ? .notable : .fullRoster)
             }
 
-            let nbaPlayers = await loadNBAPlayers()
-            let merged = (activePlayers + loadHistoricPlayers() + nbaPlayers)
+            let published = await loadPublishedSports()
+            let merged = (activePlayers + loadHistoricPlayers() + published)
                 .sorted { $0.lastName < $1.lastName }
 
             loadState = .loading(progress: 0.95)
@@ -143,12 +143,19 @@ final class PlayerDataService {
         }
     }
 
-    /// NBA players come from the file the nightly workflow publishes, not a live
-    /// API — ESPN only returns stat values one athlete at a time.
-    private func loadNBAPlayers() async -> [Player] {
-        let players = await NBADataService.shared.loadPlayers()
-        print("🏀 NBA players loaded: \(players.count)")
-        return players
+    /// Sports other than baseball come from the files the nightly workflow
+    /// publishes, not a live API — ESPN only returns stat values one athlete
+    /// at a time. They load together; one being unreachable costs nothing but
+    /// that sport.
+    private func loadPublishedSports() async -> [Player] {
+        await withTaskGroup(of: [Player].self) { group in
+            for service in PublishedSportService.all {
+                group.addTask { await service.loadPlayers() }
+            }
+            var all: [Player] = []
+            for await players in group { all += players }
+            return all
+        }
     }
 
     /// Primes today's published daily answer for every sport in play. Cheap and
@@ -281,6 +288,7 @@ final class PlayerDataService {
             sport: p.sport, externalID: p.externalID, headshotPath: p.headshotPath,
             teamName: p.teamName, teamCode: p.teamCode, conference: p.conference,
             divisionName: p.divisionName, positionCode: p.positionCode,
+            positionGroup: p.positionGroup,
             seasonLine: p.seasonLine, careerLine: p.careerLine,
             rookieLine: p.rookieLine, mysteryLines: p.mysteryLines,
             mysteryLine: p.mysteryLine
@@ -448,39 +456,45 @@ final class PlayerDataService {
             ))
         }
 
-        // NBA packs — free while the sport is new, so it can be played without a
-        // purchase decision before the content is proven.
-        let nba = allPlayers.filter { $0.resolvedSport == .basketball }
-        if !nba.isEmpty {
-            // Notables mirror baseball's free default pack: the top ~150 by
-            // prominence, scored in the generator. The daily is drawn from here,
-            // so the answer is always someone a fan would recognise.
-            let notable = nba.filter { $0.tier == .notable }
+        // Packs for the published sports — free while they are new, so they
+        // can be played without a purchase decision before the content is
+        // proven. Built the same way for every one of them, so adding a sport
+        // needs no change here.
+        for sport in Sport.allCases where sport != .baseball {
+            let roster = allPlayers.filter { $0.resolvedSport == sport }
+            guard !roster.isEmpty else { continue }
+            let key = sport.rawValue.lowercased()
+
+            // Notables mirror baseball's free default pack: the top by
+            // prominence, scored in the generator. The daily is drawn from
+            // here, so the answer is always someone a fan would recognise.
+            let notable = roster.filter { $0.tier == .notable }
             if !notable.isEmpty {
                 packs.append(Pack(
-                    id: stableID("nba-notable"),
-                    name: "NBA Notables",
-                    description: "The biggest names in the NBA right now.",
+                    id: stableID("\(key)-notable"),
+                    name: "\(sport.displayName) Notables",
+                    description: "The biggest names in the \(sport.displayName) right now.",
                     type: .base, playerIDs: notable.map(\.id),
-                    isPurchased: true, price: nil, sport: .basketball, productID: nil
+                    isPurchased: true, price: nil, sport: sport, productID: nil
                 ))
             }
             packs.append(Pack(
-                id: stableID("nba-all"),
-                name: "All NBA Players",
+                id: stableID("\(key)-all"),
+                name: "All \(sport.displayName) Players",
                 description: "Every rostered player in the league.",
-                type: .base, playerIDs: nba.map(\.id),
-                isPurchased: true, price: nil, sport: .basketball, productID: nil
+                type: .base, playerIDs: roster.map(\.id),
+                isPurchased: true, price: nil, sport: sport, productID: nil
             ))
-            for conference in Set(nba.compactMap(\.conference)).sorted() where !conference.isEmpty {
-                let ids = nba.filter { $0.conference == conference }.map(\.id)
+            for conference in Set(roster.compactMap(\.conference)).sorted()
+            where !conference.isEmpty {
+                let ids = roster.filter { $0.conference == conference }.map(\.id)
                 guard ids.count >= 20 else { continue }
                 packs.append(Pack(
-                    id: stableID("nba-conf-\(conference)"),
+                    id: stableID("\(key)-conf-\(conference)"),
                     name: conference,
                     description: "All current \(conference) players.",
                     type: .division, playerIDs: ids,
-                    isPurchased: true, price: nil, sport: .basketball, productID: nil
+                    isPurchased: true, price: nil, sport: sport, productID: nil
                 ))
             }
         }

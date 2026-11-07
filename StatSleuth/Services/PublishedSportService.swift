@@ -1,15 +1,31 @@
 import Foundation
 
-/// Loads NBA players from the file published by scripts/generate_nba.py.
+/// Loads a sport whose data the nightly workflow publishes as one file.
 ///
 /// Unlike baseball, nothing here talks to a live sports API: ESPN only returns
 /// real stat values one athlete at a time, which would be hundreds of requests
-/// on launch. The nightly workflow does that work and publishes one file.
-actor NBADataService {
+/// on launch. The workflow does that work and publishes a normalized file per
+/// sport, all the same shape — so a new sport is a data file and a
+/// `SportProfile`, not a new service.
+actor PublishedSportService {
 
-    static let shared = NBADataService()
+    static let nba = PublishedSportService(sport: .basketball, file: "nba.json")
+    static let nfl = PublishedSportService(sport: .football,   file: "nfl.json")
 
-    private let url = URL(string: "https://azzopalj.github.io/StatSleuth/data/nba.json")
+    /// Every sport served from a published file, in the order they load.
+    static let all: [PublishedSportService] = [.nba, .nfl]
+
+    private let sport: Sport
+    private let file: String
+
+    private init(sport: Sport, file: String) {
+        self.sport = sport
+        self.file = file
+    }
+
+    private var url: URL? {
+        URL(string: "https://azzopalj.github.io/StatSleuth/data/\(file)")
+    }
 
     private let session: URLSession = {
         let config = URLSessionConfiguration.default
@@ -34,12 +50,15 @@ actor NBADataService {
             let conference: String
             let division: String
             let position: String
+            /// Which stat set this player is read with. Football publishes it
+            /// because a quarterback and a cornerback share no numbers;
+            /// basketball leaves it out and the profile derives one.
+            let group: String?
             let age: Int?
             let nationality: String
             let jersey: Double?
             let debutYear: Int
-            /// Top ~150 by prominence, chosen in the generator. These make up
-            /// the free Notables pack and the daily pool.
+            /// Top by prominence — the free default pack and the daily pool.
             let notable: Bool?
             let headshot: String?
             let season: Line
@@ -77,15 +96,15 @@ actor NBADataService {
         }
         return Player(
             id: UUID(),
-            // mlbID is baseball's identifier; an NBA id here would produce wrong
-            // headshot URLs and deep links, so it stays nil. The ESPN id goes in
-            // externalID instead.
+            // mlbID is baseball's identifier; another sport's id here would
+            // produce wrong headshot URLs and deep links, so it stays nil.
+            // The ESPN id goes in externalID instead.
             mlbID: nil,
             firstName: entry.firstName,
             lastName: entry.lastName.isEmpty ? entry.fullName : entry.lastName,
             legalFirstName: nil,
-            // `team` and `position` are baseball enums. Non-baseball players are
-            // read through teamDisplayName / positionDisplay instead; these are
+            // `team` and `position` are baseball enums. Other sports are read
+            // through teamDisplayName / positionDisplay instead; these are
             // placeholders that nothing should surface.
             team: .dodgers,
             teams: [],
@@ -100,7 +119,7 @@ actor NBADataService {
             hitterStats: nil, pitcherStats: nil,
             careerHitterStats: nil, careerPitcherStats: nil,
             historicSeason: nil, rookieSeason: nil, mysterySeasons: nil,
-            sport: .basketball,
+            sport: sport,
             externalID: entry.id,
             headshotPath: entry.headshot,
             teamName: entry.teamName,
@@ -108,6 +127,7 @@ actor NBADataService {
             conference: entry.conference,
             divisionName: entry.division,
             positionCode: entry.position,
+            positionGroup: entry.group,
             seasonLine: line(entry.season),
             careerLine: line(entry.career),
             rookieLine: line(entry.rookie),
@@ -123,7 +143,7 @@ actor NBADataService {
 
     private var cacheURL: URL? {
         FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)
-            .first?.appendingPathComponent("nba_players.json")
+            .first?.appendingPathComponent("published_\(file)")
     }
 
     private func cache(_ payload: Payload) {
@@ -135,5 +155,4 @@ actor NBADataService {
         guard let cacheURL, let data = try? Data(contentsOf: cacheURL) else { return nil }
         return try? JSONDecoder().decode(Payload.self, from: data)
     }
-
 }

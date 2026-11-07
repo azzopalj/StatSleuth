@@ -255,10 +255,18 @@ final class GameViewModel {
         let g = guessed.statLineFor(mode: mode)
         let t = target.statLineFor(mode: mode)
 
+        // Football reads each role on its own numbers, so the answer's role
+        // decides which two stats are reported — and a guess from a different
+        // role has nothing comparable at all. A quarterback's passing yards
+        // next to a cornerback's tackles would be noise, not a clue.
+        let keys = profile?.primaryKeys(for: target.statGroup) ?? []
+        let sameRole = !(profile?.hasRoleSpecificStats ?? false)
+            || guessed.statGroup == target.statGroup
+
         func compareKey(_ index: Int) -> ComparisonResult {
-            guard let profile, profile.primaryKeys.count > index,
+            guard sameRole, let profile, keys.count > index,
                   let g, let t else { return .noMatch }
-            let key = profile.primaryKeys[index]
+            let key = keys[index]
             guard let a = g[key], let b = t[key] else { return .noMatch }
             if a == b { return .match }
             if profile.isCloseEnough(key, a, b) { return .close }
@@ -282,6 +290,7 @@ final class GameViewModel {
         let pa = a.positionDisplay, pb = b.positionDisplay
         if pa == pb { return .match }
         // Same grouping is a near miss, as infield/outfield is for baseball.
+        if let groupA = a.statGroup, groupA == b.statGroup { return .close }
         if let profile, let ga = profile.group(for: pa), ga == profile.group(for: pb) {
             return .close
         }

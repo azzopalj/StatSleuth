@@ -62,6 +62,66 @@ def split_made_attempted(value) -> tuple[float | None, float | None]:
     return to_float(made), to_float(attempted)
 
 
+class AmbiguousLabel(Exception):
+    """A stat label appears more than once in the category being read."""
+
+
+def category_rows(categories: list[dict], name: str) -> tuple[list[str], dict[int, list[str]]]:
+    """(labels, {season year: raw stat values}) for one ESPN stat category.
+
+    A player traded mid-season gets one row per team plus a combined row whose
+    teamSlug reads like "2024 Totals". The combined row is picked explicitly:
+    relying on it being last would quietly depend on ESPN's ordering, and
+    getting it wrong publishes half a season.
+
+    Values stay a positional list because some categories repeat a label — NFL
+    "defensive" carries YDS twice, for fumble and interception returns — so
+    zipping labels to values would silently drop one. Read them with `stat`.
+    """
+    for category in categories:
+        if category.get("name") != name:
+            continue
+        labels = [str(label).strip() for label in category.get("labels") or []]
+        by_year: dict[int, list[tuple[bool, list[str]]]] = {}
+        for entry in category.get("statistics") or []:
+            year = (entry.get("season") or {}).get("year")
+            if not year:
+                continue
+            combined = str(entry.get("teamSlug") or "").lower().endswith("totals")
+            by_year.setdefault(int(year), []).append((combined, entry.get("stats") or []))
+
+        rows: dict[int, list[str]] = {}
+        for year, entries in by_year.items():
+            combined = [values for is_combined, values in entries if is_combined]
+            if combined:
+                rows[year] = combined[0]
+            elif len(entries) == 1:
+                rows[year] = entries[0][1]
+            else:
+                # A split season with no combined row: take the longer stint
+                # rather than guessing, and let the caller's cross-check catch it.
+                gp = labels.index("GP") if "GP" in labels else 0
+                rows[year] = max((values for _, values in entries),
+                                 key=lambda v: to_float(v[gp] if gp < len(v) else None, 0) or 0)
+        return labels, rows
+    return [], {}
+
+
+def stat(labels: list[str], values: list[str], label: str, default=None):
+    """One value out of a positional stat row, by label.
+
+    Raises rather than guessing when the label is repeated in the category —
+    picking the first occurrence silently is how you end up publishing
+    interception return yards as fumble return yards.
+    """
+    found = [i for i, candidate in enumerate(labels) if candidate == label]
+    if len(found) > 1:
+        raise AmbiguousLabel(f"{label!r} appears {len(found)} times in {labels}")
+    if not found or found[0] >= len(values):
+        return default
+    return to_float(values[found[0]], default)
+
+
 def teams(sport_path: str) -> dict[str, dict]:
     """Team id -> {abbrev, name}."""
     data = get(f"{SITE_API}/{sport_path}/teams")
