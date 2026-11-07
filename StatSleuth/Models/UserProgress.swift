@@ -10,6 +10,19 @@ struct DailyRecord: Codable, Hashable {
     var guessCount: Int
 }
 
+// MARK: - Sport Record
+
+/// How one sport has gone overall.
+///
+/// The lifetime totals on `UserProgress` stay as they are — they drive
+/// levelling, the achievements and the review prompt, none of which care
+/// which sport a win came from. This is only what the home screen shows,
+/// which follows the selected sport like everything else on it.
+struct SportRecord: Codable, Hashable {
+    var played: Int
+    var won: Int
+}
+
 // MARK: - User Progress
 
 struct UserProgress: Codable {
@@ -24,6 +37,8 @@ struct UserProgress: Codable {
     var unlockedModes: Set<GameMode>
     /// Recently seen player IDs per "mode+pack" key — prevents repeats
     var recentlySeenPlayers: [String: [UUID]]
+    /// Games played and won per `Sport.rawValue`.
+    var sportRecords: [String: SportRecord]
 
     // MARK: - Daily challenge completion (persisted across launches)
 
@@ -46,7 +61,7 @@ struct UserProgress: Codable {
         case xp, level, currentStreak, longestStreak, lastPlayedDate
         case totalGamesPlayed, totalGamesWon
         case purchasedPackIDs, unlockedModes, recentlySeenPlayers
-        case dailyRecords, lastStreakDate
+        case dailyRecords, lastStreakDate, sportRecords
         // Pre-multi-sport keys, read once to migrate an existing save.
         case lastDailyDate, lastDailyWon, lastDailyGuessCount
         case totalHintlessWins, currentConsecutiveWins, longestConsecutiveWins, consecutiveFirstGuessWins
@@ -64,6 +79,21 @@ struct UserProgress: Codable {
         purchasedPackIDs         = try c.decode(Set<UUID>.self,        forKey: .purchasedPackIDs)
         unlockedModes            = try c.decode(Set<GameMode>.self,    forKey: .unlockedModes)
         recentlySeenPlayers      = try c.decode([String: [UUID]].self, forKey: .recentlySeenPlayers)
+
+        // Wins were counted in one undifferentiated pile before the home
+        // screen showed them per sport. The app was baseball-only until the
+        // other sports arrived, so crediting the lot to baseball is right for
+        // all but the few who have played another sport since — and nobody
+        // watches a number they earned reset to zero.
+        if let records = try c.decodeIfPresent([String: SportRecord].self, forKey: .sportRecords) {
+            sportRecords = records
+        } else if totalGamesPlayed > 0 {
+            sportRecords = [Sport.baseball.rawValue: SportRecord(
+                played: totalGamesPlayed, won: totalGamesWon
+            )]
+        } else {
+            sportRecords = [:]
+        }
 
         // The daily used to be a single record, implicitly baseball. Carry it
         // over so an existing player keeps today's completion and their streak.
@@ -101,6 +131,7 @@ struct UserProgress: Codable {
         try c.encode(purchasedPackIDs,          forKey: .purchasedPackIDs)
         try c.encode(unlockedModes,             forKey: .unlockedModes)
         try c.encode(recentlySeenPlayers,       forKey: .recentlySeenPlayers)
+        try c.encode(sportRecords,              forKey: .sportRecords)
         try c.encode(dailyRecords,              forKey: .dailyRecords)
         try c.encodeIfPresent(lastStreakDate,   forKey: .lastStreakDate)
         try c.encode(totalHintlessWins,         forKey: .totalHintlessWins)
@@ -114,6 +145,7 @@ struct UserProgress: Codable {
         totalGamesPlayed: Int, totalGamesWon: Int,
         purchasedPackIDs: Set<UUID>, unlockedModes: Set<GameMode>,
         recentlySeenPlayers: [String: [UUID]],
+        sportRecords: [String: SportRecord] = [:],
         dailyRecords: [String: DailyRecord] = [:], lastStreakDate: Date? = nil,
         totalHintlessWins: Int = 0, currentConsecutiveWins: Int = 0,
         longestConsecutiveWins: Int = 0, consecutiveFirstGuessWins: Int = 0
@@ -124,6 +156,7 @@ struct UserProgress: Codable {
         self.totalGamesPlayed = totalGamesPlayed; self.totalGamesWon = totalGamesWon
         self.purchasedPackIDs = purchasedPackIDs; self.unlockedModes = unlockedModes
         self.recentlySeenPlayers = recentlySeenPlayers
+        self.sportRecords = sportRecords
         self.dailyRecords = dailyRecords; self.lastStreakDate = lastStreakDate
         self.totalHintlessWins = totalHintlessWins
         self.currentConsecutiveWins = currentConsecutiveWins
@@ -161,6 +194,16 @@ struct UserProgress: Codable {
         return Double(totalGamesWon) / Double(totalGamesPlayed)
     }
 
+    func record(for sport: Sport) -> SportRecord {
+        sportRecords[sport.rawValue] ?? SportRecord(played: 0, won: 0)
+    }
+
+    func winRate(for sport: Sport) -> Double {
+        let record = record(for: sport)
+        guard record.played > 0 else { return 0 }
+        return Double(record.won) / Double(record.played)
+    }
+
     var xpToNextLevel: Int {
         let xpThreshold = level * 500
         return max(0, xpThreshold - xp)
@@ -188,6 +231,7 @@ struct UserProgress: Codable {
             purchasedPackIDs: [],
             unlockedModes: [.daily, .seasonStats, .careerStats],
             recentlySeenPlayers: [:],
+            sportRecords: [:],
             dailyRecords: [:],
             lastStreakDate: nil
         )
@@ -231,6 +275,12 @@ struct UserProgress: Codable {
         }
 
         lastPlayedDate = Date()
+
+        let sportKey = session.targetPlayer.resolvedSport.rawValue
+        var sportRecord = sportRecords[sportKey] ?? SportRecord(played: 0, won: 0)
+        sportRecord.played += 1
+        if won { sportRecord.won += 1 }
+        sportRecords[sportKey] = sportRecord
 
         // Track each sport's daily separately so the "come back tomorrow" screen
         // only blocks the sport that was actually played.

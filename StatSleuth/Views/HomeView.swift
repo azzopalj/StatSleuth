@@ -9,6 +9,7 @@ struct HomeView: View {
     @Environment(\.horizontalSizeClass)    private var horizontalSizeClass
     @Environment(SportSelectionService.self) private var sportSelection
     @Environment(NavigationCoordinator.self) private var navigation
+    @Environment(PurchaseService.self)     private var purchaseService
     @Environment(\.requestReview)         private var requestReview
 
     private static let reviewMilestones = [10, 50, 100]
@@ -43,6 +44,7 @@ struct HomeView: View {
                 dailyChallengeButton
                 modeGridSection
                 customGameButton
+                removeAdsButton
             }
             .padding(.horizontal, 20)
             .padding(.bottom, 32)
@@ -222,11 +224,15 @@ struct HomeView: View {
 
             Divider().frame(height: 40)
 
+            // Wins and win rate follow the selected sport, like everything
+            // else below them. The streak above does not: it is shared on
+            // purpose — any sport's daily advances it once, so a player with
+            // three sports still has one habit to keep, not three.
             StatBadge(
                 icon: "trophy.fill",
                 iconColor: .yellow,
-                value: "\(progress.totalGamesWon)",
-                label: "wins"
+                value: "\(progress.record(for: sport).won)",
+                label: "\(sport.displayName) wins"
             )
 
             Divider().frame(height: 40)
@@ -234,7 +240,7 @@ struct HomeView: View {
             StatBadge(
                 icon: "chart.bar.fill",
                 iconColor: .blue,
-                value: "\(Int(progress.winRate * 100))%",
+                value: "\(Int(progress.winRate(for: sport) * 100))%",
                 label: "win rate"
             )
         }
@@ -336,6 +342,58 @@ struct HomeView: View {
             )
         }
         .disabled(!enabled)
+    }
+
+    // MARK: - Remove ads
+
+    /// Worth more than quiet now that a hint costs a video: this is the only
+    /// way to take one without watching anything, so it belongs where the
+    /// player is choosing a game rather than buried in Settings.
+    ///
+    /// Shown only when there is actually something to sell — StoreKit may not
+    /// have the product yet, and a price-less button that does nothing when
+    /// tapped is worse than no button.
+    @ViewBuilder
+    private var removeAdsButton: some View {
+        if !purchaseService.isAdFree, let product = purchaseService.removeAdsProduct() {
+            Button {
+                HapticEngine.tap()
+                Task { await purchaseService.purchaseRemoveAds() }
+            } label: {
+                HStack(spacing: 12) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        HStack(spacing: 6) {
+                            Image(systemName: "nosign")
+                                .font(.headline)
+                            Text("Remove Ads")
+                                .font(.headline)
+                                .fontWeight(.semibold)
+                        }
+                        Text("No ads between games — and every hint without watching a video.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .multilineTextAlignment(.leading)
+                    }
+                    Spacer(minLength: 0)
+                    if purchaseService.isLoading {
+                        ProgressView()
+                    } else {
+                        Text(product.displayPrice)
+                            .font(.subheadline)
+                            .fontWeight(.semibold)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                .foregroundStyle(.primary)
+                .padding(18)
+                .background(
+                    Color(uiColor: .secondarySystemGroupedBackground),
+                    in: RoundedRectangle(cornerRadius: 16)
+                )
+            }
+            .buttonStyle(.plain)
+            .disabled(purchaseService.isLoading)
+        }
     }
 
     private var modeGridSection: some View {
