@@ -5,6 +5,7 @@ name: Update player data
 #   MLB  data/notable.json, data/daily.json      (MLB Stats API)
 #   NBA  data/nba.json,     data/nba_daily.json  (ESPN)
 #   NFL  data/nfl.json,     data/nfl_daily.json  (ESPN)
+#   NHL  data/nhl.json,     data/nhl_daily.json  (ESPN)
 
 on:
   schedule:
@@ -42,6 +43,9 @@ jobs:
 
       - name: Generate NFL data
         run: python3 scripts/generate_nfl.py
+
+      - name: Generate NHL data
+        run: python3 scripts/generate_nhl.py
 
       - name: Sanity-check output
         run: |
@@ -126,6 +130,40 @@ jobs:
               sys.exit(f"future nfl daily picks not in notables: {stray[:5]}")
           print(f"OK: {nfl['count']} NFL players ({len(notables)} notable), "
                 f"{len(nfl_daily['picks'])} daily dates, season {nfl['season']}")
+
+          nhl       = json.load(open("data/nhl.json"))
+          nhl_daily = json.load(open("data/nhl_daily.json"))
+          if nhl["count"] < 400:
+              sys.exit(f"nhl player set too small: {nhl['count']}")
+          groups = set(nhl["statKeys"]["byGroup"])
+          stray = {p["group"] for p in nhl["players"]} - groups
+          if stray:
+              sys.exit(f"nhl players in unknown position groups: {sorted(stray)}")
+          for p in nhl["players"]:
+              primary = nhl["statKeys"]["primaryByGroup"][p["group"]]
+              if not any(k in p["career"]["stats"] for k in primary):
+                  sys.exit(f"nhl player with no career stats for their role: {p['fullName']}")
+              if not p.get("season", {}).get("stats"):
+                  sys.exit(f"nhl player missing a season line: {p['fullName']}")
+
+          notables = {p["id"] for p in nhl["players"] if p.get("notable")}
+          if len(notables) < 100:
+              sys.exit(f"nhl notables too small: {len(notables)}")
+          # Goalies are a reserved share of the pack on purpose: ranked against
+          # skaters they score nothing and the daily would never be one.
+          keepers = sum(1 for p in nhl["players"]
+                        if p.get("notable") and p["group"] == "Goalie")
+          if keepers < 10:
+              sys.exit(f"nhl notables have too few goalies: {keepers}")
+          if len(nhl_daily["picks"]) < 7:
+              sys.exit(f"nhl daily schedule too short: {len(nhl_daily['picks'])}")
+          stray = [d for d, pid in nhl_daily["picks"].items()
+                   if d >= today and pid not in notables]
+          if stray:
+              sys.exit(f"future nhl daily picks not in notables: {stray[:5]}")
+          print(f"OK: {nhl['count']} NHL players ({len(notables)} notable, "
+                f"{keepers} goalies), {len(nhl_daily['picks'])} daily dates, "
+                f"season {nhl['season']}")
           PY
 
       - name: Commit if changed

@@ -167,6 +167,8 @@ private struct PlayerResultRow: View {
             case "Center", "Receiver":      return .brown
             case "Defense":                 return .purple
             case "Kicker":                  return .orange
+            case "Skater":                  return .blue
+            case "Goalie":                  return .orange
             default:                        return .gray
             }
         }

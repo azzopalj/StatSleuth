@@ -11,9 +11,10 @@ actor PublishedSportService {
 
     static let nba = PublishedSportService(sport: .basketball, file: "nba.json")
     static let nfl = PublishedSportService(sport: .football,   file: "nfl.json")
+    static let nhl = PublishedSportService(sport: .hockey,     file: "nhl.json")
 
     /// Every sport served from a published file, in the order they load.
-    static let all: [PublishedSportService] = [.nba, .nfl]
+    static let all: [PublishedSportService] = [.nba, .nfl, .nhl]
 
     private let sport: Sport
     private let file: String

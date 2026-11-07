@@ -41,6 +41,10 @@ struct SportProfile {
     /// Counting stats shown whole. Everything else is a per-game average and
     /// keeps a decimal, so a blocks-per-game of 0 reads as "0.0" not "0".
     let integerKeys: Set<String>
+    /// Stats that need two decimals rather than one. A goals-against average
+    /// rounded to 2.6 throws away the difference between a good goalie and a
+    /// great one, which is most of what the number is for.
+    let preciseKeys: Set<String>
     /// Position codes grouped so that a near-miss reads as close, as the
     /// baseball infield/outfield grouping does.
     let positionGroups: [String: Set<String>]
@@ -69,6 +73,7 @@ struct SportProfile {
     var hasRoleSpecificStats: Bool { !primaryKeysByGroup.isEmpty }
 
     func format(_ key: String, _ value: Double) -> String {
+        if preciseKeys.contains(key) { return String(format: "%.2f", value) }
         guard integerKeys.contains(key) else { return String(format: "%.1f", value) }
         // Career totals run to five figures, which is unreadable unseparated.
         guard abs(value) >= 10_000 else { return String(format: "%.0f", value) }
@@ -92,6 +97,7 @@ struct SportProfile {
         switch sport {
         case .basketball: return .basketball
         case .football:   return .football
+        case .hockey:     return .hockey
         default: return nil   // baseball uses its own typed path
         }
     }
@@ -112,6 +118,7 @@ struct SportProfile {
         relativeCloseness: [:],
         percentageKeys: ["FG%", "3P%", "FT%"],
         integerKeys: ["GP"],
+        preciseKeys: [],
         positionGroups: [
             "Guard":   ["G", "PG", "SG"],
             "Forward": ["F", "SF", "PF"],
@@ -157,6 +164,7 @@ struct SportProfile {
         integerKeys: ["GP", "PASS YDS", "PASS TD", "INT", "RUSH YDS", "RUSH TD",
                       "CAR", "REC", "REC YDS", "REC TD", "TGTS", "TACK", "SOLO",
                       "PD", "FF", "FG", "FGA", "LNG", "XPM", "PTS"],
+        preciseKeys: [],
         // The published group already says which role a player is read with,
         // so this only has to make a near-miss on position read as close.
         positionGroups: [
@@ -166,6 +174,48 @@ struct SportProfile {
             "Defense":      ["DE", "DT", "NT", "EDGE", "LB", "ILB", "OLB",
                              "MLB", "CB", "S", "FS", "SS", "DB"],
             "Kicker":       ["K", "PK"]
+        ]
+    )
+
+    /// Hockey splits only two ways on stats: every skater is read on the same
+    /// numbers, and a goaltender on none of them. That is what the published
+    /// `group` carries, and it is deliberately coarser than the position
+    /// grouping below — a centre and a defenceman share a stat line without
+    /// being anything like the same position, so the two are kept apart.
+    ///
+    /// Numbers are season totals, not per-game averages, so the same key spans
+    /// a 17-game start and a 1,500-game career. Tolerances are relative for
+    /// everything but the rates and plus/minus, which have their own scale.
+    static let hockey = SportProfile(
+        cardKeys: ["GP"],
+        primaryKeys: ["GP"],
+        cardKeysByGroup: [
+            "Skater": ["GP", "G", "A", "PTS", "+/-", "PIM", "PPG", "TOI/G"],
+            "Goalie": ["GP", "WINS", "L", "OTL", "GAA", "SV%", "SO", "SA"]
+        ],
+        primaryKeysByGroup: [
+            "Skater": ["PTS", "G"],
+            "Goalie": ["WINS", "GAA"]
+        ],
+        // Plus/minus is signed and small, so a fraction of it means nothing:
+        // +2 and -2 are 100% apart and four goals apart. The rest are rates.
+        closeness: ["+/-": 5, "GAA": 0.35, "SV%": 0.8, "TOI/G": 2.0],
+        relativeCloseness: [
+            "GP": 0.10, "G": 0.15, "A": 0.15, "PTS": 0.12, "PIM": 0.20,
+            "PPG": 0.20, "WINS": 0.12, "L": 0.15, "OTL": 0.20, "SO": 0.25,
+            "SA": 0.15
+        ],
+        percentageKeys: ["SV%"],
+        integerKeys: ["GP", "G", "A", "PTS", "+/-", "PIM", "PPG",
+                      "WINS", "L", "OTL", "SO", "SA"],
+        preciseKeys: ["GAA"],
+        // Finer than the stat groups above, and used only to decide whether a
+        // position guess is a near miss: a winger guessed against a centre is
+        // close, a defenceman is not.
+        positionGroups: [
+            "Forward": ["C", "LW", "RW", "F"],
+            "Defence": ["D"],
+            "Goalie":  ["G"]
         ]
     )
 }

@@ -303,10 +303,16 @@ final class GameViewModel {
         let pa = a.positionDisplay, pb = b.positionDisplay
         if pa == pb { return .match }
         // Same grouping is a near miss, as infield/outfield is for baseball.
-        if let groupA = a.statGroup, groupA == b.statGroup { return .close }
-        if let profile, let ga = profile.group(for: pa), ga == profile.group(for: pb) {
-            return .close
+        //
+        // The profile's position groups are asked first, because they are the
+        // ones that describe positions. A sport's stat group can be coarser:
+        // hockey reads a centre and a defenceman on the same numbers, which
+        // makes them one stat group but nobody's idea of the same position.
+        // Football's two groupings coincide, so nothing changes there.
+        if let profile, let groupA = profile.group(for: pa) {
+            return groupA == profile.group(for: pb) ? .close : .noMatch
         }
+        if let groupA = a.statGroup, groupA == b.statGroup { return .close }
         return .noMatch
     }
 
