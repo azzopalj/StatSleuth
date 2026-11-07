@@ -23,6 +23,8 @@ final class PlayerDataService {
     /// Today's published daily answer per sport, keyed by `Sport.rawValue`.
     /// The value is that sport's own player id — see `Player.sharedID`.
     private(set) var remoteDailyPicks: [String: Int] = [:]
+    /// The ET day `remoteDailyPicks` was fetched for.
+    @ObservationIgnored private var dailyPicksDateKey: String?
     @ObservationIgnored private var extendedTask: Task<Void, Never>?
 
     var isLoaded: Bool { if case .loaded = loadState { return true }; return false }
@@ -165,7 +167,12 @@ final class PlayerDataService {
         let key = Self.easternDateKey()
         // Baseball is always present; the rest only once their data has loaded.
         let sports = availableSports.isEmpty ? [.baseball] : availableSports
-        var picks: [String: Int] = [:]
+        // Merged, not replaced: a refresh on a foreground with no network must
+        // not drop a pick already in hand and quietly switch today's puzzle to
+        // the locally derived fallback. Picks are keyed by sport alone, so they
+        // only carry over while the ET day they were fetched for still holds.
+        var picks = (dailyPicksDateKey == key) ? remoteDailyPicks : [:]
+        dailyPicksDateKey = key
         for sport in sports {
             if let pick = await RemoteDataService.shared.dailyPick(for: key, sport: sport) {
                 picks[sport.rawValue] = pick

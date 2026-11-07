@@ -28,6 +28,7 @@ struct GuessInputView: View {
             Image(systemName: "magnifyingglass")
                 .foregroundStyle(.secondary)
                 .font(.subheadline)
+                .accessibilityHidden(true)
 
             TextField("Search for a player...", text: $searchQuery)
                 .focused($isFocused)
@@ -42,6 +43,7 @@ struct GuessInputView: View {
                     Image(systemName: "xmark.circle.fill")
                         .foregroundStyle(.secondary)
                 }
+                .accessibilityLabel("Clear search")
             }
         }
         .padding(.horizontal, 14)

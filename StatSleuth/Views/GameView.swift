@@ -123,6 +123,7 @@ struct GameView: View {
             }
             .padding(.horizontal, 16)
             .padding(.top, 8)
+            .centredColumn()
         }
         .navigationTitle(pack.name)
         .navigationBarTitleDisplayMode(.inline)
@@ -225,6 +226,7 @@ struct GameView: View {
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 12)
+            .centredColumn()
             .background(.regularMaterial)
         }
         .onChange(of: searchQuery) { _, newValue in

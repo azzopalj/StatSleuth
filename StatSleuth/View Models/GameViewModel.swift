@@ -207,7 +207,8 @@ final class GameViewModel {
         case .team:         return player.teamDisplayName.isEmpty ? nil : player.teamDisplayName
         case .nationality:  return player.nationality.isEmpty ? nil : player.nationality
         case .era:          return eraHint(for: player)
-        case .draftInfo:    return player.debutYear > 0 ? "Debut: \(player.debutYear)" : nil
+        case .draftInfo:    return player.debutYear > 0
+            ? "Debut: \(player.resolvedSport.seasonLabel(player.debutYear))" : nil
         case .jerseyNumber: return player.jerseyNumber > 0 ? "#\(player.jerseyNumber)" : nil
         case .initials:     return "\(player.firstName.prefix(1)).\(player.lastName.prefix(1))."
         case .firstNameOnly: return player.firstName.isEmpty ? nil : player.firstName

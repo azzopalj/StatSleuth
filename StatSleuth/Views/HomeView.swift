@@ -43,6 +43,7 @@ struct HomeView: View {
                 }
                 .padding(.horizontal, 20)
                 .padding(.bottom, 32)
+                .centredColumn()
             }
             .navigationTitle("StatSleuth")
             .navigationBarTitleDisplayMode(.large)
@@ -55,6 +56,7 @@ struct HomeView: View {
                             Image(systemName: "trophy")
                                 .foregroundStyle(.secondary)
                         }
+                        .accessibilityLabel("Game Center")
                     }
                 }
                 ToolbarItem(placement: .topBarTrailing) {
@@ -65,12 +67,14 @@ struct HomeView: View {
                             Image(systemName: "questionmark.circle")
                                 .foregroundStyle(.secondary)
                         }
+                        .accessibilityLabel("How to play")
                         Button {
                             showSettings = true
                         } label: {
                             Image(systemName: "gearshape.fill")
                                 .foregroundStyle(.secondary)
                         }
+                        .accessibilityLabel("Settings")
                     }
                 }
             }

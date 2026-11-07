@@ -25,6 +25,19 @@ struct ContentView: View {
             guard let link else { return }
             handleDeepLink(link)
         }
+        // A link that arrived during onboarding or the first load set
+        // `pendingDeepLink` before this view existed, so `onChange` never saw
+        // it. Opening the app from a shared link must not land on the home
+        // screen as if nothing was tapped.
+        .onAppear {
+            if let link = deepLinkService.pendingDeepLink { handleDeepLink(link) }
+        }
+        // Published sports finish loading after the app is usable, so a link
+        // into one of them can arrive before its players exist. Retry as each
+        // sport arrives rather than discarding the link.
+        .onChange(of: playerDataService.availableSports) { _, _ in
+            if let link = deepLinkService.pendingDeepLink { handleDeepLink(link) }
+        }
     }
 
     private func handleDeepLink(_ link: DeepLink) {
@@ -35,7 +48,12 @@ struct ContentView: View {
         guard let player = allPlayers.first(where: {
             $0.resolvedSport == sport && $0.sharedID == playerID
         }) else {
-            deepLinkService.clearPendingLink()
+            // The sport may simply not have loaded yet; keep the link pending
+            // so the retry above can pick it up. Only a sport that is present
+            // and genuinely lacks the player is a dead link.
+            if playerDataService.availableSports.contains(sport) {
+                deepLinkService.clearPendingLink()
+            }
             return
         }
 
@@ -54,10 +72,7 @@ struct ContentView: View {
                 ?? allPacks.first { $0.playerIDs.contains(player.id) }
                 ?? allPacks.first
         }
-        guard let pack = fallback else {
-            deepLinkService.clearPendingLink()
-            return
-        }
+        guard let pack = fallback else { return }   // packs arrive with the players
 
         deepLinkMode = mode
         deepLinkPack = pack

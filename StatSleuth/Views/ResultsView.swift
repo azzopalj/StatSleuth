@@ -211,7 +211,7 @@ struct ResultsView: View {
                         Image(systemName: "star.fill")
                             .font(.caption2)
                             .foregroundStyle(.yellow)
-                        Text("\(historic.year) season · WAR \(String(format: "%.1f", historic.war))")
+                        Text("\(player.resolvedSport.seasonLabel(historic.year)) season · WAR \(String(format: "%.1f", historic.war))")
                             .font(.caption)
                             .fontWeight(.semibold)
                     }
@@ -228,7 +228,7 @@ struct ResultsView: View {
                         Image(systemName: "calendar.badge.checkmark")
                             .font(.caption2)
                             .foregroundStyle(.purple)
-                        Text("The stats were from \(year, format: .number.grouping(.never))")
+                        Text("The stats were from \(player.resolvedSport.seasonLabel(year))")
                             .font(.caption)
                             .fontWeight(.semibold)
                     }

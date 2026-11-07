@@ -28,6 +28,9 @@ struct PlayerHeadshotView: View {
         .clipShape(Circle())
         .overlay(Circle().stroke(Color.white.opacity(0.3), lineWidth: 1))
         .shadow(color: .black.opacity(0.15), radius: 6, y: 2)
+        // Before the reveal this must not name the player, and after it the
+        // name is already on screen beside it — either way it is decorative.
+        .accessibilityHidden(true)
     }
 
     private var fallbackView: some View {

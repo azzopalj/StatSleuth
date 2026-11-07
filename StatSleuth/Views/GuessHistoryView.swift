@@ -35,6 +35,10 @@ private struct GuessRow: View {
                 .padding(.horizontal, 14)
                 .padding(.bottom, 12)
         }
+        // Each row is one guess; VoiceOver reads the name and verdict first,
+        // then swipes through the cells.
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel("\(guess.player.fullName), \(guess.isCorrect ? "correct" : "incorrect")")
         .background(rowBackground)
         .clipShape(RoundedRectangle(cornerRadius: 14))
         .overlay(
@@ -47,6 +51,7 @@ private struct GuessRow: View {
         HStack {
             Image(systemName: guess.isCorrect ? "checkmark.circle.fill" : "xmark.circle.fill")
                 .foregroundStyle(guess.isCorrect ? .green : .red)
+                .accessibilityHidden(true)   // said in the row's own label
             Text(guess.player.fullName)
                 .font(.subheadline)
                 .fontWeight(.semibold)
@@ -240,6 +245,32 @@ private struct FeedbackCell: View {
         }
     }
 
+    /// Spelled out for VoiceOver — "POS" is read as letters, and the stat
+    /// keys are jargon even sighted players learn from position on the card.
+    private static let spokenLabels = [
+        "POS": "Position", "LGE": "League", "CONF": "Conference",
+        "DIV": "Division", "TEAM": "Team", "AGE": "Age", "NAT": "Nationality"
+    ]
+
+    /// The glyph is the only thing on screen that is not colour, and VoiceOver
+    /// reads neither. Without this a guess row is just a list of numbers.
+    private var spokenResult: String {
+        switch result {
+        case .match:   return "match"
+        case .close:   return "close"
+        // `.higher` is set when the *guess* is above the answer
+        // (GameViewModel: `a > b ? .higher : .lower`), so the arrow points at
+        // the guess, not at where to go next. Said plainly here.
+        case .higher:  return "too high"
+        case .lower:   return "too low"
+        case .noMatch: return "no match"
+        }
+    }
+
+    private var spokenValue: String {
+        value == "--" ? "unknown" : value
+    }
+
     var body: some View {
         VStack(spacing: 3) {
             Text(label)
@@ -260,5 +291,7 @@ private struct FeedbackCell: View {
         .padding(.vertical, 8)
         .background(bgColor)
         .clipShape(RoundedRectangle(cornerRadius: 8))
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("\(Self.spokenLabels[label] ?? label), \(spokenValue), \(spokenResult)")
     }
 }

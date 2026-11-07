@@ -1,5 +1,6 @@
 import Foundation
 import GameKit
+import UIKit
 
 // MARK: - Leaderboard IDs
 
@@ -56,10 +57,29 @@ final class GameCenterService {
     // withCheckedContinuation here. We just set the handler and let it run.
 
     func authenticate() {
-        GKLocalPlayer.local.authenticateHandler = { [weak self] _, error in
-            if let error { _ = error; return }
+        GKLocalPlayer.local.authenticateHandler = { [weak self] viewController, _ in
+            // GameKit hands back a sign-in screen when nobody is signed in.
+            // Dropping it was leaving players permanently unauthenticated with
+            // no way to fix it from inside the app — the trophy button simply
+            // never appeared.
+            if let viewController {
+                Self.topViewController()?.present(viewController, animated: true)
+                return
+            }
             self?.isAuthenticated = GKLocalPlayer.local.isAuthenticated
         }
+    }
+
+    /// The view controller a GameKit sheet should be presented from. Walks past
+    /// anything already presented so the sheet is not attached to a controller
+    /// that is itself covered.
+    private static func topViewController() -> UIViewController? {
+        let scene = UIApplication.shared.connectedScenes
+            .compactMap { $0 as? UIWindowScene }
+            .first { $0.activationState == .foregroundActive }
+        var top = scene?.windows.first(where: \.isKeyWindow)?.rootViewController
+        while let presented = top?.presentedViewController { top = presented }
+        return top
     }
 
     // MARK: - Dashboard
@@ -87,12 +107,25 @@ final class GameCenterService {
     // MARK: - Achievements
 
     func reportAchievement(_ achievementID: String, percentComplete: Double = 100.0) async {
-        guard isAuthenticated else { return }
-        let achievement = GKAchievement(identifier: achievementID)
-        achievement.percentComplete = percentComplete
-        achievement.showsCompletionBanner = true
+        await reportAchievements([achievementID], percentComplete: percentComplete)
+    }
+
+    /// One network round trip for the whole set.
+    ///
+    /// Every milestone is re-reported after each game — re-reporting a finished
+    /// achievement is a no-op on Game Center's side, which is what keeps the
+    /// rules here stateless — but sent one at a time that was up to fifteen
+    /// serial requests between the last guess and the results screen.
+    func reportAchievements(_ ids: [String], percentComplete: Double = 100.0) async {
+        guard isAuthenticated, !ids.isEmpty else { return }
+        let achievements = Set(ids).map { id -> GKAchievement in
+            let achievement = GKAchievement(identifier: id)
+            achievement.percentComplete = percentComplete
+            achievement.showsCompletionBanner = true
+            return achievement
+        }
         do {
-            try await GKAchievement.report([achievement])
+            try await GKAchievement.report(achievements)
         } catch { }
     }
 
@@ -110,10 +143,15 @@ final class GameCenterService {
 
     /// Call after applying streak protection so streak-based achievements fire with the restored streak.
     func reportStreakAchievements(progress: UserProgress) async {
-        guard isAuthenticated else { return }
-        if progress.currentStreak >= 7   { await reportAchievement(AchievementID.streak7) }
-        if progress.currentStreak >= 30  { await reportAchievement(AchievementID.streak30) }
-        if progress.currentStreak >= 100 { await reportAchievement(AchievementID.streak100) }
+        await reportAchievements(Self.streakAchievements(progress: progress))
+    }
+
+    private static func streakAchievements(progress: UserProgress) -> [String] {
+        var earned: [String] = []
+        if progress.currentStreak >= 7   { earned.append(AchievementID.streak7) }
+        if progress.currentStreak >= 30  { earned.append(AchievementID.streak30) }
+        if progress.currentStreak >= 100 { earned.append(AchievementID.streak100) }
+        return earned
     }
 
     private func checkAchievements(for session: GameSession, progress: UserProgress) async {
@@ -123,50 +161,35 @@ final class GameCenterService {
             return session.maxGuesses
         }()
 
-        // ---- Existing ----
-        if progress.totalGamesWon == 1 {
-            await reportAchievement(AchievementID.firstWin)
-        }
-        if progress.currentStreak >= 7 {
-            await reportAchievement(AchievementID.streak7)
-        }
-        if progress.currentStreak >= 30 {
-            await reportAchievement(AchievementID.streak30)
-        }
-        if won, guessCount == 1 {
-            await reportAchievement(AchievementID.perfectGame)
-        }
-        if won, session.hintsUsed.isEmpty {
-            await reportAchievement(AchievementID.noHints)
-        }
+        var earned = Self.streakAchievements(progress: progress)
+
+        if progress.totalGamesWon == 1        { earned.append(AchievementID.firstWin) }
+        if won, guessCount == 1               { earned.append(AchievementID.perfectGame) }
+        if won, session.hintsUsed.isEmpty     { earned.append(AchievementID.noHints) }
+        // Winning on the very last guess.
+        if won, guessCount == session.maxGuesses { earned.append(AchievementID.walkOff) }
 
         // ---- Win milestones ----
-        if progress.totalGamesWon >= 10    { await reportAchievement(AchievementID.utilityPlayer) }
-        if progress.totalGamesWon >= 100   { await reportAchievement(AchievementID.everydayStarter) }
-        if progress.totalGamesWon >= 500   { await reportAchievement(AchievementID.allStar) }
-        if progress.totalGamesWon >= 1000  { await reportAchievement(AchievementID.mvp) }
-        if progress.totalGamesWon >= 5000  { await reportAchievement(AchievementID.hallOfFame) }
+        if progress.totalGamesWon >= 10       { earned.append(AchievementID.utilityPlayer) }
+        if progress.totalGamesWon >= 100      { earned.append(AchievementID.everydayStarter) }
+        if progress.totalGamesWon >= 500      { earned.append(AchievementID.allStar) }
+        if progress.totalGamesWon >= 1000     { earned.append(AchievementID.mvp) }
+        if progress.totalGamesWon >= 5000     { earned.append(AchievementID.hallOfFame) }
 
         // ---- Hintless win milestones ----
-        if progress.totalHintlessWins >= 25  { await reportAchievement(AchievementID.detective) }
-        if progress.totalHintlessWins >= 100 { await reportAchievement(AchievementID.savant) }
-        if progress.totalHintlessWins >= 500 { await reportAchievement(AchievementID.encyclopedia) }
+        if progress.totalHintlessWins >= 25   { earned.append(AchievementID.detective) }
+        if progress.totalHintlessWins >= 100  { earned.append(AchievementID.savant) }
+        if progress.totalHintlessWins >= 500  { earned.append(AchievementID.encyclopedia) }
 
-        // ---- First-guess achievements ----
-        if won, guessCount == session.maxGuesses {
-            await reportAchievement(AchievementID.walkOff)
-        }
-        if progress.consecutiveFirstGuessWins >= 10 {
-            await reportAchievement(AchievementID.perfectGame10)
-        }
+        // ---- First-guess streak ----
+        if progress.consecutiveFirstGuessWins >= 10 { earned.append(AchievementID.perfectGame10) }
 
         // ---- Win streaks (consecutive wins, any mode) ----
-        if progress.currentConsecutiveWins >= 5  { await reportAchievement(AchievementID.heatingUp) }
-        if progress.currentConsecutiveWins >= 10 { await reportAchievement(AchievementID.onFire) }
-        if progress.currentConsecutiveWins >= 25 { await reportAchievement(AchievementID.ironMan) }
+        if progress.currentConsecutiveWins >= 5  { earned.append(AchievementID.heatingUp) }
+        if progress.currentConsecutiveWins >= 10 { earned.append(AchievementID.onFire) }
+        if progress.currentConsecutiveWins >= 25 { earned.append(AchievementID.ironMan) }
 
-        // ---- Daily challenge streak ----
-        if progress.currentStreak >= 100 { await reportAchievement(AchievementID.streak100) }
+        await reportAchievements(earned)
     }
 }
 

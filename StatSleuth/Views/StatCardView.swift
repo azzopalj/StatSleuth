@@ -47,6 +47,7 @@ struct StatCardView: View {
             Image(systemName: "questionmark.circle.fill")
                 .font(.system(size: 36))
                 .foregroundStyle(.blue.opacity(0.7))
+                .accessibilityHidden(true)   // decorative
         }
         .padding(18)
     }
@@ -58,19 +59,25 @@ struct StatCardView: View {
                 return "Best season stats (year hidden)"
             }
             if let year = player.seasonYear {
-                return "\(year) season stats"
+                // Named in full — "2025-26 NBA" rather than "2026", which in a
+                // sport whose season straddles two years reads as either one.
+                return "\(seasonName(year)) \(player.resolvedSport.displayName) season stats"
             }
             return "Season stats"
         case .careerStats:
             return "Career totals"
         case .rookieSeason:
             if let year = player.rookieSeason?.year {
-                return "\(year) debut season"
+                return "\(seasonName(year)) debut season"
             }
             return "Debut season stats"
         case .mysteryEra:
             return "Stats from a mystery year — which season?"
         }
+    }
+
+    private func seasonName(_ year: Int) -> String {
+        player.resolvedSport.seasonLabel(year)
     }
 
     // MARK: - Hitter stats
@@ -177,5 +184,26 @@ struct StatCell: View {
             Rectangle().fill(Color.primary.opacity(0.08)).frame(height: 0.5),
             alignment: .top
         )
+        // Read as "points, 16.9" rather than "16.9" then "PTS" as letters.
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("\(Self.spoken[label] ?? label), \(value)")
     }
+
+    /// Only the keys whose initials VoiceOver mangles badly enough to matter;
+    /// anything else is read as written.
+    private static let spoken = [
+        "PTS": "Points", "REB": "Rebounds", "AST": "Assists",
+        "STL": "Steals", "BLK": "Blocks", "GP": "Games played",
+        "G": "Games", "HR": "Home runs", "RBI": "Runs batted in",
+        "AVG": "Batting average", "OBP": "On base percentage",
+        "SLG": "Slugging", "OPS": "O P S", "H": "Hits", "R": "Runs",
+        "SB": "Stolen bases", "BB": "Walks", "SO": "Strikeouts",
+        "ERA": "E R A", "W": "Wins", "L": "Losses", "WHIP": "WHIP",
+        "IP": "Innings pitched", "SV": "Saves",
+        "TACK": "Tackles", "SOLO": "Solo tackles", "SACK": "Sacks",
+        "INT": "Interceptions", "PD": "Passes defended", "FF": "Forced fumbles",
+        "REC": "Receptions", "TGTS": "Targets", "CAR": "Carries",
+        "FG": "Field goals", "FGA": "Field goals attempted", "LNG": "Longest",
+        "XPM": "Extra points made", "RTG": "Passer rating"
+    ]
 }

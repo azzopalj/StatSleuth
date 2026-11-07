@@ -82,6 +82,30 @@ enum Sport: String, Codable, CaseIterable {
         }
     }
 
+    /// Whether a season straddles two calendar years and is named for both.
+    ///
+    /// Basketball and hockey run October to June, so "2026" on its own is
+    /// ambiguous — it could mean 2025-26 or 2026-27. Baseball and football
+    /// finish inside the year that names them (the NFL's January playoffs are
+    /// still the previous year's season), so a bare year is already the name
+    /// a fan uses.
+    var seasonSpansCalendarYears: Bool {
+        switch self {
+        case .basketball, .hockey: return true
+        case .baseball, .football, .soccer: return false
+        }
+    }
+
+    /// The name a fan would use for the season a feed labels `year`.
+    ///
+    /// ESPN numbers a straddling season by the year it *ends* in, so its 2026
+    /// is the 2025-26 season. Everything the app shows goes through here, so
+    /// the two conventions never get mixed up on screen.
+    func seasonLabel(_ year: Int) -> String {
+        guard seasonSpansCalendarYears else { return String(year) }
+        return String(format: "%d-%02d", year - 1, year % 100)
+    }
+
     /// Fixed order for the sport picker, so it doesn't reshuffle as data
     /// arrives for new sports.
     var sortOrder: Int {
