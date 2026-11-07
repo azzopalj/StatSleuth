@@ -25,7 +25,7 @@ final class AdService {
     /// fastest way to lose the habit.
     private static let skipFirstGameOfDay = true
     /// At most one interstitial per this many finished games.
-    private static let gamesBetweenAds = 3
+    private static let gamesBetweenAds = 2
     /// …and never two inside this window, however many games are played.
     private static let minimumSecondsBetweenAds: TimeInterval = 180
 
