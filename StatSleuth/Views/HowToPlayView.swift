@@ -63,31 +63,17 @@ struct HowToPlayView: View {
 
     private var feedbackSection: some View {
         InfoCard(title: "Reading the Feedback", icon: "square.grid.3x2.fill", iconColor: .green) {
-            VStack(spacing: 14) {
-                HStack(alignment: .top, spacing: 12) {
-                    colorBox(.green, icon: "checkmark")
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("Match").font(.subheadline).fontWeight(.semibold)
-                        Text("Exact match — position, team, nationality, or stat is correct.")
-                            .font(.caption).foregroundStyle(.secondary)
-                    }
-                }
-                HStack(alignment: .top, spacing: 12) {
-                    colorBox(.orange, icon: "arrow.left.and.right")
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("Close").font(.subheadline).fontWeight(.semibold)
-                        Text("Nearly right — same position group, division, or stat within range.")
-                            .font(.caption).foregroundStyle(.secondary)
-                    }
-                }
-                HStack(alignment: .top, spacing: 12) {
-                    colorBox(.red, icon: "xmark")
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("No Match").font(.subheadline).fontWeight(.semibold)
-                        Text("Completely off. For numbers, an arrow shows higher ↑ or lower ↓.")
-                            .font(.caption).foregroundStyle(.secondary)
-                    }
-                }
+            VStack(alignment: .leading, spacing: 14) {
+                // One row per colour the guess grid actually uses, in the same
+                // order a player meets them: right, nearly, warmer/colder, no.
+                legendRow(.green, icon: "checkmark", title: "Match",
+                          detail: "Exact — the position, team, nationality or stat is the answer's.")
+                legendRow(.yellow, icon: "minus", title: "Close",
+                          detail: "Nearly right — same position group or division, or a stat within range.")
+                legendRow(.orange, icon: "arrow.up", title: "Higher or lower",
+                          detail: "A number that is off. The arrow points at the answer: up means the answer is the bigger number.")
+                legendRow(Color.red.opacity(0.75), icon: "xmark", title: "No match",
+                          detail: "Nothing in common on that row.")
 
                 Divider()
 
@@ -96,17 +82,25 @@ struct HowToPlayView: View {
                     HStack(alignment: .top, spacing: 16) {
                         VStack(alignment: .leading, spacing: 4) {
                             ForEach(["Position", "Division", "Age", "Key Stat 1"], id: \.self) { label in
-                                Label(label, systemImage: "checkmark.circle.fill")
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
+                                Label {
+                                    Text(label)
+                                } icon: {
+                                    Image(systemName: "circle.fill").font(.system(size: 4))
+                                }
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
                             }
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
                         VStack(alignment: .leading, spacing: 4) {
                             ForEach(["Team", "League / Conference", "Nationality", "Key Stat 2"], id: \.self) { label in
-                                Label(label, systemImage: "checkmark.circle.fill")
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
+                                Label {
+                                    Text(label)
+                                } icon: {
+                                    Image(systemName: "circle.fill").font(.system(size: 4))
+                                }
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
                             }
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
@@ -183,14 +177,42 @@ struct HowToPlayView: View {
 
     // MARK: - Helpers
 
+    /// Swatch width plus the gap after it, so a row's detail text hangs under
+    /// its own title instead of under the swatch.
+    private static let legendSwatch: CGFloat = 32
+    private static let legendGap: CGFloat = 12
+
+    /// Swatch and title share a line, which centres the swatch against the
+    /// title rather than against the whole block — with the title and a
+    /// two- or three-line detail stacked, a top-aligned swatch reads as
+    /// floating above the text it belongs to.
+    private func legendRow(_ color: Color, icon: String,
+                           title: String, detail: String) -> some View {
+        VStack(alignment: .leading, spacing: 3) {
+            HStack(spacing: Self.legendGap) {
+                colorBox(color, icon: icon)
+                Text(title)
+                    .font(.subheadline)
+                    .fontWeight(.semibold)
+            }
+            Text(detail)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+                .padding(.leading, Self.legendSwatch + Self.legendGap)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .accessibilityElement(children: .combine)
+    }
+
     private func colorBox(_ color: Color, icon: String) -> some View {
         RoundedRectangle(cornerRadius: 8)
             .fill(color)
-            .frame(width: 36, height: 36)
+            .frame(width: Self.legendSwatch, height: Self.legendSwatch)
             .overlay(
                 Image(systemName: icon)
                     .foregroundStyle(.white)
-                    .font(.subheadline.bold())
+                    .font(.footnote.bold())
             )
     }
 
