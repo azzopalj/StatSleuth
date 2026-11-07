@@ -1,0 +1,5 @@
+# Claude Code local session files
+.claude/settings.local.json
+.claude/launch.json
+
+.DS_Store
