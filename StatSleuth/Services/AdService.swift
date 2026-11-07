@@ -67,10 +67,47 @@ final class AdService {
     private var started = false
     private let presenter = AdPresenter()
 
-    private var gamesSinceLastAd = 0
-    private var lastAdShownAt: Date?
-    private var finishedGamesToday = 0
-    private var finishedGamesDateKey: String?
+    // Pacing state is persisted. Held only in memory it reset on every cold
+    // launch, which quietly turned "the first game of the day is free" into
+    // "the first game after every launch is free" and restarted the
+    // three-game counter each time. A player who opens the app, plays their
+    // daily and closes it — which is most daily players, most days — would
+    // never have seen an interstitial at all.
+    private var gamesSinceLastAd = 0 { didSet { savePacing() } }
+    private var lastAdShownAt: Date? { didSet { savePacing() } }
+    private var finishedGamesToday = 0 { didSet { savePacing() } }
+    private var finishedGamesDateKey: String? { didSet { savePacing() } }
+
+    private enum PacingKey {
+        static let gamesSinceLastAd = "com.lucasazzopardi.StatSleuth.ads.gamesSinceLastAd"
+        static let lastAdShownAt    = "com.lucasazzopardi.StatSleuth.ads.lastAdShownAt"
+        static let finishedToday    = "com.lucasazzopardi.StatSleuth.ads.finishedGamesToday"
+        static let finishedDayKey   = "com.lucasazzopardi.StatSleuth.ads.finishedGamesDateKey"
+    }
+
+    /// Restores the pacing counters, which is the whole point of persisting
+    /// them. `isLoading` guards the `didSet` observers so loading four values
+    /// doesn't write them straight back out again.
+    init() {
+        isLoadingPacing = true
+        let defaults = UserDefaults.standard
+        gamesSinceLastAd    = defaults.integer(forKey: PacingKey.gamesSinceLastAd)
+        lastAdShownAt       = defaults.object(forKey: PacingKey.lastAdShownAt) as? Date
+        finishedGamesToday  = defaults.integer(forKey: PacingKey.finishedToday)
+        finishedGamesDateKey = defaults.string(forKey: PacingKey.finishedDayKey)
+        isLoadingPacing = false
+    }
+
+    private var isLoadingPacing = false
+
+    private func savePacing() {
+        guard !isLoadingPacing else { return }
+        let defaults = UserDefaults.standard
+        defaults.set(gamesSinceLastAd, forKey: PacingKey.gamesSinceLastAd)
+        defaults.set(lastAdShownAt, forKey: PacingKey.lastAdShownAt)
+        defaults.set(finishedGamesToday, forKey: PacingKey.finishedToday)
+        defaults.set(finishedGamesDateKey, forKey: PacingKey.finishedDayKey)
+    }
 
     // MARK: - Start-up
 
