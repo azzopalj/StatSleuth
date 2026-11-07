@@ -5,116 +5,24 @@ import Foundation
 
 extension PurchaseService {
 
-    // Team pack IDs  (30)
-    static let teamPackIDs: [String] = [
-        "com.lucasazzopardi.statsleuth.pack.tor",
-        "com.lucasazzopardi.statsleuth.pack.nyy",
-        "com.lucasazzopardi.statsleuth.pack.bos",
-        "com.lucasazzopardi.statsleuth.pack.tb",
-        "com.lucasazzopardi.statsleuth.pack.bal",
-        "com.lucasazzopardi.statsleuth.pack.cws",
-        "com.lucasazzopardi.statsleuth.pack.cle",
-        "com.lucasazzopardi.statsleuth.pack.det",
-        "com.lucasazzopardi.statsleuth.pack.kc",
-        "com.lucasazzopardi.statsleuth.pack.min",
-        "com.lucasazzopardi.statsleuth.pack.hou",
-        "com.lucasazzopardi.statsleuth.pack.laa",
-        "com.lucasazzopardi.statsleuth.pack.athletics",
-        "com.lucasazzopardi.statsleuth.pack.sea",
-        "com.lucasazzopardi.statsleuth.pack.tex",
-        "com.lucasazzopardi.statsleuth.pack.atlanta",
-        "com.lucasazzopardi.statsleuth.pack.mia",
-        "com.lucasazzopardi.statsleuth.pack.nym",
-        "com.lucasazzopardi.statsleuth.pack.phi",
-        "com.lucasazzopardi.statsleuth.pack.wsh",
-        "com.lucasazzopardi.statsleuth.pack.chc",
-        "com.lucasazzopardi.statsleuth.pack.cin",
-        "com.lucasazzopardi.statsleuth.pack.col",
-        "com.lucasazzopardi.statsleuth.pack.mil",
-        "com.lucasazzopardi.statsleuth.pack.pit",
-        "com.lucasazzopardi.statsleuth.pack.stl",
-        "com.lucasazzopardi.statsleuth.pack.arizona",
-        "com.lucasazzopardi.statsleuth.pack.lad",
-        "com.lucasazzopardi.statsleuth.pack.sd",
-        "com.lucasazzopardi.statsleuth.pack.sf"
-    ]
+    /// The only thing for sale. Everything that used to be a paid pack is free;
+    /// the app earns from ads instead, and this removes them.
+    static let removeAdsID = "com.lucasazzopardi.statsleuth.removeads"
 
-    // Division pack IDs  (6)
-    static let divisionPackIDs: [String] = [
-        "com.lucasazzopardi.statsleuth.pack.division.aleast",
-        "com.lucasazzopardi.statsleuth.pack.division.alcentral",
-        "com.lucasazzopardi.statsleuth.pack.division.alwest",
-        "com.lucasazzopardi.statsleuth.pack.division.nleast",
-        "com.lucasazzopardi.statsleuth.pack.division.nlcentral",
-        "com.lucasazzopardi.statsleuth.pack.division.nlwest"
-    ]
+    static var allProductIDs: Set<String> { [removeAdsID] }
 
-    // Unlock-all bundle
-    static let unlockAllID = "com.lucasazzopardi.statsleuth.unlockall"
-
-    // Hint packs
-    static let hints5ID  = "com.lucasazzopardi.statsleuth.hints.pack5"
-    static let hints15ID = "com.lucasazzopardi.statsleuth.hints.pack15"
-    static let hintPackIDs: [String] = [hints5ID, hints15ID]
-
-    static var allProductIDs: Set<String> {
-        Set(teamPackIDs + divisionPackIDs + hintPackIDs + [unlockAllID])
+    /// Anyone who bought a pack under the old model gets the ad-free app.
+    ///
+    /// Their packs are free to everyone now, so without this they would have
+    /// paid and received nothing — and would be shown ads on top of it. Matched
+    /// by prefix rather than by a list of the 37 retired identifiers: the old
+    /// products are gone from App Store Connect but the entitlements remain on
+    /// the account forever. Consumable hint packs never appear in
+    /// `currentEntitlements`, so they cannot match here.
+    static func isLegacyPurchase(_ productID: String) -> Bool {
+        productID.hasPrefix("com.lucasazzopardi.statsleuth.pack.")
+            || productID == "com.lucasazzopardi.statsleuth.unlockall"
     }
-
-    /// How many hints a given hint product ID awards
-    static func hintCount(for productID: String) -> Int {
-        switch productID {
-        case hints5ID:  return 5
-        case hints15ID: return 15
-        default:        return 0
-        }
-    }
-
-    // Division → contained team pack IDs
-    static let divisionTeamIDs: [String: [String]] = [
-        "com.lucasazzopardi.statsleuth.pack.division.aleast": [
-            "com.lucasazzopardi.statsleuth.pack.tor",
-            "com.lucasazzopardi.statsleuth.pack.nyy",
-            "com.lucasazzopardi.statsleuth.pack.bos",
-            "com.lucasazzopardi.statsleuth.pack.tb",
-            "com.lucasazzopardi.statsleuth.pack.bal"
-        ],
-        "com.lucasazzopardi.statsleuth.pack.division.alcentral": [
-            "com.lucasazzopardi.statsleuth.pack.cws",
-            "com.lucasazzopardi.statsleuth.pack.cle",
-            "com.lucasazzopardi.statsleuth.pack.det",
-            "com.lucasazzopardi.statsleuth.pack.kc",
-            "com.lucasazzopardi.statsleuth.pack.min"
-        ],
-        "com.lucasazzopardi.statsleuth.pack.division.alwest": [
-            "com.lucasazzopardi.statsleuth.pack.hou",
-            "com.lucasazzopardi.statsleuth.pack.laa",
-            "com.lucasazzopardi.statsleuth.pack.athletics",
-            "com.lucasazzopardi.statsleuth.pack.sea",
-            "com.lucasazzopardi.statsleuth.pack.tex"
-        ],
-        "com.lucasazzopardi.statsleuth.pack.division.nleast": [
-            "com.lucasazzopardi.statsleuth.pack.atlanta",
-            "com.lucasazzopardi.statsleuth.pack.mia",
-            "com.lucasazzopardi.statsleuth.pack.nym",
-            "com.lucasazzopardi.statsleuth.pack.phi",
-            "com.lucasazzopardi.statsleuth.pack.wsh"
-        ],
-        "com.lucasazzopardi.statsleuth.pack.division.nlcentral": [
-            "com.lucasazzopardi.statsleuth.pack.chc",
-            "com.lucasazzopardi.statsleuth.pack.cin",
-            "com.lucasazzopardi.statsleuth.pack.mil",
-            "com.lucasazzopardi.statsleuth.pack.pit",
-            "com.lucasazzopardi.statsleuth.pack.stl"
-        ],
-        "com.lucasazzopardi.statsleuth.pack.division.nlwest": [
-            "com.lucasazzopardi.statsleuth.pack.arizona",
-            "com.lucasazzopardi.statsleuth.pack.col",
-            "com.lucasazzopardi.statsleuth.pack.lad",
-            "com.lucasazzopardi.statsleuth.pack.sd",
-            "com.lucasazzopardi.statsleuth.pack.sf"
-        ]
-    ]
 }
 
 // MARK: - PurchaseService
@@ -138,8 +46,6 @@ final class PurchaseService {
         var task: Task<Void, Never>?
         func cancel() { task?.cancel() }
     }
-    private weak var progressService: UserProgressService?
-    private weak var playerDataService: PlayerDataService?
 
     init() {
         transactionListenerBox.task = Task { await self.listenForTransactions() }
@@ -147,13 +53,6 @@ final class PurchaseService {
 
     deinit {
         transactionListenerBox.cancel()
-    }
-
-    // MARK: - Setup
-
-    func configure(progressService: UserProgressService, playerDataService: PlayerDataService) {
-        self.progressService = progressService
-        self.playerDataService = playerDataService
     }
 
     // MARK: - Load products
@@ -237,80 +136,28 @@ final class PurchaseService {
         }
     }
 
-    // MARK: - Unlock packs
+    // MARK: - Entitlement
 
     private func unlock(productID: String) async {
         purchasedProductIDs.insert(productID)
-
-        guard let progressService else { return }
-
-        // Hint packs — consumable, award hints directly. These must not depend on the
-        // player data service, which may not be wired up yet.
-        let hintsToAdd = Self.hintCount(for: productID)
-        if hintsToAdd > 0 {
-            progressService.addHints(hintsToAdd)
-            return
-        }
-
-        syncUnlockedPacks()
     }
 
-    /// Mirrors entitlements into UserProgress as pack UUIDs. Packs may not be built yet
-    /// when entitlements arrive on launch, so this is safe to call again afterwards —
-    /// `ownsProduct` is the source of truth, this is only the persisted copy.
-    func syncUnlockedPacks() {
-        guard let progressService, let playerDataService else { return }
-        let packIDsToUnlock = playerDataService.packs
-            .filter { pack in
-                guard let pid = pack.productID else { return false }
-                return ownsProduct(pid)
-            }
-            .map { $0.id }
-        guard !packIDsToUnlock.isEmpty else { return }
-        progressService.unlockPacks(packIDsToUnlock)
+    /// Whether the player has paid to remove ads.
+    var isAdFree: Bool {
+        purchasedProductIDs.contains(Self.removeAdsID)
+            || purchasedProductIDs.contains(where: Self.isLegacyPurchase)
     }
 
-    // MARK: - Convenience
+    /// Every pack is free now. Kept so callers read as a question about the
+    /// pack rather than assuming.
+    func isOwned(pack: Pack) -> Bool { true }
 
-    func isOwned(pack: Pack) -> Bool {
-        guard let pid = pack.productID else { return pack.isFree }
-        return ownsProduct(pid)
+    func removeAdsProduct() -> Product? {
+        products[Self.removeAdsID]
     }
 
-    /// Resolves the unlock-all and division -> team cascades from the transacted product
-    /// IDs alone. This must not depend on `playerDataService.packs`: restorePurchases()
-    /// runs concurrently with the player load, so on a fresh install the packs are often
-    /// still empty when entitlements arrive, which previously left paid packs locked.
-    func ownsProduct(_ productID: String) -> Bool {
-        Self.grants(owned: purchasedProductIDs, productID: productID)
+    func purchaseRemoveAds() async {
+        await purchase(productID: Self.removeAdsID)
     }
 
-    /// Pure entitlement rule, kept free of StoreKit and app state so it can be checked
-    /// directly.
-    static func grants(owned: Set<String>, productID: String) -> Bool {
-        if owned.contains(productID) { return true }
-
-        // Unlock-all covers every team and division pack (not consumable hint packs).
-        if owned.contains(unlockAllID),
-           teamPackIDs.contains(productID) || divisionPackIDs.contains(productID) {
-            return true
-        }
-
-        // Owning a division pack also grants the team packs inside it.
-        for (divisionID, teamIDs) in divisionTeamIDs
-        where owned.contains(divisionID) && teamIDs.contains(productID) {
-            return true
-        }
-
-        return false
-    }
-
-    func product(for pack: Pack) -> Product? {
-        guard let pid = pack.productID else { return nil }
-        return products[pid]
-    }
-
-    func unlockAllProduct() -> Product? {
-        products[Self.unlockAllID]
-    }
 }

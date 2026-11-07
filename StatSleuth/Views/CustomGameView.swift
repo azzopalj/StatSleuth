@@ -17,7 +17,6 @@ struct CustomGameView: View {
 
     @Environment(PlayerDataService.self)  private var playerDataService
     @Environment(UserProgressService.self) private var progressService
-    @Environment(PurchaseService.self)    private var purchaseService
     @Environment(\.dismiss)              private var dismiss
 
     @State private var selectedMode: GameMode = .seasonStats
@@ -32,50 +31,44 @@ struct CustomGameView: View {
 
     // MARK: - Division groups
 
-    private static let divisionOrder: [(key: String, name: String)] = [
-        ("aleast",    "AL East"),
-        ("alcentral", "AL Central"),
-        ("alwest",    "AL West"),
-        ("nleast",    "NL East"),
-        ("nlcentral", "NL Central"),
-        ("nlwest",    "NL West"),
-    ]
-
-    /// Baseball's team packs are grouped by division. Other sports have no
-    /// equivalent structure yet, so they fall back to a flat list.
+    /// Team packs grouped under the division they belong to.
+    ///
+    /// The grouping used to be a lookup from division product ID to team
+    /// product IDs, which stopped existing when the packs became free. Each
+    /// team pack now carries its own division name, so this works for every
+    /// sport instead of baseball alone.
     private var divisionGroups: [DivisionGroup] {
-        guard sport == .baseball else { return [] }
         let packs = allPacks
-        return Self.divisionOrder.map { (key, name) in
-            let divProductID  = "com.lucasazzopardi.statsleuth.pack.division.\(key)"
-            let teamProductIDs = PurchaseService.divisionTeamIDs[divProductID] ?? []
-            let divPack  = packs.first { $0.productID == divProductID }
-            let teams    = packs.filter { p in
-                guard let pid = p.productID else { return false }
-                return teamProductIDs.contains(pid)
+        let divisionPacks = packs.filter { $0.type == .division }
+        let teamPacks     = packs.filter { $0.type == .team }
+        let grouped = Dictionary(grouping: teamPacks) { $0.groupName ?? "" }
+
+        return grouped.keys.sorted()
+            .filter { !$0.isEmpty }
+            .map { name in
+                DivisionGroup(
+                    id: name,
+                    name: name,
+                    divisionPack: divisionPacks.first { $0.name == name },
+                    teamPacks: (grouped[name] ?? []).sorted { $0.name < $1.name }
+                )
             }
-            return DivisionGroup(id: key, name: name, divisionPack: divPack, teamPacks: teams)
-        }
     }
 
-    private var freePacks: [Pack] {
-        allPacks.filter { $0.isFree }
+    /// The league-wide packs. Everything is free now, so these are separated
+    /// by what they are — picking "All NBA Players" alongside a team pack is
+    /// pointless, and it used to be the only thing in this section anyway.
+    private var basePacks: [Pack] {
+        allPacks.filter { $0.type == .base }
     }
 
     // MARK: - Selection helpers
-
-    private func isOwned(_ pack: Pack) -> Bool {
-        pack.isFree
-            || progress.purchasedPackIDs.contains(pack.id)
-            || purchaseService.isOwned(pack: pack)
-    }
 
     private func isSelected(_ pack: Pack) -> Bool {
         selectedPackIDs.contains(pack.id)
     }
 
     private func toggle(_ pack: Pack) {
-        guard isOwned(pack) else { return }
         if selectedPackIDs.contains(pack.id) {
             selectedPackIDs.remove(pack.id)
         } else {
@@ -83,13 +76,12 @@ struct CustomGameView: View {
         }
     }
 
-    /// All teams in the group that the user owns.
-    private func ownedTeams(in group: DivisionGroup) -> [Pack] {
-        group.teamPacks.filter { isOwned($0) }
+    private func teams(in group: DivisionGroup) -> [Pack] {
+        group.teamPacks
     }
 
     private func allTeamsSelected(in group: DivisionGroup) -> Bool {
-        let owned = ownedTeams(in: group)
+        let owned = teams(in: group)
         return !owned.isEmpty && owned.allSatisfy { selectedPackIDs.contains($0.id) }
     }
 
@@ -99,7 +91,7 @@ struct CustomGameView: View {
             group.teamPacks.forEach { selectedPackIDs.remove($0.id) }
         } else {
             // Select all owned teams in this division
-            ownedTeams(in: group).forEach { selectedPackIDs.insert($0.id) }
+            teams(in: group).forEach { selectedPackIDs.insert($0.id) }
         }
     }
 
@@ -174,25 +166,27 @@ struct CustomGameView: View {
 
     @ViewBuilder
     private var freeSection: some View {
-        if !freePacks.isEmpty {
-            Section("Free Packs") {
-                ForEach(freePacks) { pack in
+        if !basePacks.isEmpty {
+            Section("Everyone") {
+                ForEach(basePacks) { pack in
                     packRow(pack)
                 }
             }
         }
     }
 
-    /// Paid packs that aren't part of a division grouping — every sport except
-    /// baseball, for now.
+    /// Anything left over: conference packs, and any team pack whose division
+    /// the feed didn't give us.
     @ViewBuilder
     private var otherPacksSection: some View {
         let grouped = Set(divisionGroups.flatMap { group in
             group.teamPacks.map(\.id) + [group.divisionPack?.id].compactMap { $0 }
         })
-        let rest = allPacks.filter { !$0.isFree && !grouped.contains($0.id) }
+        let rest = allPacks.filter {
+            $0.type != .base && !grouped.contains($0.id)
+        }
         if !rest.isEmpty {
-            Section("Packs") {
+            Section("Conferences") {
                 ForEach(rest) { packRow($0) }
             }
         }
@@ -211,9 +205,9 @@ struct CustomGameView: View {
     }
 
     private func divisionHeader(_ group: DivisionGroup) -> some View {
-        let owned   = ownedTeams(in: group)
+        let members = teams(in: group)
         let allSel  = allTeamsSelected(in: group)
-        let hasOwned = !owned.isEmpty
+        let hasOwned = !members.isEmpty
 
         return Button {
             guard hasOwned else { return }
@@ -246,39 +240,31 @@ struct CustomGameView: View {
     // MARK: - Pack row
 
     private func packRow(_ pack: Pack) -> some View {
-        let owned    = isOwned(pack)
         let selected = isSelected(pack)
 
         return Button {
-            guard owned else { return }
             HapticEngine.tap()
             toggle(pack)
         } label: {
             HStack(spacing: 12) {
                 Image(systemName: selected ? "checkmark.circle.fill" : "circle")
-                    .foregroundStyle(selected ? .blue : (owned ? .secondary : Color.secondary.opacity(0.4)))
+                    .foregroundStyle(selected ? .blue : .secondary)
                     .font(.title3)
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(pack.name)
                         .font(.subheadline)
                         .fontWeight(.medium)
-                        .foregroundStyle(owned ? .primary : .secondary)
+                        .foregroundStyle(.primary)
                     Text("\(pack.playerCount) players")
                         .font(.caption)
                         .foregroundStyle(.tertiary)
                 }
 
                 Spacer()
-
-                if !owned {
-                    Image(systemName: "lock.fill")
-                        .font(.caption)
-                        .foregroundStyle(.tertiary)
-                }
             }
         }
-        .disabled(!owned)
+        .accessibilityAddTraits(selected ? [.isSelected] : [])
     }
 
     // MARK: - Play bar

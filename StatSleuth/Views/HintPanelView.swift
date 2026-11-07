@@ -183,25 +183,9 @@ private struct BuyHintsSheet: View {
                 }
                 .padding(.top, 8)
 
-                Divider()
-
-                // Purchase options
-                VStack(spacing: 12) {
-                    hintPackButton(
-                        productID: PurchaseService.hints5ID,
-                        count: 5,
-                        icon: "lightbulb.fill",
-                        label: "5 Hints"
-                    )
-                    hintPackButton(
-                        productID: PurchaseService.hints15ID,
-                        count: 15,
-                        icon: "lightbulb.max.fill",
-                        label: "15 Hints",
-                        badge: "Best Value"
-                    )
-                }
-                .padding(.horizontal, 4)
+                // TODO(ads): a rewarded-video button belongs here — "watch an
+                // ad for a hint" is the slot this screen exists for. Left out
+                // rather than stubbed so nothing dead ships.
 
                 Spacer()
             }
@@ -221,64 +205,6 @@ private struct BuyHintsSheet: View {
         }
     }
 
-    @ViewBuilder
-    private func hintPackButton(
-        productID: String,
-        count: Int,
-        icon: String,
-        label: String,
-        badge: String? = nil
-    ) -> some View {
-        Button {
-            HapticEngine.impact()
-            Task {
-                await purchaseService.purchase(productID: productID)
-                if let err = purchaseService.errorMessage {
-                    purchaseError = err
-                } else {
-                    dismiss()
-                }
-            }
-        } label: {
-            HStack(spacing: 14) {
-                Image(systemName: icon)
-                    .font(.title2)
-                    .foregroundStyle(.yellow)
-                    .frame(width: 44, height: 44)
-                    .background(.yellow.opacity(0.15), in: RoundedRectangle(cornerRadius: 10))
-
-                VStack(alignment: .leading, spacing: 2) {
-                    HStack(spacing: 6) {
-                        Text(label).font(.headline).foregroundStyle(.primary)
-                        if let badge {
-                            Text(badge)
-                                .font(.caption2).fontWeight(.bold)
-                                .foregroundStyle(.white)
-                                .padding(.horizontal, 6).padding(.vertical, 2)
-                                .background(.blue, in: Capsule())
-                        }
-                    }
-                    if let product = purchaseService.products[productID] {
-                        Text(product.displayPrice)
-                            .font(.subheadline).foregroundStyle(.secondary)
-                    }
-                }
-
-                Spacer()
-
-                if purchaseService.isLoading {
-                    ProgressView().scaleEffect(0.8)
-                } else {
-                    Image(systemName: "chevron.right")
-                        .font(.caption).foregroundStyle(.tertiary)
-                }
-            }
-            .padding(14)
-            .background(Color(uiColor: .secondarySystemGroupedBackground),
-                        in: RoundedRectangle(cornerRadius: 14))
-        }
-        .disabled(purchaseService.isLoading)
-    }
 }
 
 // MARK: - HintChip

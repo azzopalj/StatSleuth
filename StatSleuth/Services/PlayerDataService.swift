@@ -463,10 +463,8 @@ final class PlayerDataService {
             ))
         }
 
-        // Packs for the published sports — free while they are new, so they
-        // can be played without a purchase decision before the content is
-        // proven. Built the same way for every one of them, so adding a sport
-        // needs no change here.
+        // Packs for the published sports. Built the same way for every one of
+        // them, so adding a sport needs no change here.
         for sport in Sport.allCases where sport != .baseball {
             let roster = allPlayers.filter { $0.resolvedSport == sport }
             guard !roster.isEmpty else { continue }
@@ -492,6 +490,7 @@ final class PlayerDataService {
                 type: .base, playerIDs: roster.map(\.id),
                 isPurchased: true, price: nil, sport: sport, productID: nil
             ))
+
             for conference in Set(roster.compactMap(\.conference)).sorted()
             where !conference.isEmpty {
                 let ids = roster.filter { $0.conference == conference }.map(\.id)
@@ -502,6 +501,34 @@ final class PlayerDataService {
                     description: "All current \(conference) players.",
                     type: .division, playerIDs: ids,
                     isPurchased: true, price: nil, sport: sport, productID: nil
+                ))
+            }
+
+            for division in Set(roster.compactMap(\.divisionName)).sorted()
+            where !division.isEmpty {
+                let ids = roster.filter { $0.divisionName == division }.map(\.id)
+                guard ids.count >= 10 else { continue }
+                let name = Self.divisionPackName(division)
+                packs.append(Pack(
+                    id: stableID("\(key)-div-\(division)"),
+                    name: name,
+                    description: "All current \(name) players.",
+                    type: .division, playerIDs: ids,
+                    isPurchased: true, price: nil, sport: sport, productID: nil
+                ))
+            }
+
+            for team in Set(roster.compactMap(\.teamName)).sorted() where !team.isEmpty {
+                let members = roster.filter { $0.teamName == team }
+                guard !members.isEmpty else { continue }
+                packs.append(Pack(
+                    id: stableID("\(key)-team-\(team)"),
+                    name: team,
+                    description: "The current \(team) roster.",
+                    type: .team, playerIDs: members.map(\.id),
+                    isPurchased: true, price: nil, sport: sport, productID: nil,
+                    groupName: members.compactMap(\.divisionName).first
+                        .map(Self.divisionPackName)
                 ))
             }
         }
@@ -521,12 +548,12 @@ final class PlayerDataService {
                 name: team.rawValue,
                 description: "Current roster + legends for the \(team.rawValue).",
                 type: .team, playerIDs: ids,
-                isPurchased: false, price: 1.99, sport: .baseball,
-                productID: "com.lucasazzopardi.statsleuth.pack.\(team.packKey)"
+                isPurchased: true, price: nil, sport: .baseball, productID: nil,
+                groupName: team.division.rawValue
             ))
         }
 
-        // Division packs — current players only; purchasing also unlocks contained team packs
+        // Division packs — current players only
         for division in MLBDivision.allCases {
             let ids = allPlayers
                 .filter { $0.isBaseball && $0.tier != .historic && $0.team.division == division }
@@ -535,14 +562,24 @@ final class PlayerDataService {
             packs.append(Pack(
                 id: stableID("division-\(division.rawValue)"),
                 name: division.rawValue,
-                description: "All current \(division.rawValue) players. Includes all 5 team packs.",
+                description: "All current \(division.rawValue) players.",
                 type: .division, playerIDs: ids,
-                isPurchased: false, price: 2.99, sport: .baseball,
-                productID: "com.lucasazzopardi.statsleuth.pack.division.\(division.productKey)"
+                isPurchased: true, price: nil, sport: .baseball, productID: nil
             ))
         }
 
         return packs
+    }
+
+    /// ESPN names NBA divisions bare — "Atlantic", "Pacific" — which on a list
+    /// beside "Eastern Conference" reads like a region rather than a pack. The
+    /// NFL's already carry their conference ("AFC East"), so those are left
+    /// alone.
+    private static func divisionPackName(_ division: String) -> String {
+        let lower = division.lowercased()
+        guard !lower.contains("division"), !lower.contains("conference"),
+              division.split(separator: " ").count == 1 else { return division }
+        return "\(division) Division"
     }
 
     private func stableID(_ string: String) -> UUID {

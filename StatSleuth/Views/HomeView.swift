@@ -7,7 +7,6 @@ struct HomeView: View {
     @Environment(UserProgressService.self) private var progressService
     @Environment(GameCenterService.self)   private var gameCenterService
     @Environment(\.horizontalSizeClass)    private var horizontalSizeClass
-    @Environment(PurchaseService.self)    private var purchaseService
     @Environment(SportSelectionService.self) private var sportSelection
     @Environment(NavigationCoordinator.self) private var navigation
     @Environment(\.requestReview)         private var requestReview
@@ -290,15 +289,11 @@ struct HomeView: View {
 
     private var hasEnoughPacksForCustomGame: Bool {
         // Scoped to the selected sport: a custom game mixes packs, and mixing
-        // sports would compare every guess against the wrong fields.
-        let allPacks = playerDataService.packs(for: sport)
-        let ownedPaidCount = allPacks.filter { pack in
-            !pack.isFree && (
-                progressService.progress.purchasedPackIDs.contains(pack.id)
-                || purchaseService.isOwned(pack: pack)
-            )
-        }.count
-        return ownedPaidCount >= 1
+        // sports would compare every guess against the wrong fields. Packs are
+        // all free now, so the only requirement is having two to mix.
+        playerDataService.packs(for: sport)
+            .filter { $0.type == .team || $0.type == .division }
+            .count >= 2
     }
 
     private var customGameButton: some View {
@@ -319,7 +314,7 @@ struct HomeView: View {
                     }
                     Text(enabled
                          ? "Mix any \(sport.displayName) packs you own into one game"
-                         : "Unlock a \(sport.displayName) pack to enable custom games")
+                         : "No \(sport.displayName) team packs loaded yet")
                         .font(.caption)
                         .opacity(0.85)
                 }

@@ -1,4 +1,5 @@
 import SwiftUI
+import StoreKit
 
 struct SettingsView: View {
 
@@ -70,6 +71,33 @@ struct SettingsView: View {
 
     private var purchasesSection: some View {
         Section("Purchases") {
+            if purchaseService.isAdFree {
+                Label("Ad-free — thank you", systemImage: "checkmark.seal.fill")
+                    .foregroundStyle(.green)
+            } else {
+                Button {
+                    HapticEngine.impact()
+                    Task { await purchaseService.purchaseRemoveAds() }
+                } label: {
+                    HStack {
+                        Label("Remove Ads", systemImage: "nosign")
+                        Spacer()
+                        if purchaseService.isLoading {
+                            ProgressView().scaleEffect(0.8)
+                        } else if let product = purchaseService.removeAdsProduct() {
+                            Text(product.displayPrice)
+                                .font(.subheadline).fontWeight(.semibold)
+                                .foregroundStyle(.blue)
+                        }
+                    }
+                }
+                .disabled(purchaseService.isLoading)
+
+                if let error = purchaseService.errorMessage {
+                    Text(error).font(.caption).foregroundStyle(.red)
+                }
+            }
+
             Button {
                 restoreInProgress = true
                 restoreMessage = nil

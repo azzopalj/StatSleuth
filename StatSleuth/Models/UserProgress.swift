@@ -38,7 +38,10 @@ struct UserProgress: Codable {
     // MARK: - Hint recharge
     // One hint regenerates every hintRechargeInterval seconds up to naturalHintMax.
     // Purchased hints may exceed the natural cap and don't affect the recharge timer.
-    static let naturalHintMax: Int = 5
+    /// Three, not five: a rewarded video is only worth watching if hints are
+    /// actually scarce, and five free ones plus a two-hour recharge meant most
+    /// players never ran out.
+    static let naturalHintMax: Int = 3
     static let hintRechargeInterval: TimeInterval = 2 * 3600  // 2 hours
 
     /// The Date from which we measure elapsed intervals. nil = timer not running (hints are at/above natural max).

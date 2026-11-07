@@ -34,6 +34,9 @@ struct Pack: Identifiable, Codable {
     let price: Double?
     let sport: Sport
     let productID: String?   // App Store Connect product identifier (nil = free)
+    /// For a team pack, the division it sits in. Lets the custom-game screen
+    /// group teams under their division without knowing anything sport-specific.
+    var groupName: String? = nil
 
     var isFree: Bool { price == nil }
     var playerCount: Int { playerIDs.count }
