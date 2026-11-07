@@ -67,9 +67,15 @@ final class UserProgressService {
         save()
     }
 
+    /// Set from the ad-free purchase. Removing ads removes the rewarded video
+    /// a free player tops hints up with, so paying would otherwise make the
+    /// game *harder*. Hints come with the purchase instead.
+    var hasUnlimitedHints = false
+
     /// Returns true if a hint was successfully used, deducting the full cost
     @discardableResult
     func useHint(cost: Int = 1) -> Bool {
+        guard !hasUnlimitedHints else { return true }
         let success = progress.useHint(cost: cost)
         if success { save() }
         return success

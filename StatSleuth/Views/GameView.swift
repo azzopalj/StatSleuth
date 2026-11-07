@@ -11,6 +11,8 @@ struct GameView: View {
     @Environment(GameCenterService.self)   private var gameCenterService
     @Environment(DeepLinkService.self)     private var deepLinkService
     @Environment(NavigationCoordinator.self) private var navigation
+    @Environment(PurchaseService.self)     private var purchaseService
+    @Environment(AdService.self)           private var adService
 
     @State private var viewModel: GameViewModel?
     @State private var searchQuery = ""
@@ -48,6 +50,14 @@ struct GameView: View {
         .onChange(of: playerDataService.isExtendedLoaded) { _, _ in startIfReady() }
         .onChange(of: viewModel?.showingResults) { _, showing in
             if showing == true { showResults = true }
+        }
+        // The interstitial goes *after* the results screen, never over it:
+        // the reveal is the payoff the player just earned six guesses for.
+        // The short wait lets the cover finish dismissing so the ad presents
+        // from whatever is actually on screen.
+        .onChange(of: showResults) { wasShowing, isShowing in
+            guard wasShowing, !isShowing else { return }
+            Task { await adService.gameFinished(isAdFree: purchaseService.isAdFree) }
         }
         .alert("Quit game?", isPresented: $showQuitConfirm) {
             Button("Keep playing", role: .cancel) { }

@@ -11,6 +11,7 @@ struct StatSleutApp: App {
     @State private var purchaseService    = PurchaseService()
     @State private var sportSelection     = SportSelectionService()
     @State private var navigation         = NavigationCoordinator()
+    @State private var adService          = AdService()
     @State private var showOnboarding     = !UserDefaults.standard.bool(forKey: OnboardingView.storageKey)
     @Environment(\.scenePhase) private var scenePhase
 
@@ -43,8 +44,21 @@ struct StatSleutApp: App {
             .environment(purchaseService)
             .environment(sportSelection)
             .environment(navigation)
+            .environment(adService)
             .onAppear {
                 gameCenterService.authenticate()
+            }
+            // Consent, then tracking, then ads — and only once onboarding is
+            // out of the way, so a first-run player isn't met by a consent
+            // sheet before they know what the app is.
+            .task(id: showOnboarding) {
+                guard !showOnboarding else { return }
+                await adService.start()
+            }
+            // Removing ads also makes hints unlimited: the purchase takes away
+            // the rewarded video they would otherwise be earned with.
+            .onChange(of: purchaseService.isAdFree) { _, adFree in
+                progressService.hasUnlimitedHints = adFree
             }
             .task {
                 // Load players and IAP products in parallel — products don't need players

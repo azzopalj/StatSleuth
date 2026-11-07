@@ -1,5 +1,4 @@
 import SwiftUI
-import StoreKit
 
 struct HintPanelView: View {
 
@@ -11,6 +10,8 @@ struct HintPanelView: View {
 
     @Environment(UserProgressService.self) private var progressService
     @Environment(PurchaseService.self) private var purchaseService
+
+    private var unlimited: Bool { purchaseService.isAdFree }
 
     @State private var showHintPicker = false
     @State private var showBuyHints = false
@@ -24,7 +25,7 @@ struct HintPanelView: View {
         VStack(alignment: .leading, spacing: 10) {
             if !hintsUsed.isEmpty { usedHintsSection }
             hintButton
-            if hintsAvailable < UserProgress.naturalHintMax { rechargeRow }
+            if !unlimited, hintsAvailable < UserProgress.naturalHintMax { rechargeRow }
         }
         .sheet(isPresented: $showBuyHints) {
             BuyHintsSheet()
@@ -63,7 +64,7 @@ struct HintPanelView: View {
                 Text("Use a hint")
                     .fontWeight(.medium)
                 Spacer()
-                Text("\(hintsAvailable) left")
+                Text(unlimited ? "∞" : "\(hintsAvailable) left")
                     .font(.caption)
                     .foregroundStyle(.secondary)
                 Image(systemName: "chevron.right")
@@ -74,8 +75,8 @@ struct HintPanelView: View {
             .padding(.vertical, 12)
             .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
         }
-        .disabled(hintsAvailable == 0 || unusedHintTypes.isEmpty)
-        .opacity((hintsAvailable == 0 || unusedHintTypes.isEmpty) ? 0.5 : 1)
+        .disabled((hintsAvailable == 0 && !unlimited) || unusedHintTypes.isEmpty)
+        .opacity(((hintsAvailable == 0 && !unlimited) || unusedHintTypes.isEmpty) ? 0.5 : 1)
         .sheet(isPresented: $showHintPicker) {
             HintPickerSheet(
                 hintTypes: unusedHintTypes,
@@ -151,6 +152,7 @@ struct HintPanelView: View {
 private struct BuyHintsSheet: View {
     @Environment(PurchaseService.self) private var purchaseService
     @Environment(UserProgressService.self) private var progressService
+    @Environment(AdService.self) private var adService
     @Environment(\.dismiss) private var dismiss
 
     @State private var purchaseError: String? = nil
@@ -183,9 +185,52 @@ private struct BuyHintsSheet: View {
                 }
                 .padding(.top, 8)
 
-                // TODO(ads): a rewarded-video button belongs here — "watch an
-                // ad for a hint" is the slot this screen exists for. Left out
-                // rather than stubbed so nothing dead ships.
+                if !purchaseService.isAdFree {
+                    Button {
+                        HapticEngine.impact()
+                        Task {
+                            // Only an ad watched to the end pays out.
+                            if await adService.showRewarded() {
+                                progressService.addHints(1)
+                                HapticEngine.correctGuess()
+                                dismiss()
+                            }
+                        }
+                    } label: {
+                        HStack(spacing: 14) {
+                            Image(systemName: "play.rectangle.fill")
+                                .font(.title2)
+                                .foregroundStyle(.yellow)
+                                .frame(width: 44, height: 44)
+                                .background(.yellow.opacity(0.15),
+                                            in: RoundedRectangle(cornerRadius: 10))
+
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Watch an ad for a hint")
+                                    .font(.headline).foregroundStyle(.primary)
+                                Text(adService.isRewardedReady
+                                     ? "About 30 seconds"
+                                     : "Loading…")
+                                    .font(.subheadline).foregroundStyle(.secondary)
+                            }
+
+                            Spacer()
+
+                            Image(systemName: "chevron.right")
+                                .font(.caption).foregroundStyle(.tertiary)
+                        }
+                        .padding(14)
+                        .background(Color(uiColor: .secondarySystemGroupedBackground),
+                                    in: RoundedRectangle(cornerRadius: 14))
+                    }
+                    .disabled(!adService.isRewardedReady)
+                    .opacity(adService.isRewardedReady ? 1 : 0.5)
+
+                    Text("Or remove ads once and keep hints unlimited — see Settings.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                }
 
                 Spacer()
             }
