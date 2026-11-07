@@ -12,17 +12,8 @@ final class UserProgressService {
     /// Non-zero only after a completed session — used to offer streak protection.
     private(set) var streakBeforeLastGame: Int = 0
 
-    static let streakProtectionCost = 5
-
     init() {
         self.progress = Self.load(key: "com.lucasazzopardi.StatSleuth.userProgress")
-        rechargeHints()   // award any hints earned while app was closed
-    }
-
-    /// Call whenever the app returns to the foreground.
-    func rechargeHints() {
-        progress.rechargeHintsIfNeeded()
-        save()
     }
 
     // MARK: - Persistence
@@ -49,41 +40,18 @@ final class UserProgressService {
         save()
     }
 
-    /// Spends `streakProtectionCost` hints to restore the streak lost in the last daily game.
-    /// Returns true if protection was applied successfully.
+    /// Restores the streak lost in the last daily game.
+    ///
+    /// The price is the caller's business: a rewarded video for a free player,
+    /// nothing for one who paid to remove ads. By the time this is called the
+    /// streak has already been earned back.
     @discardableResult
     func applyStreakProtection() -> Bool {
-        guard streakBeforeLastGame > 0,
-              progress.hintsAvailable >= Self.streakProtectionCost else { return false }
+        guard streakBeforeLastGame > 0 else { return false }
         progress.currentStreak = streakBeforeLastGame
-        _ = progress.useHint(cost: Self.streakProtectionCost)
         streakBeforeLastGame = 0   // prevent double-applying
         save()
         return true
-    }
-
-    func addHints(_ count: Int) {
-        progress.addHints(count)
-        save()
-    }
-
-    /// Set from the ad-free purchase. Removing ads removes the rewarded video
-    /// a free player tops hints up with, so paying would otherwise make the
-    /// game *harder*. Hints come with the purchase instead.
-    var hasUnlimitedHints = false
-
-    /// Returns true if a hint was successfully used, deducting the full cost
-    @discardableResult
-    func useHint(cost: Int = 1) -> Bool {
-        guard !hasUnlimitedHints else { return true }
-        let success = progress.useHint(cost: cost)
-        if success { save() }
-        return success
-    }
-
-    func resetDailyHints() {
-        progress.hintsAvailable = max(progress.hintsAvailable, 5)
-        save()
     }
 
     func unlockPack(_ packID: UUID) {

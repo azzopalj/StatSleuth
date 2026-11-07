@@ -20,7 +20,6 @@ struct UserProgress: Codable {
     var lastPlayedDate: Date?
     var totalGamesPlayed: Int
     var totalGamesWon: Int
-    var hintsAvailable: Int
     var purchasedPackIDs: Set<UUID>
     var unlockedModes: Set<GameMode>
     /// Recently seen player IDs per "mode+pack" key — prevents repeats
@@ -35,18 +34,6 @@ struct UserProgress: Codable {
     /// counting again.
     var lastStreakDate: Date?
 
-    // MARK: - Hint recharge
-    // One hint regenerates every hintRechargeInterval seconds up to naturalHintMax.
-    // Purchased hints may exceed the natural cap and don't affect the recharge timer.
-    /// Three, not five: a rewarded video is only worth watching if hints are
-    /// actually scarce, and five free ones plus a two-hour recharge meant most
-    /// players never ran out.
-    static let naturalHintMax: Int = 3
-    static let hintRechargeInterval: TimeInterval = 2 * 3600  // 2 hours
-
-    /// The Date from which we measure elapsed intervals. nil = timer not running (hints are at/above natural max).
-    var hintsRechargeStartedAt: Date?
-
     // MARK: - Achievement tracking
     var totalHintlessWins: Int         // wins with zero hints used
     var currentConsecutiveWins: Int    // consecutive wins any mode (resets on loss)
@@ -57,10 +44,9 @@ struct UserProgress: Codable {
 
     enum CodingKeys: String, CodingKey {
         case xp, level, currentStreak, longestStreak, lastPlayedDate
-        case totalGamesPlayed, totalGamesWon, hintsAvailable
+        case totalGamesPlayed, totalGamesWon
         case purchasedPackIDs, unlockedModes, recentlySeenPlayers
         case dailyRecords, lastStreakDate
-        case hintsRechargeStartedAt
         // Pre-multi-sport keys, read once to migrate an existing save.
         case lastDailyDate, lastDailyWon, lastDailyGuessCount
         case totalHintlessWins, currentConsecutiveWins, longestConsecutiveWins, consecutiveFirstGuessWins
@@ -75,11 +61,9 @@ struct UserProgress: Codable {
         lastPlayedDate           = try c.decodeIfPresent(Date.self,    forKey: .lastPlayedDate)
         totalGamesPlayed         = try c.decode(Int.self,              forKey: .totalGamesPlayed)
         totalGamesWon            = try c.decode(Int.self,              forKey: .totalGamesWon)
-        hintsAvailable           = try c.decode(Int.self,              forKey: .hintsAvailable)
         purchasedPackIDs         = try c.decode(Set<UUID>.self,        forKey: .purchasedPackIDs)
         unlockedModes            = try c.decode(Set<GameMode>.self,    forKey: .unlockedModes)
         recentlySeenPlayers      = try c.decode([String: [UUID]].self, forKey: .recentlySeenPlayers)
-        hintsRechargeStartedAt   = try c.decodeIfPresent(Date.self,    forKey: .hintsRechargeStartedAt)
 
         // The daily used to be a single record, implicitly baseball. Carry it
         // over so an existing player keeps today's completion and their streak.
@@ -114,13 +98,11 @@ struct UserProgress: Codable {
         try c.encodeIfPresent(lastPlayedDate,   forKey: .lastPlayedDate)
         try c.encode(totalGamesPlayed,          forKey: .totalGamesPlayed)
         try c.encode(totalGamesWon,             forKey: .totalGamesWon)
-        try c.encode(hintsAvailable,            forKey: .hintsAvailable)
         try c.encode(purchasedPackIDs,          forKey: .purchasedPackIDs)
         try c.encode(unlockedModes,             forKey: .unlockedModes)
         try c.encode(recentlySeenPlayers,       forKey: .recentlySeenPlayers)
         try c.encode(dailyRecords,              forKey: .dailyRecords)
         try c.encodeIfPresent(lastStreakDate,   forKey: .lastStreakDate)
-        try c.encodeIfPresent(hintsRechargeStartedAt, forKey: .hintsRechargeStartedAt)
         try c.encode(totalHintlessWins,         forKey: .totalHintlessWins)
         try c.encode(currentConsecutiveWins,    forKey: .currentConsecutiveWins)
         try c.encode(longestConsecutiveWins,    forKey: .longestConsecutiveWins)
@@ -129,11 +111,10 @@ struct UserProgress: Codable {
 
     init(
         xp: Int, level: Int, currentStreak: Int, longestStreak: Int, lastPlayedDate: Date?,
-        totalGamesPlayed: Int, totalGamesWon: Int, hintsAvailable: Int,
+        totalGamesPlayed: Int, totalGamesWon: Int,
         purchasedPackIDs: Set<UUID>, unlockedModes: Set<GameMode>,
         recentlySeenPlayers: [String: [UUID]],
         dailyRecords: [String: DailyRecord] = [:], lastStreakDate: Date? = nil,
-        hintsRechargeStartedAt: Date?,
         totalHintlessWins: Int = 0, currentConsecutiveWins: Int = 0,
         longestConsecutiveWins: Int = 0, consecutiveFirstGuessWins: Int = 0
     ) {
@@ -141,11 +122,9 @@ struct UserProgress: Codable {
         self.currentStreak = currentStreak; self.longestStreak = longestStreak
         self.lastPlayedDate = lastPlayedDate
         self.totalGamesPlayed = totalGamesPlayed; self.totalGamesWon = totalGamesWon
-        self.hintsAvailable = hintsAvailable
         self.purchasedPackIDs = purchasedPackIDs; self.unlockedModes = unlockedModes
         self.recentlySeenPlayers = recentlySeenPlayers
         self.dailyRecords = dailyRecords; self.lastStreakDate = lastStreakDate
-        self.hintsRechargeStartedAt = hintsRechargeStartedAt
         self.totalHintlessWins = totalHintlessWins
         self.currentConsecutiveWins = currentConsecutiveWins
         self.longestConsecutiveWins = longestConsecutiveWins
@@ -177,16 +156,6 @@ struct UserProgress: Codable {
         sports.filter { !hasPlayedDailyToday(sport: $0) }
     }
 
-    /// Seconds until the next hint regenerates. nil if hints are full or timer isn't running.
-    var secondsUntilNextHint: TimeInterval? {
-        guard hintsAvailable < Self.naturalHintMax,
-              let start = hintsRechargeStartedAt else { return nil }
-        let elapsed = Date().timeIntervalSince(start)
-        let remaining = Self.hintRechargeInterval
-            - elapsed.truncatingRemainder(dividingBy: Self.hintRechargeInterval)
-        return max(0, remaining)
-    }
-
     var winRate: Double {
         guard totalGamesPlayed > 0 else { return 0 }
         return Double(totalGamesWon) / Double(totalGamesPlayed)
@@ -216,13 +185,11 @@ struct UserProgress: Codable {
             lastPlayedDate: nil,
             totalGamesPlayed: 0,
             totalGamesWon: 0,
-            hintsAvailable: naturalHintMax,
             purchasedPackIDs: [],
             unlockedModes: [.daily, .seasonStats, .careerStats],
             recentlySeenPlayers: [:],
             dailyRecords: [:],
-            lastStreakDate: nil,
-            hintsRechargeStartedAt: nil
+            lastStreakDate: nil
         )
     }
 
@@ -270,47 +237,6 @@ struct UserProgress: Codable {
         if session.mode == .daily {
             dailyRecords[session.targetPlayer.resolvedSport.rawValue] = DailyRecord(
                 date: Date(), won: won, guessCount: guessCount
-            )
-        }
-    }
-
-    mutating func addHints(_ count: Int) {
-        hintsAvailable += count
-        // If purchased hints push us to/above natural max, stop the recharge timer
-        if hintsAvailable >= Self.naturalHintMax {
-            hintsRechargeStartedAt = nil
-        }
-    }
-
-    mutating func useHint(cost: Int = 1) -> Bool {
-        guard hintsAvailable >= cost else { return false }
-        hintsAvailable -= cost
-        // Start the recharge timer the first time hints drop below the natural max
-        if hintsAvailable < Self.naturalHintMax && hintsRechargeStartedAt == nil {
-            hintsRechargeStartedAt = Date()
-        }
-        return true
-    }
-
-    /// Awards any hints earned by elapsed time since the recharge timer started.
-    /// Call at app launch and on foreground. Safe to call repeatedly.
-    mutating func rechargeHintsIfNeeded() {
-        guard hintsAvailable < Self.naturalHintMax,
-              let start = hintsRechargeStartedAt else {
-            if hintsAvailable >= Self.naturalHintMax { hintsRechargeStartedAt = nil }
-            return
-        }
-        let elapsed = Date().timeIntervalSince(start)
-        let earned  = Int(elapsed / Self.hintRechargeInterval)
-        guard earned > 0 else { return }
-
-        hintsAvailable = min(Self.naturalHintMax, hintsAvailable + earned)
-        if hintsAvailable >= Self.naturalHintMax {
-            hintsRechargeStartedAt = nil
-        } else {
-            // Advance the anchor by the consumed intervals so remaining time is correct
-            hintsRechargeStartedAt = start.addingTimeInterval(
-                Double(earned) * Self.hintRechargeInterval
             )
         }
     }

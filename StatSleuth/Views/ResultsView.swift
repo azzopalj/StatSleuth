@@ -9,11 +9,14 @@ struct ResultsView: View {
 
     @Environment(UserProgressService.self) private var progressService
     @Environment(GameCenterService.self)   private var gameCenterService
+    @Environment(PurchaseService.self)     private var purchaseService
+    @Environment(AdService.self)           private var adService
 
     @State private var animationPhase = 0
     @State private var showShare = false
     @State private var showStats = false
     @State private var streakProtected = false
+    @State private var isProtecting = false
 
     private var won: Bool {
         if case .won = session.state { return true }
@@ -92,7 +95,24 @@ struct ResultsView: View {
         && !streakProtected
         && session.mode == .daily
         && progressService.streakBeforeLastGame > 0
-        && progressService.progress.hintsAvailable >= UserProgressService.streakProtectionCost
+    }
+
+    /// One video, one streak saved.
+    ///
+    /// Free for a player who removed ads, and free too when we have no video
+    /// to show — losing a streak to our own empty ad inventory would be a
+    /// cruel way to learn about fill rates.
+    private func protectStreak() async {
+        if !purchaseService.isAdFree {
+            isProtecting = true
+            let outcome = await adService.showRewarded()
+            isProtecting = false
+            if case .dismissed = outcome { return }
+        }
+        guard progressService.applyStreakProtection() else { return }
+        streakProtected = true
+        let progress = progressService.progress
+        await gameCenterService.reportStreakAchievements(progress: progress)
     }
 
     private var streakProtectionBanner: some View {
@@ -104,7 +124,9 @@ struct ResultsView: View {
                     Text("Save your \(progressService.streakBeforeLastGame)-day streak!")
                         .font(.subheadline)
                         .fontWeight(.semibold)
-                    Text("Spend \(UserProgressService.streakProtectionCost) hints to keep it alive.")
+                    Text(purchaseService.isAdFree
+                         ? "Keep it alive \u{2014} included with your purchase."
+                         : "Watch a short video to keep it alive.")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -113,16 +135,17 @@ struct ResultsView: View {
 
             Button {
                 HapticEngine.tap()
-                if progressService.applyStreakProtection() {
-                    streakProtected = true
-                    let progress = progressService.progress
-                    Task { await gameCenterService.reportStreakAchievements(progress: progress) }
-                }
+                Task { await protectStreak() }
             } label: {
                 HStack(spacing: 6) {
-                    Image(systemName: "lightbulb.fill")
+                    Image(systemName: purchaseService.isAdFree
+                          ? "flame.fill" : "play.rectangle.fill")
                         .foregroundStyle(.yellow)
-                    Text("Spend \(UserProgressService.streakProtectionCost) hints — protect streak")
+                    Text(isProtecting
+                         ? "Loading\u{2026}"
+                         : (purchaseService.isAdFree
+                            ? "Protect streak"
+                            : "Watch a video \u{2014} protect streak"))
                         .fontWeight(.semibold)
                 }
                 .font(.subheadline)
@@ -131,6 +154,7 @@ struct ResultsView: View {
                 .background(.orange, in: RoundedRectangle(cornerRadius: 12))
                 .foregroundStyle(.white)
             }
+            .disabled(isProtecting)
         }
         .padding(16)
         .background(Color.orange.opacity(0.12), in: RoundedRectangle(cornerRadius: 16))

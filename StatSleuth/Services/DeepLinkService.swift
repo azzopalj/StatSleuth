@@ -13,19 +13,29 @@ enum DeepLink: Equatable {
 @Observable
 final class DeepLinkService {
 
-    private static let webBase = "https://azzopalj.github.io/StatSleuth"
+    /// Where links shared from this build point. The old GitHub Pages host
+    /// now redirects here, so new links skip the hop.
+    private static let webBase = "https://azzosoftware.ca/statsleuth"
+
+    /// Every host a challenge link may arrive on. The GitHub Pages host stays
+    /// in the list for good: links already shared from older builds are out
+    /// there in group chats and must keep opening the right puzzle.
+    private static let linkHosts: [(host: String, pathPrefix: String)] = [
+        ("azzosoftware.ca",     "/statsleuth"),
+        ("azzopalj.github.io",  "/StatSleuth")
+    ]
 
     var pendingDeepLink: DeepLink? = nil
 
     // Handles both:
-    //   Universal link: https://azzopalj.github.io/StatSleuth/?mlbID=...&mode=...&pack=...
+    //   Universal link: https://azzosoftware.ca/statsleuth?mlbID=...&mode=...&pack=...
     //   Custom scheme:  statsleuth://play?mlbID=...&mode=...&pack=...
     //
     // Links shared by older versions carry only `mlbID` and are always baseball.
     // Other sports add `id` and `sport`, so an old build receiving a new link
     // falls through harmlessly instead of opening the wrong player.
     func handle(url: URL) -> Bool {
-        let isUniversalLink = url.host == "azzopalj.github.io" && url.path.hasPrefix("/StatSleuth")
+        let isUniversalLink = Self.linkHosts.contains { url.host == $0.host && url.path.hasPrefix($0.pathPrefix) }
         let isCustomScheme  = url.scheme == "statsleuth" && url.host == "play"
         guard isUniversalLink || isCustomScheme else { return false }
 

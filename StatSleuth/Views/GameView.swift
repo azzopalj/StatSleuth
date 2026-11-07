@@ -124,10 +124,11 @@ struct GameView: View {
                 guessHistory(vm: vm)
                 if !vm.isComplete {
                     HintPanelView(
-                        hintsAvailable: vm.hintsAvailable,
                         hintsUsed: vm.hintsUsed,
-                        availableHintTypes: vm.availableHintTypes
-                    ) { type in vm.requestHint(type: type) }
+                        availableHintTypes: vm.availableHintTypes,
+                        onRequestHint: { vm.revealHint(type: $0) },
+                        isResolvable: { vm.hintIsResolvable($0) }
+                    )
                 }
                 Color.clear.frame(height: 80)
             }

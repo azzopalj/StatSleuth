@@ -55,21 +55,15 @@ struct StatSleutApp: App {
                 guard !showOnboarding else { return }
                 await adService.start()
             }
-            // Removing ads also makes hints unlimited: the purchase takes away
-            // the rewarded video they would otherwise be earned with.
-            .onChange(of: purchaseService.isAdFree) { _, adFree in
-                progressService.hasUnlimitedHints = adFree
-            }
             .task {
                 // Load players and IAP products in parallel — products don't need players
                 async let players: Void = playerDataService.loadPlayers()
                 async let iap: Void     = purchaseService.loadProducts()
                 _ = await (players, iap)
             }
-            // Recharge hints and clear badge whenever the app comes back to the foreground
+            // Clear the badge whenever the app comes back to the foreground
             .onChange(of: scenePhase) { _, phase in
                 if phase == .active {
-                    progressService.rechargeHints()
                     UNUserNotificationCenter.current().setBadgeCount(0)
                     // The ET day may have rolled over while the app was backgrounded.
                     Task { await playerDataService.refreshDailyPick() }

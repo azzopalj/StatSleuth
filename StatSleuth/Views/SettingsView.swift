@@ -129,8 +129,8 @@ struct SettingsView: View {
         Section("About") {
             LabeledContent("Version", value: appVersion)
             Link("Rate StatSleuth", destination: URL(string: "https://apps.apple.com/app/id6776067937?action=write-review")!)
-            Link("Privacy Policy", destination: URL(string: "https://azzopalj.github.io/StatSleuth/privacy.html")!)
-            Link("Contact Us", destination: URL(string: "https://azzopalj.github.io/StatSleuth/support.html")!)
+            Link("Privacy Policy", destination: URL(string: "https://azzosoftware.ca/statsleuth/privacy")!)
+            Link("Contact Us", destination: URL(string: "https://azzosoftware.ca/contact")!)
         }
     }
 

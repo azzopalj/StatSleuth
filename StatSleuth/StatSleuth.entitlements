@@ -4,6 +4,7 @@
 <dict>
 	<key>com.apple.developer.associated-domains</key>
 	<array>
+		<string>applinks:azzosoftware.ca</string>
 		<string>applinks:azzopalj.github.io</string>
 	</array>
 	<key>com.apple.developer.game-center</key>

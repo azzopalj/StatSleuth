@@ -115,41 +115,39 @@ struct HowToPlayView: View {
     private var hintsSection: some View {
         InfoCard(title: "Hints", icon: "lightbulb.fill", iconColor: .yellow) {
             VStack(alignment: .leading, spacing: 10) {
-                Text("Spend hint tokens to reveal clues. More revealing hints cost more tokens.")
+                Text("Stuck? Watch a short video to reveal a clue. Every hint costs the same \u{2014} one video \u{2014} and there is no daily limit.")
                     .font(.subheadline).foregroundStyle(.secondary)
 
                 Divider()
 
                 VStack(spacing: 0) {
-                    hintRow("Position",    cost: 1, isFirst: true)
-                    hintRow("Nationality", cost: 1)
-                    hintRow("Era",         cost: 1)
-                    hintRow("Team",        cost: 2)
-                    hintRow("Debut Year",  cost: 2)
-                    hintRow("Jersey #",    cost: 2)
-                    hintRow("Initials",    cost: 3)
-                    hintRow("First Name",  cost: 4, isLast: true)
+                    hintRow("Position", isFirst: true)
+                    hintRow("Team")
+                    hintRow("Nationality")
+                    hintRow("Era")
+                    hintRow("Debut Year")
+                    hintRow("Jersey #")
+                    hintRow("Initials")
+                    hintRow("First Name", isLast: true)
                 }
                 .background(Color(uiColor: .tertiarySystemGroupedBackground),
                             in: RoundedRectangle(cornerRadius: 10))
+
+                Text("A bigger reveal costs you more points, so save First Name for when you really need it. Only hints this player actually has are offered. Removed ads? Hints come without the video.")
+                    .font(.caption).foregroundStyle(.secondary)
             }
         }
     }
 
-    private func hintRow(_ name: String, cost: Int, isFirst: Bool = false, isLast: Bool = false) -> some View {
+    private func hintRow(_ name: String, isFirst: Bool = false, isLast: Bool = false) -> some View {
         VStack(spacing: 0) {
             if !isFirst { Divider().padding(.leading, 16) }
             HStack {
                 Text(name).font(.subheadline)
                 Spacer()
-                HStack(spacing: 2) {
-                    ForEach(0..<cost, id: \.self) { _ in
-                        Image(systemName: "lightbulb.fill")
-                            .font(.caption2)
-                            .foregroundStyle(.yellow)
-                    }
-                    Text("\(cost)").font(.caption).fontWeight(.semibold).foregroundStyle(.secondary)
-                }
+                Image(systemName: "play.rectangle.fill")
+                    .font(.caption)
+                    .foregroundStyle(.yellow)
             }
             .padding(.horizontal, 14)
             .padding(.vertical, 10)

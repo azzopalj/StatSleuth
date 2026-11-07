@@ -29,7 +29,6 @@ final class GameViewModel {
     var guessesRemaining: Int { session?.guessesRemaining ?? 0 }
     var isComplete: Bool { session?.isComplete ?? false }
     var targetPlayer: Player? { session?.targetPlayer }
-    var hintsAvailable: Int { progressService.progress.hintsAvailable }
 
     // MARK: - Init
 
@@ -184,15 +183,25 @@ final class GameViewModel {
 
     // MARK: - Hints
 
+    /// Whether this hint has anything to reveal for the current player.
+    ///
+    /// Checked *before* the rewarded video plays, so a sport that doesn't
+    /// publish — say — a jersey number can never cost the player thirty
+    /// seconds to reveal a blank chip. `availableHintTypes` filters on the
+    /// same thing, so a false here means the picker offered something it
+    /// shouldn't have.
+    func hintIsResolvable(_ type: HintType) -> Bool {
+        guard let target = targetPlayer else { return false }
+        return hintValue(for: type, player: target) != nil
+    }
+
+    /// Records a hint the player has already paid for, by watching a video or
+    /// by having bought the ad-free app. There is no currency left to charge.
     @discardableResult
-    func requestHint(type: HintType) -> Hint? {
-        // The value is resolved before the hint is charged: a sport that doesn't
-        // publish, say, a jersey number must not cost the player a hint to
-        // reveal a blank chip.
+    func revealHint(type: HintType) -> Hint? {
         guard var currentSession = session,
               let target = targetPlayer,
-              let value = hintValue(for: type, player: target),
-              progressService.useHint(cost: type.hintCost) else { return nil }
+              let value = hintValue(for: type, player: target) else { return nil }
 
         let hint = Hint(type: type, value: value)
         currentSession.useHint(hint)

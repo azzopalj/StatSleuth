@@ -65,6 +65,7 @@ final class AdService {
     private var interstitial: InterstitialAd?
     private var rewarded: RewardedAd?
     private var started = false
+    private let presenter = AdPresenter()
 
     private var gamesSinceLastAd = 0
     private var lastAdShownAt: Date?
@@ -131,11 +132,10 @@ final class AdService {
 
     /// Call when a game ends. Returns whether an ad was shown.
     ///
-    /// Presentation waits for a view controller that is not mid-transition.
-    /// The results screen is a full-screen cover and leaving it may also pop
-    /// the navigation stack, so for a moment the frontmost controller is one
-    /// on its way out — `present` against it does nothing at all and burns the
-    /// loaded ad in silence.
+    /// The ad goes up in a window of its own — see `AdPresenter`. Presenting
+    /// against whatever happens to be frontmost used to burn the loaded ad
+    /// whenever that controller was still mid-transition, which it usually was
+    /// here: the results cover is on its way out as this runs.
     @discardableResult
     func gameFinished(isAdFree: Bool) async -> Bool {
         guard !isAdFree else { return false }
@@ -144,32 +144,18 @@ final class AdService {
         gamesSinceLastAd += 1
 
         guard shouldShowInterstitial(), let ad = interstitial else { return false }
-        guard let root = await Self.settledTopViewController() else { return false }
 
-        ad.present(from: root)
         interstitial = nil
+        let shown = await presenter.show(ad) { host in ad.present(from: host) }
+        guard shown else {
+            Task { await loadInterstitial() }
+            return false
+        }
+
         gamesSinceLastAd = 0
         lastAdShownAt = Date()
         Task { await loadInterstitial() }
         return true
-    }
-
-    /// The frontmost view controller once the screen has stopped moving, or
-    /// nil if it never settles.
-    private static func settledTopViewController(
-        timeout: Duration = .seconds(3)
-    ) async -> UIViewController? {
-        let deadline = ContinuousClock.now + timeout
-        while ContinuousClock.now < deadline {
-            if let top = topViewController(),
-               top.presentedViewController == nil,
-               top.transitionCoordinator == nil,
-               top.isViewLoaded, top.view.window != nil {
-                return top
-            }
-            try? await Task.sleep(for: .milliseconds(120))
-        }
-        return nil
     }
 
     private func shouldShowInterstitial() -> Bool {
@@ -196,24 +182,33 @@ final class AdService {
         isRewardedReady = rewarded != nil
     }
 
-    /// Shows a rewarded video. Returns true only if the player actually earned
-    /// the reward — dismissing early must not pay out.
-    func showRewarded() async -> Bool {
-        guard let ad = rewarded, let root = Self.topViewController() else { return false }
+    /// What came of asking for a rewarded video.
+    ///
+    /// `unavailable` is deliberately distinct from `dismissed`: one is the
+    /// player declining to pay, the other is us having nothing to sell. The
+    /// caller should hand over the reward in the second case — a button that
+    /// does nothing reads as a bug, and the player did nothing wrong.
+    enum RewardOutcome {
+        case earned
+        case dismissed
+        case unavailable
+    }
+
+    /// Shows a rewarded video, paying out only if it is watched to the end.
+    func showRewarded() async -> RewardOutcome {
+        guard let ad = rewarded else { return .unavailable }
 
         rewarded = nil
         isRewardedReady = false
 
         var earned = false
-        await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
-            ad.present(from: root) {
-                earned = true
-                continuation.resume()
-            }
+        let shown = await presenter.show(ad) { host in
+            ad.present(from: host) { earned = true }
         }
 
         await loadRewarded()
-        return earned
+        guard shown else { return .unavailable }
+        return earned ? .earned : .dismissed
     }
 
     // MARK: - Helpers
@@ -232,5 +227,96 @@ final class AdService {
         var top = scene?.windows.first(where: \.isKeyWindow)?.rootViewController
         while let presented = top?.presentedViewController { top = presented }
         return top
+    }
+}
+
+// MARK: - AdPresenter
+
+/// Puts a full-screen ad up in a window of its own.
+///
+/// Presenting an ad from the app's own view controller takes the game down
+/// with it: a `.fullScreen` presentation makes UIKit pull the presenting
+/// hierarchy out of the window, and SwiftUI reads a pushed destination
+/// disappearing as a pop, so `navigationDestination(isPresented:)` writes
+/// `false` back and the stack unwinds. A player who watched a video for a hint
+/// came back to the home screen with their game gone.
+///
+/// A window of our own is also always a settled place to present from — no
+/// transition to wait out, nothing half-dismissed, so an ad can no longer be
+/// burned by presenting against a controller on its way off screen.
+@MainActor
+private final class AdPresenter: NSObject, FullScreenContentDelegate {
+
+    private var window: UIWindow?
+    private var continuation: CheckedContinuation<Void, Never>?
+    /// Identifies the current presentation, so a late watchdog from a previous
+    /// one cannot cut this one short.
+    private var generation = 0
+    private var didPresent = false
+
+    /// Shows the ad and returns once it is gone. `false` means it never made
+    /// it on screen, and the caller still owes the player whatever it bought.
+    func show(
+        _ ad: FullScreenPresentingAd,
+        present: (UIViewController) -> Void
+    ) async -> Bool {
+        guard window == nil,
+              let scene = UIApplication.shared.connectedScenes
+                .compactMap({ $0 as? UIWindowScene })
+                .first(where: { $0.activationState == .foregroundActive })
+        else { return false }
+
+        generation += 1
+        let generation = generation
+        didPresent = false
+
+        let host = UIViewController()
+        host.view.backgroundColor = .clear
+
+        let window = UIWindow(windowScene: scene)
+        window.rootViewController = host
+        window.backgroundColor = .clear
+        // Above the app, below alerts and the system UI.
+        window.windowLevel = .normal + 1
+        window.makeKeyAndVisible()
+        self.window = window
+
+        ad.fullScreenContentDelegate = self
+
+        await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
+            self.continuation = continuation
+            present(host)
+            // If the SDK declines to present and never calls the delegate, the
+            // caller must not be left waiting on a video that isn't coming.
+            Task { [weak self] in
+                try? await Task.sleep(for: .seconds(5))
+                guard let self, self.generation == generation, !self.didPresent else { return }
+                self.finish()
+            }
+        }
+
+        self.window?.isHidden = true
+        self.window = nil
+        return didPresent
+    }
+
+    private func finish() {
+        continuation?.resume()
+        continuation = nil
+    }
+
+    // MARK: FullScreenContentDelegate
+
+    func adWillPresentFullScreenContent(_ ad: FullScreenPresentingAd) {
+        didPresent = true
+    }
+
+    func adDidDismissFullScreenContent(_ ad: FullScreenPresentingAd) {
+        finish()
+    }
+
+    func ad(_ ad: FullScreenPresentingAd, didFailToPresentFullScreenContentWithError error: Error) {
+        didPresent = false
+        finish()
     }
 }

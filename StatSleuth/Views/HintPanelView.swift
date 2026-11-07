@@ -2,35 +2,36 @@ import SwiftUI
 
 struct HintPanelView: View {
 
-    let hintsAvailable: Int
     let hintsUsed: [Hint]
     /// Which hints make sense for this answer — see `GameViewModel.availableHintTypes`.
     let availableHintTypes: [HintType]
+    /// Called once the hint has been paid for, never before.
     let onRequestHint: (HintType) -> Void
+    /// Whether a hint would actually reveal something. Checked before the
+    /// video plays — see `GameViewModel.hintIsResolvable`.
+    let isResolvable: (HintType) -> Bool
 
-    @Environment(UserProgressService.self) private var progressService
     @Environment(PurchaseService.self) private var purchaseService
+    @Environment(AdService.self) private var adService
 
-    private var unlimited: Bool { purchaseService.isAdFree }
+    /// Paying to remove ads also removes the video a hint is earned with, so
+    /// the purchase hands hints over directly instead.
+    private var hintsAreFree: Bool { purchaseService.isAdFree }
 
     @State private var showHintPicker = false
-    @State private var showBuyHints = false
+    @State private var isClaiming = false
 
     private var unusedHintTypes: [HintType] {
         let usedTypes = Set(hintsUsed.map { $0.type })
         return availableHintTypes.filter { !usedTypes.contains($0) }
     }
 
+    private var isDisabled: Bool { unusedHintTypes.isEmpty || isClaiming }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             if !hintsUsed.isEmpty { usedHintsSection }
             hintButton
-            if !unlimited, hintsAvailable < UserProgress.naturalHintMax { rechargeRow }
-        }
-        .sheet(isPresented: $showBuyHints) {
-            BuyHintsSheet()
-                .presentationDetents([.medium])
-                .presentationDragIndicator(.visible)
         }
     }
 
@@ -61,12 +62,21 @@ struct HintPanelView: View {
             HStack(spacing: 8) {
                 Image(systemName: "lightbulb.fill")
                     .foregroundStyle(.yellow)
-                Text("Use a hint")
+                Text(isClaiming ? "Loading\u{2026}" : "Use a hint")
                     .fontWeight(.medium)
                 Spacer()
-                Text(unlimited ? "∞" : "\(hintsAvailable) left")
+                if hintsAreFree {
+                    Text("\u{221E}")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                } else {
+                    HStack(spacing: 4) {
+                        Image(systemName: "play.rectangle.fill")
+                        Text("Watch a video")
+                    }
                     .font(.caption)
                     .foregroundStyle(.secondary)
+                }
                 Image(systemName: "chevron.right")
                     .font(.caption)
                     .foregroundStyle(.tertiary)
@@ -75,181 +85,47 @@ struct HintPanelView: View {
             .padding(.vertical, 12)
             .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
         }
-        .disabled((hintsAvailable == 0 && !unlimited) || unusedHintTypes.isEmpty)
-        .opacity(((hintsAvailable == 0 && !unlimited) || unusedHintTypes.isEmpty) ? 0.5 : 1)
+        .disabled(isDisabled)
+        .opacity(isDisabled ? 0.5 : 1)
         .sheet(isPresented: $showHintPicker) {
             HintPickerSheet(
                 hintTypes: unusedHintTypes,
-                hintsAvailable: hintsAvailable
+                needsVideo: !hintsAreFree
             ) { type in
                 showHintPicker = false
-                onRequestHint(type)
+                Task { await claim(type) }
             }
             .presentationDetents([.medium])
             .presentationDragIndicator(.visible)
         }
     }
 
-    // MARK: - Recharge row
+    // MARK: - Paying for a hint
 
-    private var rechargeRow: some View {
-        HStack(spacing: 10) {
-            Image(systemName: "clock.arrow.circlepath")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-
-            if hintsAvailable == 0 {
-                Text("Out of hints")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            } else {
-                Text("\(hintsAvailable)/\(UserProgress.naturalHintMax) hints")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-
-            // Live countdown
-            TimelineView(.periodic(from: .now, by: 1)) { context in
-                if let secs = progressService.progress.secondsUntilNextHint {
-                    let h = Int(secs) / 3600
-                    let m = (Int(secs) % 3600) / 60
-                    let s = Int(secs) % 60
-                    let timeStr = h > 0
-                        ? String(format: "+1 in %d:%02d:%02d", h, m, s)
-                        : String(format: "+1 in %d:%02d", m, s)
-                    Text(timeStr)
-                        .font(.caption)
-                        .fontWeight(.medium)
-                        .foregroundStyle(.orange)
-                        .monospacedDigit()
-                        .contentTransition(.numericText())
-                }
-            }
-
-            Spacer()
-
-            Button {
-                HapticEngine.tap()
-                showBuyHints = true
-            } label: {
-                Text("Get More")
-                    .font(.caption)
-                    .fontWeight(.semibold)
-                    .foregroundStyle(.blue)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 5)
-                    .background(.blue.opacity(0.1), in: Capsule())
-            }
+    /// Every hint costs the same thing: one video. There is no balance to
+    /// spend, nothing to run out of, and nothing to wait for.
+    private func claim(_ type: HintType) async {
+        guard isResolvable(type) else { return }
+        guard !hintsAreFree else {
+            onRequestHint(type)
+            return
         }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 8)
-        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 10))
-    }
-}
 
-// MARK: - BuyHintsSheet
+        isClaiming = true
+        defer { isClaiming = false }
 
-private struct BuyHintsSheet: View {
-    @Environment(PurchaseService.self) private var purchaseService
-    @Environment(UserProgressService.self) private var progressService
-    @Environment(AdService.self) private var adService
-    @Environment(\.dismiss) private var dismiss
-
-    @State private var purchaseError: String? = nil
-
-    var body: some View {
-        NavigationStack {
-            VStack(spacing: 20) {
-                // Current status
-                VStack(spacing: 6) {
-                    Image(systemName: "lightbulb.fill")
-                        .font(.system(size: 40))
-                        .foregroundStyle(.yellow)
-                    Text("You have \(progressService.progress.hintsAvailable) hint\(progressService.progress.hintsAvailable == 1 ? "" : "s")")
-                        .font(.title3).fontWeight(.bold)
-                    if let secs = progressService.progress.secondsUntilNextHint {
-                        let h = Int(secs) / 3600
-                        let m = (Int(secs) % 3600) / 60
-                        let s = Int(secs) % 60
-                        let str = h > 0
-                            ? String(format: "%d:%02d:%02d", h, m, s)
-                            : String(format: "%d:%02d", m, s)
-                        Text("Next free hint in \(str)")
-                            .font(.subheadline).foregroundStyle(.secondary)
-                            .monospacedDigit()
-                    } else {
-                        Text("1 hint regenerates every 2 hours · max \(UserProgress.naturalHintMax)")
-                            .font(.subheadline).foregroundStyle(.secondary)
-                            .multilineTextAlignment(.center)
-                    }
-                }
-                .padding(.top, 8)
-
-                if !purchaseService.isAdFree {
-                    Button {
-                        HapticEngine.impact()
-                        Task {
-                            // Only an ad watched to the end pays out.
-                            if await adService.showRewarded() {
-                                progressService.addHints(1)
-                                HapticEngine.correctGuess()
-                                dismiss()
-                            }
-                        }
-                    } label: {
-                        HStack(spacing: 14) {
-                            Image(systemName: "play.rectangle.fill")
-                                .font(.title2)
-                                .foregroundStyle(.yellow)
-                                .frame(width: 44, height: 44)
-                                .background(.yellow.opacity(0.15),
-                                            in: RoundedRectangle(cornerRadius: 10))
-
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text("Watch an ad for a hint")
-                                    .font(.headline).foregroundStyle(.primary)
-                                Text(adService.isRewardedReady
-                                     ? "About 30 seconds"
-                                     : "Loading…")
-                                    .font(.subheadline).foregroundStyle(.secondary)
-                            }
-
-                            Spacer()
-
-                            Image(systemName: "chevron.right")
-                                .font(.caption).foregroundStyle(.tertiary)
-                        }
-                        .padding(14)
-                        .background(Color(uiColor: .secondarySystemGroupedBackground),
-                                    in: RoundedRectangle(cornerRadius: 14))
-                    }
-                    .disabled(!adService.isRewardedReady)
-                    .opacity(adService.isRewardedReady ? 1 : 0.5)
-
-                    Text("Or remove ads once and keep hints unlimited — see Settings.")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .multilineTextAlignment(.center)
-                }
-
-                Spacer()
-            }
-            .padding(.horizontal, 20)
-            .navigationTitle("Get More Hints")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button("Close") { dismiss() }
-                }
-            }
-            .alert("Purchase Failed", isPresented: .constant(purchaseError != nil)) {
-                Button("OK") { purchaseError = nil }
-            } message: {
-                if let msg = purchaseError { Text(msg) }
-            }
+        switch await adService.showRewarded() {
+        case .earned:
+            HapticEngine.correctGuess()
+            onRequestHint(type)
+        case .unavailable:
+            // Nothing to show. The player asked for a hint and did nothing
+            // wrong, so our empty inventory is not their problem.
+            onRequestHint(type)
+        case .dismissed:
+            break
         }
     }
-
 }
 
 // MARK: - HintChip
@@ -279,13 +155,15 @@ private struct HintChip: View {
 
 private struct HintPickerSheet: View {
     let hintTypes: [HintType]
-    let hintsAvailable: Int
+    let needsVideo: Bool
     let onSelect: (HintType) -> Void
 
     var body: some View {
         NavigationStack {
             VStack(alignment: .leading, spacing: 8) {
-                Text("\(hintsAvailable) hints remaining")
+                Text(needsVideo
+                     ? "Any hint costs one short video."
+                     : "Hints are included \u{2014} no video needed.")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                     .padding(.horizontal, 20)
@@ -297,27 +175,18 @@ private struct HintPickerSheet: View {
                         onSelect(type)
                     } label: {
                         HStack {
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text(type.displayName)
-                                    .font(.subheadline)
-                                    .fontWeight(.medium)
-                                    .foregroundStyle(.primary)
-                                Text("Costs \(type.hintCost) hint\(type.hintCost > 1 ? "s" : "")")
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-                            }
+                            Text(type.displayName)
+                                .font(.subheadline)
+                                .fontWeight(.medium)
+                                .foregroundStyle(.primary)
                             Spacer()
-                            HStack(spacing: 2) {
-                                ForEach(0..<type.hintCost, id: \.self) { _ in
-                                    Image(systemName: "lightbulb.fill")
-                                        .font(.caption)
-                                        .foregroundStyle(.yellow)
-                                }
+                            if needsVideo {
+                                Image(systemName: "play.rectangle.fill")
+                                    .font(.caption)
+                                    .foregroundStyle(.yellow)
                             }
                         }
                     }
-                    .disabled(hintsAvailable < type.hintCost)
-                    .opacity(hintsAvailable < type.hintCost ? 0.4 : 1)
                 }
                 .listStyle(.plain)
             }
