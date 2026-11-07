@@ -6,6 +6,7 @@ struct ContentView: View {
     @Environment(UserProgressService.self) private var progressService
     @Environment(GameCenterService.self)  private var gameCenterService
     @Environment(DeepLinkService.self)    private var deepLinkService
+    @Environment(NavigationCoordinator.self) private var navigation
 
     @State private var deepLinkPack: Pack?
     @State private var deepLinkMode: GameMode?
@@ -37,6 +38,9 @@ struct ContentView: View {
         // sport arrives rather than discarding the link.
         .onChange(of: playerDataService.availableSports) { _, _ in
             if let link = deepLinkService.pendingDeepLink { handleDeepLink(link) }
+        }
+        .onChange(of: navigation.popToRootToken) { _, _ in
+            navigateToDeepLink = false
         }
     }
 

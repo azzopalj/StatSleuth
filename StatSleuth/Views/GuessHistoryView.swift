@@ -258,11 +258,8 @@ private struct FeedbackCell: View {
         switch result {
         case .match:   return "match"
         case .close:   return "close"
-        // `.higher` is set when the *guess* is above the answer
-        // (GameViewModel: `a > b ? .higher : .lower`), so the arrow points at
-        // the guess, not at where to go next. Said plainly here.
-        case .higher:  return "too high"
-        case .lower:   return "too low"
+        case .higher:  return "the answer is higher"
+        case .lower:   return "the answer is lower"
         case .noMatch: return "no match"
         }
     }

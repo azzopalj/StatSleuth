@@ -10,7 +10,7 @@ struct GameView: View {
     @Environment(UserProgressService.self) private var progressService
     @Environment(GameCenterService.self)   private var gameCenterService
     @Environment(DeepLinkService.self)     private var deepLinkService
-    @Environment(\.dismiss)                private var dismiss
+    @Environment(NavigationCoordinator.self) private var navigation
 
     @State private var viewModel: GameViewModel?
     @State private var searchQuery = ""
@@ -35,7 +35,7 @@ struct GameView: View {
                                 },
                                 onGoHome: {
                                     showResults = false
-                                    dismiss()
+                                    navigation.popToRoot()
                                 }
                             )
                         }

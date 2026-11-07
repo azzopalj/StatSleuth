@@ -271,7 +271,10 @@ final class GameViewModel {
             guard let a = g[key], let b = t[key] else { return .noMatch }
             if a == b { return .match }
             if profile.isCloseEnough(key, a, b) { return .close }
-            return a > b ? .higher : .lower
+            // `a` is the guess, `b` the answer, and the arrow points the way
+            // the player has to move — so the answer being the larger number
+            // is what makes this `.higher`.
+            return b > a ? .higher : .lower
         }
 
         return GuessFeedback(
@@ -323,10 +326,11 @@ final class GameViewModel {
         a == b ? .match : .noMatch
     }
 
+    /// `a` is the guessed value, `b` the answer's. See `ComparisonResult`.
     private func compareNumeric(_ a: Double, _ b: Double, closeness: Double) -> ComparisonResult {
         if a == b { return .match }
         if abs(a - b) <= closeness { return .close }
-        return a > b ? .higher : .lower
+        return b > a ? .higher : .lower
     }
 
     private func comparePrimaryStat1(guessed: Player, target: Player, mode: GameMode) -> ComparisonResult {

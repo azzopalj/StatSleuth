@@ -10,6 +10,7 @@ struct StatSleutApp: App {
     @State private var deepLinkService    = DeepLinkService()
     @State private var purchaseService    = PurchaseService()
     @State private var sportSelection     = SportSelectionService()
+    @State private var navigation         = NavigationCoordinator()
     @State private var showOnboarding     = !UserDefaults.standard.bool(forKey: OnboardingView.storageKey)
     @Environment(\.scenePhase) private var scenePhase
 
@@ -41,6 +42,7 @@ struct StatSleutApp: App {
             .environment(deepLinkService)
             .environment(purchaseService)
             .environment(sportSelection)
+            .environment(navigation)
             .onAppear {
                 gameCenterService.authenticate()
                 purchaseService.configure(

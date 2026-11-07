@@ -2,6 +2,11 @@ import Foundation
 
 // MARK: - Comparison Result
 
+/// How a guessed value stands against the answer's.
+///
+/// `higher` and `lower` describe **the answer**, not the guess: an up arrow
+/// beside a guess of 12.9 rebounds means the player is looking for someone
+/// with more, which is the direction the arrow is pointing them in.
 enum ComparisonResult: Codable {
     case match
     case higher
@@ -22,8 +27,8 @@ enum ComparisonResult: Codable {
     var label: String {
         switch self {
         case .match: return "Match"
-        case .higher: return "Higher"
-        case .lower: return "Lower"
+        case .higher: return "Answer is higher"
+        case .lower: return "Answer is lower"
         case .close: return "Close"
         case .noMatch: return "No match"
         }

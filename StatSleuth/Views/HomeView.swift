@@ -9,6 +9,7 @@ struct HomeView: View {
     @Environment(\.horizontalSizeClass)    private var horizontalSizeClass
     @Environment(PurchaseService.self)    private var purchaseService
     @Environment(SportSelectionService.self) private var sportSelection
+    @Environment(NavigationCoordinator.self) private var navigation
     @Environment(\.requestReview)         private var requestReview
 
     private static let reviewMilestones = [10, 50, 100]
@@ -30,99 +31,108 @@ struct HomeView: View {
     private var availableSports: [Sport] { playerDataService.availableSports }
     private var hasPlayedDaily: Bool { progress.hasPlayedDailyToday(sport: sport) }
 
+    // Navigation lives in ContentView's NavigationStack. A second one here
+    // nested a stack inside a stack: destinations pushed from this screen and
+    // the one a deep link pushes were being driven by different stacks, with
+    // two navigation bars stacked up to make it look like one.
     var body: some View {
-        NavigationStack {
-            ScrollView {
-                VStack(spacing: 24) {
-                    headerSection
-                    sportPicker
-                    streakXPSection
-                    dailyChallengeButton
-                    modeGridSection
-                    customGameButton
-                }
-                .padding(.horizontal, 20)
-                .padding(.bottom, 32)
-                .centredColumn()
+        ScrollView {
+            VStack(spacing: 24) {
+                headerSection
+                sportPicker
+                streakXPSection
+                dailyChallengeButton
+                modeGridSection
+                customGameButton
             }
-            .navigationTitle("StatSleuth")
-            .navigationBarTitleDisplayMode(.large)
-            .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    if gameCenterService.isAuthenticated {
-                        Button {
-                            gameCenterService.showDashboard()
-                        } label: {
-                            Image(systemName: "trophy")
-                                .foregroundStyle(.secondary)
-                        }
-                        .accessibilityLabel("Game Center")
+            .padding(.horizontal, 20)
+            .padding(.bottom, 32)
+            .centredColumn()
+        }
+        .navigationTitle("StatSleuth")
+        .navigationBarTitleDisplayMode(.large)
+        .toolbar {
+            ToolbarItem(placement: .topBarLeading) {
+                if gameCenterService.isAuthenticated {
+                    Button {
+                        gameCenterService.showDashboard()
+                    } label: {
+                        Image(systemName: "trophy")
+                            .foregroundStyle(.secondary)
                     }
+                    .accessibilityLabel("Game Center")
                 }
-                ToolbarItem(placement: .topBarTrailing) {
-                    HStack(spacing: 4) {
-                        Button {
-                            showHowToPlay = true
-                        } label: {
-                            Image(systemName: "questionmark.circle")
-                                .foregroundStyle(.secondary)
-                        }
-                        .accessibilityLabel("How to play")
-                        Button {
-                            showSettings = true
-                        } label: {
-                            Image(systemName: "gearshape.fill")
-                                .foregroundStyle(.secondary)
-                        }
-                        .accessibilityLabel("Settings")
+            }
+            ToolbarItem(placement: .topBarTrailing) {
+                HStack(spacing: 4) {
+                    Button {
+                        showHowToPlay = true
+                    } label: {
+                        Image(systemName: "questionmark.circle")
+                            .foregroundStyle(.secondary)
                     }
-                }
-            }
-            .navigationDestination(isPresented: $navigateToPackSelection) {
-                if let mode = selectedMode {
-                    PackSelectionView(mode: mode, sport: sport)
-                }
-            }
-            .navigationDestination(isPresented: $navigateToDaily) {
-                if let dailyPack = playerDataService.dailyPack(for: sport) {
-                    GameView(mode: .daily, pack: dailyPack)
-                }
-            }
-            .navigationDestination(isPresented: $navigateToDailyComplete) {
-                DailyCompleteView(
-                    sport: sport,
-                    record: progress.dailyRecord(for: sport),
-                    maxGuesses: GameMode.daily.maxGuesses,
-                    remainingSports: progress.sportsWithDailyRemaining(from: availableSports),
-                    onPickSport: { other in
-                        sportSelection.select(other)
-                        navigateToDailyComplete = false
-                    },
-                    onPlayOtherModes: {
-                        navigateToDailyComplete = false
+                    .accessibilityLabel("How to play")
+                    Button {
+                        showSettings = true
+                    } label: {
+                        Image(systemName: "gearshape.fill")
+                            .foregroundStyle(.secondary)
                     }
-                )
-            }
-            .sheet(isPresented: $showSettings) {
-                SettingsView()
-            }
-            .sheet(isPresented: $showHowToPlay) {
-                HowToPlayView()
-            }
-            .sheet(isPresented: $showCustomGame) {
-                CustomGameView(sport: sport)
-            }
-            .onAppear {
-                sportSelection.reconcile(available: availableSports)
-                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-                    requestReviewIfEligible()
+                    .accessibilityLabel("Settings")
                 }
             }
-            .onChange(of: availableSports) { _, sports in
-                // A sport whose data file became unreachable shouldn't leave the
-                // player on an empty screen.
-                sportSelection.reconcile(available: sports)
+        }
+        .navigationDestination(isPresented: $navigateToPackSelection) {
+            if let mode = selectedMode {
+                PackSelectionView(mode: mode, sport: sport)
             }
+        }
+        .navigationDestination(isPresented: $navigateToDaily) {
+            if let dailyPack = playerDataService.dailyPack(for: sport) {
+                GameView(mode: .daily, pack: dailyPack)
+            }
+        }
+        .navigationDestination(isPresented: $navigateToDailyComplete) {
+            DailyCompleteView(
+                sport: sport,
+                record: progress.dailyRecord(for: sport),
+                maxGuesses: GameMode.daily.maxGuesses,
+                remainingSports: progress.sportsWithDailyRemaining(from: availableSports),
+                onPickSport: { other in
+                    sportSelection.select(other)
+                    navigateToDailyComplete = false
+                },
+                onPlayOtherModes: {
+                    navigateToDailyComplete = false
+                }
+            )
+        }
+        .sheet(isPresented: $showSettings) {
+            SettingsView()
+        }
+        .sheet(isPresented: $showHowToPlay) {
+            HowToPlayView()
+        }
+        .sheet(isPresented: $showCustomGame) {
+            CustomGameView(sport: sport)
+        }
+        .onAppear {
+            sportSelection.reconcile(available: availableSports)
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                requestReviewIfEligible()
+            }
+        }
+        .onChange(of: availableSports) { _, sports in
+            // A sport whose data file became unreachable shouldn't leave the
+            // player on an empty screen.
+            sportSelection.reconcile(available: sports)
+        }
+        // "Home" from a results screen: clearing these pops the pack list and
+        // whatever was pushed above it in one move.
+        .onChange(of: navigation.popToRootToken) { _, _ in
+            navigateToPackSelection = false
+            navigateToDaily         = false
+            navigateToDailyComplete = false
         }
     }
 
