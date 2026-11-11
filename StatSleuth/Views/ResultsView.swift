@@ -80,7 +80,7 @@ struct ResultsView: View {
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
                     ToolbarItem(placement: .topBarTrailing) {
-                        Button("Done") { showStats = false }
+                        BarActionButton("Done", systemImage: "checkmark") { showStats = false }
                     }
                 }
             }

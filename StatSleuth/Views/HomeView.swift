@@ -49,38 +49,42 @@ struct HomeView: View {
             .padding(.horizontal, 20)
             .padding(.bottom, 32)
             .centredColumn()
+            .centredOnFold()
         }
         .navigationTitle("StatSleuth")
         .navigationBarTitleDisplayMode(.large)
         .toolbar {
-            ToolbarItem(placement: .topBarLeading) {
-                if gameCenterService.isAuthenticated {
+            if gameCenterService.isAuthenticated {
+                ToolbarItem(placement: .topBarLeading) {
                     Button {
                         gameCenterService.showDashboard()
                     } label: {
-                        Image(systemName: "trophy")
+                        Label("Game Center", systemImage: "trophy")
                             .foregroundStyle(.secondary)
                     }
-                    .accessibilityLabel("Game Center")
+                    .tint(.secondary)
                 }
             }
+            // Separate items with titles rather than one HStack: a custom view
+            // stays in a horizontal bar, and iPhone Duo's short outer display
+            // needs these on the side rail.
             ToolbarItem(placement: .topBarTrailing) {
-                HStack(spacing: 4) {
-                    Button {
-                        showHowToPlay = true
-                    } label: {
-                        Image(systemName: "questionmark.circle")
-                            .foregroundStyle(.secondary)
-                    }
-                    .accessibilityLabel("How to play")
-                    Button {
-                        showSettings = true
-                    } label: {
-                        Image(systemName: "gearshape.fill")
-                            .foregroundStyle(.secondary)
-                    }
-                    .accessibilityLabel("Settings")
+                Button {
+                    showHowToPlay = true
+                } label: {
+                    Label("How to play", systemImage: "questionmark.circle")
+                        .foregroundStyle(.secondary)
                 }
+                .tint(.secondary)
+            }
+            ToolbarItem(placement: .topBarTrailing) {
+                Button {
+                    showSettings = true
+                } label: {
+                    Label("Settings", systemImage: "gearshape.fill")
+                        .foregroundStyle(.secondary)
+                }
+                .tint(.secondary)
             }
         }
         .navigationDestination(isPresented: $navigateToPackSelection) {

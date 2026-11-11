@@ -15,8 +15,6 @@
 	</array>
 	<key>GADApplicationIdentifier</key>
 	<string>ca-app-pub-5551151489823400~2005000084</string>
-	<key>NSUserTrackingUsageDescription</key>
-	<string>StatSleuth asks so the ads you see can be more relevant. Say no and the game works exactly the same, with less relevant ads.</string>
 	<key>SKAdNetworkItems</key>
 	<array>
 		<dict>

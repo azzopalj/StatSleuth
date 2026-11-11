@@ -144,9 +144,30 @@ final class PurchaseService {
 
     /// Whether the player has paid to remove ads.
     var isAdFree: Bool {
-        purchasedProductIDs.contains(Self.removeAdsID)
+        #if DEBUG && targetEnvironment(simulator)
+        if debugAdFreeOverride { return true }
+        #endif
+        return purchasedProductIDs.contains(Self.removeAdsID)
             || purchasedProductIDs.contains(where: Self.isLegacyPurchase)
     }
+
+    // MARK: - Debug override
+
+    #if DEBUG && targetEnvironment(simulator)
+    /// Pretends the remove-ads purchase is owned, so the ad-free paths can be
+    /// exercised without a StoreKit configuration or a sandbox account.
+    ///
+    /// Compiled only into a debug build running in the simulator: a real device
+    /// build, debug or not, has no way to reach this, so it cannot leak the
+    /// entitlement to anyone who hasn't paid for it.
+    /// Stored rather than read straight from UserDefaults so `@Observable`
+    /// sees the change and the views that branch on `isAdFree` redraw.
+    var debugAdFreeOverride = UserDefaults.standard.bool(forKey: PurchaseService.debugAdFreeKey) {
+        didSet { UserDefaults.standard.set(debugAdFreeOverride, forKey: Self.debugAdFreeKey) }
+    }
+
+    private static let debugAdFreeKey = "com.lucasazzopardi.StatSleuth.debug.adFreeOverride"
+    #endif
 
     /// Every pack is free now. Kept so callers read as a question about the
     /// pack rather than assuming.

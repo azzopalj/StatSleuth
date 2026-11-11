@@ -126,7 +126,7 @@ struct CustomGameView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
-                    Button("Cancel") { dismiss() }
+                    BarActionButton("Cancel", systemImage: "xmark") { dismiss() }
                 }
             }
             .safeAreaInset(edge: .bottom) {

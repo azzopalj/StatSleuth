@@ -13,10 +13,12 @@ struct GameView: View {
     @Environment(NavigationCoordinator.self) private var navigation
     @Environment(PurchaseService.self)     private var purchaseService
     @Environment(AdService.self)           private var adService
+    @Environment(\.horizontalSizeClass)    private var horizontalSizeClass
 
     @State private var viewModel: GameViewModel?
     @State private var searchQuery = ""
     @State private var shakeGuessInput = false
+    @State private var isSearchFocused = false
     @State private var showResults = false
     @State private var showQuitConfirm = false
 
@@ -113,28 +115,13 @@ struct GameView: View {
 
     // MARK: - Main Game Content
 
-    @ViewBuilder
     private func gameContent(vm: GameViewModel) -> some View {
-        ScrollView {
-            VStack(spacing: 16) {
-                guessCounter(vm: vm)
-                if let player = vm.targetPlayer {
-                    StatCardView(player: player, mode: mode)
-                }
-                guessHistory(vm: vm)
-                if !vm.isComplete {
-                    HintPanelView(
-                        hintsUsed: vm.hintsUsed,
-                        availableHintTypes: vm.availableHintTypes,
-                        onRequestHint: { vm.revealHint(type: $0) },
-                        isResolvable: { vm.hintIsResolvable($0) }
-                    )
-                }
-                Color.clear.frame(height: 80)
+        Group {
+            if horizontalSizeClass == .regular {
+                twoPaneContent(vm: vm)
+            } else {
+                singleColumnContent(vm: vm)
             }
-            .padding(.horizontal, 16)
-            .padding(.top, 8)
-            .centredColumn()
         }
         .navigationTitle(pack.name)
         .navigationBarTitleDisplayMode(.inline)
@@ -142,17 +129,13 @@ struct GameView: View {
         .toolbar {
             if !vm.isComplete {
                 ToolbarItem(placement: .topBarLeading) {
-                    Button("Quit") {
+                    BarActionButton("Quit", systemImage: "xmark") {
                         UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
                         showQuitConfirm = true
                     }
                     .foregroundStyle(.red)
+                    .tint(.red)
                 }
-            }
-        }
-        .safeAreaInset(edge: .bottom) {
-            if !vm.isComplete {
-                floatingInputBar(vm: vm)
             }
         }
         .onChange(of: vm.guesses.count) { _, _ in
@@ -163,6 +146,105 @@ struct GameView: View {
                 HapticEngine.wrongGuess()
             }
         }
+    }
+
+    /// Every phone, and any window too narrow for two panes.
+    private func singleColumnContent(vm: GameViewModel) -> some View {
+        ScrollView {
+            VStack(spacing: 16) {
+                guessCounter(vm: vm)
+                if let player = vm.targetPlayer {
+                    StatCardView(player: player, mode: mode)
+                }
+                guessHistory(vm: vm)
+                if !vm.isComplete {
+                    hintPanel(vm: vm)
+                }
+                Color.clear.frame(height: 80)
+            }
+            .padding(.horizontal, 16)
+            .padding(.top, 8)
+            .centredColumn()
+        }
+        .safeAreaInset(edge: .bottom) {
+            if !vm.isComplete {
+                floatingInputBar(vm: vm)
+            }
+        }
+    }
+
+    /// iPad and the inner display of iPhone Duo: the clues on one side, the
+    /// guesses on the other, and the search bar across both, on top of a
+    /// keyboard that is as wide as the window. Results open over the guesses
+    /// rather than under the field, which keeps the clues in view while typing.
+    private func twoPaneContent(vm: GameViewModel) -> some View {
+        TwoPaneLayout {
+            ScrollView {
+                VStack(spacing: 16) {
+                    guessCounter(vm: vm)
+                    if let player = vm.targetPlayer {
+                        StatCardView(player: player, mode: mode)
+                    }
+                    if !vm.isComplete {
+                        hintPanel(vm: vm)
+                    }
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 8)
+            }
+        } trailing: {
+            ScrollView {
+                if vm.guesses.isEmpty {
+                    guessesPlaceholder
+                } else {
+                    guessHistory(vm: vm)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 8)
+                }
+            }
+            .overlay(alignment: .bottom) {
+                if isSearchFocused && !searchQuery.isEmpty {
+                    GuessResultsView(searchResults: vm.searchResults) { player in
+                        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+                        submit(player, vm: vm)
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.bottom, 8)
+                }
+            }
+        }
+        .centredColumn(maxWidth: Self.twoPaneMaxWidth)
+        .safeAreaInset(edge: .bottom) {
+            if !vm.isComplete {
+                floatingInputBar(vm: vm, spansPanes: true)
+            }
+        }
+    }
+
+    private static let twoPaneMaxWidth: CGFloat = 1120
+
+    private func hintPanel(vm: GameViewModel) -> some View {
+        HintPanelView(
+            hintsUsed: vm.hintsUsed,
+            availableHintTypes: vm.availableHintTypes,
+            onRequestHint: { vm.revealHint(type: $0) },
+            isResolvable: { vm.hintIsResolvable($0) }
+        )
+    }
+
+    /// A pane of its own would otherwise open the game completely empty.
+    private var guessesPlaceholder: some View {
+        VStack(spacing: 8) {
+            Image(systemName: "person.fill.questionmark")
+                .font(.title)
+                .foregroundStyle(.secondary)
+            Text("Your guesses will appear here")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.top, 48)
+        .padding(.horizontal, 16)
     }
 
     // MARK: - Guess Counter
@@ -221,28 +303,34 @@ struct GameView: View {
         )
     }
 
-    // MARK: - Floating Input Bar (iPhone only)
+    // MARK: - Floating Input Bar
 
-    private func floatingInputBar(vm: GameViewModel) -> some View {
+    private func floatingInputBar(vm: GameViewModel, spansPanes: Bool = false) -> some View {
         VStack(spacing: 0) {
             Divider()
             GuessInputView(
                 searchQuery: $searchQuery,
-                searchResults: vm.searchResults
+                searchResults: vm.searchResults,
+                showsResults: !spansPanes,
+                onFocusChange: { isSearchFocused = $0 }
             ) { player in
-                withAnimation(.spring(bounce: 0.2)) {
-                    vm.submitGuess(player)
-                    searchQuery = ""
-                }
+                submit(player, vm: vm)
             }
+            .startingAfterFold(spacing: spansPanes ? 16 : 0)
             .padding(.horizontal, 16)
             .padding(.vertical, 12)
-            .centredColumn()
+            .centredColumn(maxWidth: spansPanes ? Self.twoPaneMaxWidth : 700)
             .background(.regularMaterial)
         }
         .onChange(of: searchQuery) { _, newValue in
             vm.updateSearch(newValue)
         }
     }
-}
 
+    private func submit(_ player: Player, vm: GameViewModel) {
+        withAnimation(.spring(bounce: 0.2)) {
+            vm.submitGuess(player)
+            searchQuery = ""
+        }
+    }
+}

@@ -25,7 +25,7 @@ struct HowToPlayView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button("Done") { dismiss() }
+                    BarActionButton("Done", systemImage: "checkmark") { dismiss() }
                 }
             }
         }

@@ -19,13 +19,14 @@ struct SettingsView: View {
                 notificationsSection
                 purchasesSection
                 aboutSection
+                debugSection
             }
             .listStyle(.insetGrouped)
             .navigationTitle("Settings")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button("Done") { dismiss() }
+                    BarActionButton("Done", systemImage: "checkmark") { dismiss() }
                 }
             }
             .onAppear { loadNotificationState() }
@@ -123,6 +124,25 @@ struct SettingsView: View {
                     .foregroundStyle(.secondary)
             }
         }
+    }
+
+    /// Simulator-only, debug-only: flip the ad-free entitlement without a
+    /// StoreKit configuration or a sandbox account. Not compiled into a device
+    /// build, so there is nothing here to find in a release.
+    @ViewBuilder
+    private var debugSection: some View {
+        #if DEBUG && targetEnvironment(simulator)
+        Section {
+            Toggle("Ad-free unlocked", isOn: Binding(
+                get: { purchaseService.debugAdFreeOverride },
+                set: { purchaseService.debugAdFreeOverride = $0 }
+            ))
+        } header: {
+            Label("Debug (Simulator)", systemImage: "hammer.fill")
+        } footer: {
+            Text("Pretends the Remove Ads purchase is owned. Simulator debug builds only.")
+        }
+        #endif
     }
 
     private var aboutSection: some View {

@@ -4,6 +4,9 @@ struct GuessInputView: View {
 
     @Binding var searchQuery: String
     let searchResults: [Player]
+    /// Off when the layout shows `GuessResultsView` somewhere of its own.
+    var showsResults = true
+    var onFocusChange: (Bool) -> Void = { _ in }
     let onSelect: (Player) -> Void
 
     @FocusState private var isFocused: Bool
@@ -11,14 +14,15 @@ struct GuessInputView: View {
     var body: some View {
         VStack(spacing: 0) {
             searchField
-            if isFocused && !searchQuery.isEmpty {
-                if searchResults.isEmpty {
-                    emptyState
-                } else {
-                    resultsList
+            if showsResults && isFocused && !searchQuery.isEmpty {
+                GuessResultsView(searchResults: searchResults) { player in
+                    isFocused = false
+                    searchQuery = ""
+                    onSelect(player)
                 }
             }
         }
+        .onChange(of: isFocused) { _, focused in onFocusChange(focused) }
     }
 
     // MARK: - Search Field
@@ -56,6 +60,24 @@ struct GuessInputView: View {
         )
         .animation(.easeInOut(duration: 0.15), value: isFocused)
     }
+}
+
+// MARK: - GuessResultsView
+
+/// What a search found: the dropdown under the field on a phone, and a panel
+/// of its own beside the clues on a wide layout.
+struct GuessResultsView: View {
+
+    let searchResults: [Player]
+    let onSelect: (Player) -> Void
+
+    var body: some View {
+        if searchResults.isEmpty {
+            emptyState
+        } else {
+            resultsList
+        }
+    }
 
     // MARK: - Empty State
 
@@ -89,8 +111,6 @@ struct GuessInputView: View {
                 ForEach(searchResults) { player in
                     PlayerResultRow(player: player) {
                         HapticEngine.selection()
-                        isFocused = false
-                        searchQuery = ""
                         onSelect(player)
                     }
 
