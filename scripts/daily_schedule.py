@@ -1,6 +1,6 @@
 """Builds a daily-puzzle schedule that is identical on every device.
 
-Shared by the MLB and NBA generators. The one rule that matters: a date that
+Shared by every sport's generator. The one rule that matters: a date that
 has already been published must never be rewritten. Changing one would hand two
 users different puzzles depending on when they last fetched the file, which is
 the exact bug publishing the schedule exists to prevent.
@@ -52,6 +52,43 @@ def extend(existing: dict, pool: list[int], today: date,
     cutoff = (today - timedelta(days=no_repeat + 7)).isoformat()
     picks = {k: v for k, v in picks.items() if k >= cutoff}
     return {"picks": dict(sorted(picks.items()))}
+
+
+def scheduled_ids(existing: dict, today: date) -> set[int]:
+    """Player ids already published as the answer for today or a later date."""
+    cutoff = today.isoformat()
+    return {pid for day, pid in existing.get("picks", {}).items() if day >= cutoff}
+
+
+def keep_scheduled(players: list[dict], previous: list[dict], scheduled: set[int],
+                   id_key: str = "id", name_key: str = "fullName") -> list[str]:
+    """Keeps every already-scheduled answer in the notable pool, in place.
+
+    The notable pool is re-ranked from scratch on every run, so mid-season a
+    player near the cutoff can slip out of it, or off a roster entirely, after
+    being published as an upcoming answer. That date can't be rewritten, so the
+    player has to stay answerable instead: someone still in this run's data is
+    flagged notable, and someone who has left it is carried forward from the
+    previously published file. Once their date has passed they fall away on
+    their own. Returns a log line per player kept.
+    """
+    current = {p[id_key]: p for p in players}
+    earlier = {p[id_key]: p for p in previous if id_key in p}
+    log = []
+    for pid in sorted(scheduled):
+        if pid in current:
+            if not current[pid].get("notable", True):
+                current[pid]["notable"] = True
+                log.append(f"kept scheduled answer in notables: {current[pid].get(name_key, pid)}")
+        elif pid in earlier:
+            record = dict(earlier[pid])
+            if "notable" in record:
+                record["notable"] = True
+            players.append(record)
+            log.append(f"carried scheduled answer forward: {record.get(name_key, pid)}")
+        else:
+            log.append(f"WARNING: scheduled answer {pid} is in neither this run nor the last")
+    return log
 
 
 def load(path: str) -> dict:

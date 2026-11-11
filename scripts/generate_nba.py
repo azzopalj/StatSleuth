@@ -301,6 +301,16 @@ def main() -> int:
             players.append(built)
             season = max(season, built["season"]["year"])
     mark_notable(players)
+    # Anyone already published as an upcoming daily answer has to stay
+    # answerable, even if this run's ranking (or roster) has dropped them.
+    today = datetime.now(timezone.utc).astimezone(
+        timezone(timedelta(hours=-5))).date()   # ET-ish; the exact offset doesn't matter
+    existing = daily_schedule.load(os.path.join(repo_root, "data", "nba_daily.json"))
+    previous = daily_schedule.load(os.path.join(repo_root, "data", "nba.json"))
+    for line in daily_schedule.keep_scheduled(
+            players, previous.get("players", []),
+            daily_schedule.scheduled_ids(existing, today)):
+        print(line)
     notables = sorted((p for p in players if p["notable"]),
                       key=lambda p: -prominence(p))
     players.sort(key=lambda p: (p["lastName"], p["firstName"]))
@@ -334,9 +344,6 @@ def main() -> int:
     }
     # The daily is drawn from the notables, most prominent first, and already
     # published dates are never rewritten.
-    today = datetime.now(timezone.utc).astimezone(
-        timezone(timedelta(hours=-5))).date()   # ET-ish; the exact offset doesn't matter
-    existing = daily_schedule.load(os.path.join(repo_root, "data", "nba_daily.json"))
     daily_doc = {
         "generated": doc["generated"],
         "season": season,

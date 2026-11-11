@@ -224,6 +224,28 @@ def main() -> int:
 
     rows = score_players(people, award_scores)
     notable = pick_notable(rows, majors)
+    # Published daily picks must never change, so start from what is already
+    # live — and keep every upcoming answer in the pack, even if this run's
+    # ranking or rosters have dropped them.
+    existing = daily_schedule.load(os.path.join(repo_root, "data", "daily.json"))
+    previous = daily_schedule.load(os.path.join(repo_root, "data", "notable.json"))
+    current = [{"mlbID": pid, "name": row["name"], "score": row["score"]}
+               for pid, row in rows.items()]
+    chosen = {p["mlbID"] for p in notable}
+    pool = [p for p in current if p["mlbID"] in chosen] + \
+           [p for p in current if p["mlbID"] not in chosen]
+    for p in pool[len(chosen):]:
+        p["notable"] = False
+    for line in daily_schedule.keep_scheduled(
+            pool, previous.get("players", []),
+            daily_schedule.scheduled_ids(existing, today),
+            id_key="mlbID", name_key="name"):
+        print(line)
+    notable = [p for p in pool if p.get("notable", True)]
+    for p in notable:
+        p.pop("notable", None)
+        p.setdefault("score", 0.0)
+    notable.sort(key=lambda p: (-p["score"], p["name"]))
     print(f"notable pack: {len(notable)}")
     if len(notable) < 100:
         print("ERROR: notable pack too small, refusing to publish", file=sys.stderr)
@@ -237,8 +259,6 @@ def main() -> int:
         "players": [{"mlbID": p["mlbID"], "name": p["name"]} for p in notable],
     }
 
-    # Published daily picks must never change, so start from what is already live.
-    existing = daily_schedule.load(os.path.join(repo_root, "data", "daily.json"))
     daily_doc = build_daily(existing, notable, today)
     daily_doc = {"generated": generated, "season": season, **daily_doc}
     print(f"daily schedule: {len(daily_doc['picks'])} dates "
