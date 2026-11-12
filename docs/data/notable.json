@@ -1,5 +1,5 @@
 {
- "generated": "2026-11-05T01:06:44+00:00",
+ "generated": "2026-11-12T17:24:35+00:00",
  "season": 2026,
  "count": 221,
  "players": [
@@ -212,6 +212,10 @@
    "name": "Dansby Swanson"
   },
   {
+   "mlbID": 694819,
+   "name": "Jacob Misiorowski"
+  },
+  {
    "mlbID": 608379,
    "name": "Michael Wacha"
   },
@@ -234,6 +238,10 @@
   {
    "mlbID": 657277,
    "name": "Logan Webb"
+  },
+  {
+   "mlbID": 693645,
+   "name": "Cam Schlittler"
   },
   {
    "mlbID": 607074,
@@ -298,10 +306,6 @@
   {
    "mlbID": 666200,
    "name": "Jesús Luzardo"
-  },
-  {
-   "mlbID": 694819,
-   "name": "Jacob Misiorowski"
   },
   {
    "mlbID": 682985,
@@ -402,10 +406,6 @@
   {
    "mlbID": 592178,
    "name": "Kris Bryant"
-  },
-  {
-   "mlbID": 693645,
-   "name": "Cam Schlittler"
   },
   {
    "mlbID": 656730,
@@ -572,6 +572,10 @@
    "name": "Hunter Brown"
   },
   {
+   "mlbID": 701398,
+   "name": "Sal Stewart"
+  },
+  {
    "mlbID": 667670,
    "name": "Brent Rooker"
   },
@@ -716,10 +720,6 @@
    "name": "Luke Weaver"
   },
   {
-   "mlbID": 701398,
-   "name": "Sal Stewart"
-  },
-  {
    "mlbID": 666808,
    "name": "Camilo Doval"
   },
@@ -770,6 +770,10 @@
   {
    "mlbID": 691587,
    "name": "Eury Pérez"
+  },
+  {
+   "mlbID": 805808,
+   "name": "Kevin McGonigle"
   },
   {
    "mlbID": 680694,
@@ -878,10 +882,6 @@
   {
    "mlbID": 663687,
    "name": "Hogan Harris"
-  },
-  {
-   "mlbID": 680869,
-   "name": "Zack Gelof"
   },
   {
    "mlbID": 661563,
