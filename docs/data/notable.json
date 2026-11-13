@@ -1,5 +1,5 @@
 {
- "generated": "2026-11-12T17:24:35+00:00",
+ "generated": "2026-11-13T16:58:45+00:00",
  "season": 2026,
  "count": 221,
  "players": [
@@ -76,6 +76,10 @@
    "name": "Pete Alonso"
   },
   {
+   "mlbID": 670541,
+   "name": "Yordan Alvarez"
+  },
+  {
    "mlbID": 660670,
    "name": "Ronald Acuña Jr."
   },
@@ -102,10 +106,6 @@
   {
    "mlbID": 623352,
    "name": "Josh Hader"
-  },
-  {
-   "mlbID": 670541,
-   "name": "Yordan Alvarez"
   },
   {
    "mlbID": 641355,
@@ -142,6 +142,10 @@
   {
    "mlbID": 665489,
    "name": "Vladimir Guerrero Jr."
+  },
+  {
+   "mlbID": 691718,
+   "name": "Pete Crow-Armstrong"
   },
   {
    "mlbID": 677951,
@@ -194,10 +198,6 @@
   {
    "mlbID": 656302,
    "name": "Dylan Cease"
-  },
-  {
-   "mlbID": 691718,
-   "name": "Pete Crow-Armstrong"
   },
   {
    "mlbID": 572233,
