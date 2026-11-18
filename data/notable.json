@@ -1,7 +1,7 @@
 {
- "generated": "2026-11-17T18:14:27+00:00",
+ "generated": "2026-11-18T17:51:17+00:00",
  "season": 2026,
- "count": 221,
+ "count": 222,
  "players": [
   {
    "mlbID": 660271,
@@ -64,16 +64,16 @@
    "name": "Juan Soto"
   },
   {
+   "mlbID": 624413,
+   "name": "Pete Alonso"
+  },
+  {
    "mlbID": 521692,
    "name": "Salvador Perez"
   },
   {
    "mlbID": 596019,
    "name": "Francisco Lindor"
-  },
-  {
-   "mlbID": 624413,
-   "name": "Pete Alonso"
   },
   {
    "mlbID": 670541,
@@ -112,16 +112,16 @@
    "name": "Cody Bellinger"
   },
   {
+   "mlbID": 608324,
+   "name": "Alex Bregman"
+  },
+  {
    "mlbID": 607208,
    "name": "Trea Turner"
   },
   {
    "mlbID": 594798,
    "name": "Jacob deGrom"
-  },
-  {
-   "mlbID": 608324,
-   "name": "Alex Bregman"
   },
   {
    "mlbID": 593428,
@@ -132,8 +132,16 @@
    "name": "Zack Wheeler"
   },
   {
+   "mlbID": 691718,
+   "name": "Pete Crow-Armstrong"
+  },
+  {
    "mlbID": 608369,
    "name": "Corey Seager"
+  },
+  {
+   "mlbID": 677951,
+   "name": "Bobby Witt Jr."
   },
   {
    "mlbID": 665487,
@@ -142,14 +150,6 @@
   {
    "mlbID": 665489,
    "name": "Vladimir Guerrero Jr."
-  },
-  {
-   "mlbID": 691718,
-   "name": "Pete Crow-Armstrong"
-  },
-  {
-   "mlbID": 677951,
-   "name": "Bobby Witt Jr."
   },
   {
    "mlbID": 606466,
@@ -224,8 +224,16 @@
    "name": "Mason Miller"
   },
   {
+   "mlbID": 670280,
+   "name": "David Bednar"
+  },
+  {
    "mlbID": 605400,
    "name": "Aaron Nola"
+  },
+  {
+   "mlbID": 682829,
+   "name": "Elly De La Cruz"
   },
   {
    "mlbID": 593958,
@@ -246,6 +254,10 @@
   {
    "mlbID": 607074,
    "name": "Carlos Rodón"
+  },
+  {
+   "mlbID": 682985,
+   "name": "Riley Greene"
   },
   {
    "mlbID": 663586,
@@ -288,10 +300,6 @@
    "name": "Sandy Alcantara"
   },
   {
-   "mlbID": 682829,
-   "name": "Elly De La Cruz"
-  },
-  {
    "mlbID": 682928,
    "name": "CJ Abrams"
   },
@@ -300,16 +308,16 @@
    "name": "Bryan Reynolds"
   },
   {
+   "mlbID": 691406,
+   "name": "Junior Caminero"
+  },
+  {
    "mlbID": 650490,
    "name": "Yandy Díaz"
   },
   {
    "mlbID": 666200,
    "name": "Jesús Luzardo"
-  },
-  {
-   "mlbID": 682985,
-   "name": "Riley Greene"
   },
   {
    "mlbID": 661388,
@@ -330,10 +338,6 @@
   {
    "mlbID": 696100,
    "name": "Hunter Goodman"
-  },
-  {
-   "mlbID": 691406,
-   "name": "Junior Caminero"
   },
   {
    "mlbID": 642715,
@@ -370,6 +374,10 @@
   {
    "mlbID": 686973,
    "name": "Louis Varland"
+  },
+  {
+   "mlbID": 695578,
+   "name": "James Wood"
   },
   {
    "mlbID": 683002,
@@ -414,10 +422,6 @@
   {
    "mlbID": 671739,
    "name": "Michael Harris II"
-  },
-  {
-   "mlbID": 695578,
-   "name": "James Wood"
   },
   {
    "mlbID": 669257,
@@ -476,8 +480,16 @@
    "name": "Luis García Jr."
   },
   {
+   "mlbID": 641343,
+   "name": "Jake Bauers"
+  },
+  {
    "mlbID": 663158,
    "name": "Robert Suarez"
+  },
+  {
+   "mlbID": 694192,
+   "name": "Jackson Chourio"
   },
   {
    "mlbID": 647304,
@@ -494,6 +506,10 @@
   {
    "mlbID": 668939,
    "name": "Adley Rutschman"
+  },
+  {
+   "mlbID": 693307,
+   "name": "Dillon Dingler"
   },
   {
    "mlbID": 693433,
@@ -532,6 +548,10 @@
    "name": "George Kirby"
   },
   {
+   "mlbID": 641941,
+   "name": "Emilio Pagán"
+  },
+  {
    "mlbID": 678882,
    "name": "Ceddanne Rafaela"
   },
@@ -558,10 +578,6 @@
   {
    "mlbID": 676617,
    "name": "Riley O'Brien"
-  },
-  {
-   "mlbID": 694192,
-   "name": "Jackson Chourio"
   },
   {
    "mlbID": 656811,
@@ -608,10 +624,6 @@
    "name": "Jordan Walker"
   },
   {
-   "mlbID": 693307,
-   "name": "Dillon Dingler"
-  },
-  {
    "mlbID": 669394,
    "name": "Jake Burger"
   },
@@ -638,6 +650,10 @@
   {
    "mlbID": 676440,
    "name": "Tanner Bibee"
+  },
+  {
+   "mlbID": 672515,
+   "name": "Gabriel Moreno"
   },
   {
    "mlbID": 669016,
@@ -680,6 +696,10 @@
    "name": "Yusei Kikuchi"
   },
   {
+   "mlbID": 805808,
+   "name": "Kevin McGonigle"
+  },
+  {
    "mlbID": 630105,
    "name": "Jake Cronenworth"
   },
@@ -710,10 +730,6 @@
   {
    "mlbID": 667755,
    "name": "José Soriano"
-  },
-  {
-   "mlbID": 672515,
-   "name": "Gabriel Moreno"
   },
   {
    "mlbID": 596133,
@@ -770,10 +786,6 @@
   {
    "mlbID": 691587,
    "name": "Eury Pérez"
-  },
-  {
-   "mlbID": 805808,
-   "name": "Kevin McGonigle"
   },
   {
    "mlbID": 680694,
@@ -874,14 +886,6 @@
   {
    "mlbID": 677960,
    "name": "Ryan Weathers"
-  },
-  {
-   "mlbID": 673962,
-   "name": "Josh Jung"
-  },
-  {
-   "mlbID": 663687,
-   "name": "Hogan Harris"
   },
   {
    "mlbID": 661563,
