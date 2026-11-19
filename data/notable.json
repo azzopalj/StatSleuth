@@ -1,5 +1,5 @@
 {
- "generated": "2026-11-18T17:51:17+00:00",
+ "generated": "2026-11-19T17:59:51+00:00",
  "season": 2026,
  "count": 222,
  "players": [
@@ -158,6 +158,10 @@
   {
    "mlbID": 621439,
    "name": "Byron Buxton"
+  },
+  {
+   "mlbID": 543243,
+   "name": "Sonny Gray"
   },
   {
    "mlbID": 663656,
@@ -878,10 +882,6 @@
   {
    "mlbID": 663567,
    "name": "Peter Lambert"
-  },
-  {
-   "mlbID": 671056,
-   "name": "Iván Herrera"
   },
   {
    "mlbID": 677960,
