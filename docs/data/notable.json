@@ -1,7 +1,7 @@
 {
- "generated": "2026-11-20T17:36:18+00:00",
+ "generated": "2026-11-21T16:38:02+00:00",
  "season": 2026,
- "count": 222,
+ "count": 221,
  "players": [
   {
    "mlbID": 660271,
@@ -886,10 +886,6 @@
   {
    "mlbID": 677960,
    "name": "Ryan Weathers"
-  },
-  {
-   "mlbID": 661563,
-   "name": "Luis Gil"
   }
  ]
 }
