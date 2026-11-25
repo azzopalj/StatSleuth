@@ -1,5 +1,5 @@
 {
- "generated": "2026-11-24T19:59:39+00:00",
+ "generated": "2026-11-25T18:59:52+00:00",
  "season": 2026,
  "count": 221,
  "players": [
@@ -34,6 +34,10 @@
   {
    "mlbID": 514888,
    "name": "Jose Altuve"
+  },
+  {
+   "mlbID": 502671,
+   "name": "Paul Goldschmidt"
   },
   {
    "mlbID": 592518,
@@ -878,10 +882,6 @@
   {
    "mlbID": 683737,
    "name": "Michael Busch"
-  },
-  {
-   "mlbID": 665019,
-   "name": "Kody Clemens"
   },
   {
    "mlbID": 677960,
