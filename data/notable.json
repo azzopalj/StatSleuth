@@ -1,5 +1,5 @@
 {
- "generated": "2026-11-25T18:59:52+00:00",
+ "generated": "2026-11-26T18:51:48+00:00",
  "season": 2026,
  "count": 221,
  "players": [
@@ -150,6 +150,10 @@
   {
    "mlbID": 665487,
    "name": "Fernando Tatis Jr."
+  },
+  {
+   "mlbID": 669373,
+   "name": "Tarik Skubal"
   },
   {
    "mlbID": 665489,
@@ -632,6 +636,10 @@
    "name": "Zach Neto"
   },
   {
+   "mlbID": 669432,
+   "name": "Trevor Rogers"
+  },
+  {
    "mlbID": 691023,
    "name": "Jordan Walker"
   },
@@ -874,14 +882,6 @@
   {
    "mlbID": 678662,
    "name": "Ezequiel Tovar"
-  },
-  {
-   "mlbID": 668715,
-   "name": "Spencer Steer"
-  },
-  {
-   "mlbID": 683737,
-   "name": "Michael Busch"
   },
   {
    "mlbID": 677960,
