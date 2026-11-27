@@ -1,5 +1,5 @@
 {
- "generated": "2026-11-26T18:51:48+00:00",
+ "generated": "2026-11-27T18:43:05+00:00",
  "season": 2026,
  "count": 221,
  "players": [
@@ -488,6 +488,10 @@
    "name": "Andrés Giménez"
   },
   {
+   "mlbID": 506433,
+   "name": "Yu Darvish"
+  },
+  {
    "mlbID": 668930,
    "name": "Brice Turang"
   },
@@ -636,12 +640,20 @@
    "name": "Zach Neto"
   },
   {
+   "mlbID": 664761,
+   "name": "Alec Bohm"
+  },
+  {
    "mlbID": 669432,
    "name": "Trevor Rogers"
   },
   {
    "mlbID": 691023,
    "name": "Jordan Walker"
+  },
+  {
+   "mlbID": 595777,
+   "name": "Jurickson Profar"
   },
   {
    "mlbID": 669394,
@@ -870,18 +882,6 @@
   {
    "mlbID": 680736,
    "name": "Justin Wrobleski"
-  },
-  {
-   "mlbID": 664056,
-   "name": "Harrison Bader"
-  },
-  {
-   "mlbID": 672640,
-   "name": "Otto Lopez"
-  },
-  {
-   "mlbID": 678662,
-   "name": "Ezequiel Tovar"
   },
   {
    "mlbID": 677960,
