@@ -1,7 +1,7 @@
 {
- "generated": "2026-11-27T18:43:05+00:00",
+ "generated": "2026-11-28T17:24:19+00:00",
  "season": 2026,
- "count": 221,
+ "count": 222,
  "players": [
   {
    "mlbID": 660271,
@@ -616,6 +616,10 @@
    "name": "Brent Rooker"
   },
   {
+   "mlbID": 656849,
+   "name": "David Peterson"
+  },
+  {
    "mlbID": 593871,
    "name": "Jorge Polanco"
   },
@@ -880,12 +884,12 @@
    "name": "Will Warren"
   },
   {
-   "mlbID": 680736,
-   "name": "Justin Wrobleski"
-  },
-  {
    "mlbID": 677960,
    "name": "Ryan Weathers"
+  },
+  {
+   "mlbID": 661563,
+   "name": "Luis Gil"
   }
  ]
 }
